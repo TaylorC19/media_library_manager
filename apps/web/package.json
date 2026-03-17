@@ -1,0 +1,25 @@
+{
+  "name": "@media-library/web",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0 --port ${WEB_PORT:-3000}",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0 --port ${WEB_PORT:-3000}",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@media-library/types": "workspace:*",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest"
+  }
+}

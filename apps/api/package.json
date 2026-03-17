@@ -1,0 +1,31 @@
+{
+  "name": "@media-library/api",
+  "private": true,
+  "scripts": {
+    "dev": "sh -c 'pnpm exec tsc --project tsconfig.build.json --watch & until [ -f dist/main.js ]; do sleep 1; done; exec node --watch dist/main.js'",
+    "build": "tsc --project tsconfig.build.json",
+    "start": "node dist/main.js",
+    "lint": "eslint .",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@media-library/types": "workspace:*",
+    "@nestjs/common": "latest",
+    "@nestjs/config": "latest",
+    "@nestjs/core": "latest",
+    "@nestjs/mongoose": "latest",
+    "@nestjs/platform-express": "latest",
+    "class-transformer": "latest",
+    "class-validator": "latest",
+    "mongoose": "latest",
+    "reflect-metadata": "latest",
+    "rxjs": "latest"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "latest",
+    "@nestjs/schematics": "latest",
+    "@nestjs/testing": "latest",
+    "@types/node": "latest",
+    "typescript": "latest"
+  }
+}

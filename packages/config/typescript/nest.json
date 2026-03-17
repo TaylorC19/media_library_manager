@@ -1,0 +1,13 @@
+{
+  "extends": "./base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "lib": [
+      "ES2022"
+    ],
+    "declaration": false,
+    "sourceMap": true,
+    "incremental": true
+  }
+}

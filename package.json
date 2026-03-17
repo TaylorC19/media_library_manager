@@ -1,0 +1,21 @@
+{
+  "name": "media-library-manager",
+  "private": true,
+  "packageManager": "pnpm@10.32.1",
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "dev:web": "turbo run dev --filter=@media-library/web",
+    "dev:api": "turbo run dev --filter=@media-library/api",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "@eslint/js": "latest",
+    "eslint": "latest",
+    "globals": "latest",
+    "turbo": "latest",
+    "typescript": "latest",
+    "typescript-eslint": "latest"
+  }
+}

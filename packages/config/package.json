@@ -1,0 +1,24 @@
+{
+  "name": "@media-library/config",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./typescript/base.json": "./typescript/base.json",
+    "./typescript/next.json": "./typescript/next.json",
+    "./typescript/nest.json": "./typescript/nest.json",
+    "./typescript/package.json": "./typescript/package.json"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "typescript": "latest"
+  }
+}

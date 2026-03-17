@@ -1,0 +1,22 @@
+{
+  "name": "@media-library/provider-sdk",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "lint": "eslint .",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@media-library/types": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "latest"
+  }
+}
