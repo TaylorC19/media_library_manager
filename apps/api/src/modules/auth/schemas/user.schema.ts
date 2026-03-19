@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import type { UserSettings } from "@media-library/types";
 import type { HydratedDocument } from "mongoose";
 
 export type UserDocument = HydratedDocument<User>;
@@ -10,7 +11,6 @@ export type UserDocument = HydratedDocument<User>;
 export class User {
   @Prop({
     required: true,
-    unique: true,
     type: String,
     lowercase: true,
     trim: true
@@ -44,10 +44,7 @@ export class User {
       futureSocialEnabled: false
     }
   })
-  settings!: {
-    futureSocialEnabled: boolean;
-    profileVisibility: "private";
-  };
+  settings!: UserSettings;
 
   createdAt?: Date;
   updatedAt?: Date;

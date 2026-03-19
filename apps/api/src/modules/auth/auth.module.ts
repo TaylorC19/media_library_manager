@@ -5,6 +5,8 @@ import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { SessionAuthGuard } from "./guards/session-auth.guard";
 import { LoginRateLimitService } from "./login-rate-limit.service";
+import { SessionsRepository } from "./repositories/sessions.repository";
+import { UsersRepository } from "./repositories/users.repository";
 import { Session, SessionSchema } from "./schemas/session.schema";
 import { User, UserSchema } from "./schemas/user.schema";
 
@@ -26,6 +28,8 @@ import { User, UserSchema } from "./schemas/user.schema";
   providers: [
     AuthService,
     LoginRateLimitService,
+    UsersRepository,
+    SessionsRepository,
     {
       provide: APP_GUARD,
       useClass: SessionAuthGuard

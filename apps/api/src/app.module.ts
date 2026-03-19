@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MongooseModule } from "@nestjs/mongoose";
 import { AuthModule } from "./modules/auth/auth.module";
 import { HealthModule } from "./modules/health/health.module";
+import { LibraryModule } from "./modules/library/library.module";
+import { MediaModule } from "./modules/media/media.module";
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { HealthModule } from "./modules/health/health.module";
       })
     }),
     AuthModule,
+    LibraryModule,
+    MediaModule,
     HealthModule
   ]
 })

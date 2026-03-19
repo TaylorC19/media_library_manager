@@ -56,3 +56,4 @@ export const SessionSchema = SchemaFactory.createForClass(Session);
 
 SessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 SessionSchema.index({ tokenHash: 1 }, { unique: true });
+SessionSchema.index({ userId: 1, expiresAt: 1 });

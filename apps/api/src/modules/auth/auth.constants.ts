@@ -3,6 +3,14 @@ export const IS_PUBLIC_KEY = "isPublic";
 export const AUTH_COOKIE_NAME_FALLBACK = "mlib_session";
 export const SESSION_TTL_DAYS_FALLBACK = 30;
 
+export const NON_EMPTY_STRING_MIN_LENGTH = 1;
+export const USERNAME_MIN_LENGTH = 3;
+export const USERNAME_MAX_LENGTH = 32;
+export const PASSWORD_MIN_LENGTH = 8;
+export const PASSWORD_MAX_LENGTH = 72;
+export const DISPLAY_NAME_MIN_LENGTH = NON_EMPTY_STRING_MIN_LENGTH;
+export const DISPLAY_NAME_MAX_LENGTH = 64;
+
 export const PASSWORD_SCRYPT_COST = 16384;
 export const PASSWORD_SCRYPT_BLOCK_SIZE = 8;
 export const PASSWORD_SCRYPT_PARALLELIZATION = 1;

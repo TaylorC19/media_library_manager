@@ -1,4 +1,4 @@
-import type { MediaType } from "./library";
+import type { MediaType } from "./library.js";
 
 export interface ProviderRefs {
   tmdb?: { id: string; mediaKind?: "movie" | "tv" };
@@ -13,6 +13,43 @@ export interface ExternalRatings {
   rottenTomatoes?: number | null;
   tmdb?: number | null;
   metacritic?: number | null;
+}
+
+export interface MovieMediaDetails {
+  runtimeMinutes?: number | null;
+  directors?: string[];
+  cast?: string[];
+  genres?: string[];
+}
+
+export interface TvMediaDetails {
+  seasons?: number | null;
+  episodes?: number | null;
+  genres?: string[];
+  creators?: string[];
+}
+
+export interface AlbumMediaDetails {
+  artists: string[];
+  label?: string | null;
+  trackCount?: number | null;
+  releaseCountry?: string | null;
+  catalogNumber?: string | null;
+}
+
+export interface BookMediaDetails {
+  authors: string[];
+  isbn10?: string | null;
+  isbn13?: string | null;
+  publisher?: string | null;
+  pageCount?: number | null;
+}
+
+export interface GameMediaDetails {
+  platforms?: string[];
+  developers?: string[];
+  publishers?: string[];
+  genres?: string[];
 }
 
 export interface MediaRecordBase {
@@ -34,54 +71,27 @@ export interface MediaRecordBase {
 
 export interface MovieMediaRecord extends MediaRecordBase {
   mediaType: "movie";
-  details: {
-    runtimeMinutes?: number | null;
-    directors?: string[];
-    cast?: string[];
-    genres?: string[];
-  };
+  details: MovieMediaDetails;
 }
 
 export interface TvMediaRecord extends MediaRecordBase {
   mediaType: "tv";
-  details: {
-    seasons?: number | null;
-    episodes?: number | null;
-    genres?: string[];
-    creators?: string[];
-  };
+  details: TvMediaDetails;
 }
 
 export interface AlbumMediaRecord extends MediaRecordBase {
   mediaType: "album";
-  details: {
-    artists: string[];
-    label?: string | null;
-    trackCount?: number | null;
-    releaseCountry?: string | null;
-    catalogNumber?: string | null;
-  };
+  details: AlbumMediaDetails;
 }
 
 export interface BookMediaRecord extends MediaRecordBase {
   mediaType: "book";
-  details: {
-    authors: string[];
-    isbn10?: string | null;
-    isbn13?: string | null;
-    publisher?: string | null;
-    pageCount?: number | null;
-  };
+  details: BookMediaDetails;
 }
 
 export interface GameMediaRecord extends MediaRecordBase {
   mediaType: "game";
-  details: {
-    platforms?: string[];
-    developers?: string[];
-    publishers?: string[];
-    genres?: string[];
-  };
+  details: GameMediaDetails;
 }
 
 export type MediaRecord =

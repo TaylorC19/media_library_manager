@@ -1,11 +1,21 @@
 services:
+  deps:
+    image: node:22-alpine
+    working_dir: /workspace
+    command: >
+      sh -c "corepack enable &&
+      pnpm config set store-dir /pnpm/store &&
+      pnpm install --no-frozen-lockfile"
+    volumes:
+      - .:/workspace
+      - pnpm-store:/pnpm/store
+
   web:
     image: node:22-alpine
     working_dir: /workspace
     command: >
       sh -c "corepack enable &&
       pnpm config set store-dir /pnpm/store &&
-      pnpm install --no-frozen-lockfile &&
       pnpm --filter @media-library/web dev"
     env_file:
       - .env
@@ -19,7 +29,10 @@ services:
     ports:
       - "${WEB_PORT:-3000}:3000"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+      deps:
+        condition: service_completed_successfully
 
   api:
     image: node:22-alpine
@@ -27,7 +40,6 @@ services:
     command: >
       sh -c "corepack enable &&
       pnpm config set store-dir /pnpm/store &&
-      pnpm install --no-frozen-lockfile &&
       pnpm --filter @media-library/api dev"
     env_file:
       - .env
@@ -40,7 +52,16 @@ services:
     ports:
       - "${API_PORT:-4000}:4000"
     depends_on:
-      - mongo
+      deps:
+        condition: service_completed_successfully
+      mongo:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
 
   mongo:
     image: mongo:7

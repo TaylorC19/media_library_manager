@@ -5,12 +5,12 @@ import {
   UnauthorizedException
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { InjectModel } from "@nestjs/mongoose";
 import type {
   AuthSessionResponse,
   AuthUser,
   LoginRequest,
-  RegisterRequest
+  RegisterRequest,
+  User as UserEntity
 } from "@media-library/types";
 import {
   createHmac,
@@ -18,7 +18,6 @@ import {
   scrypt as scryptCallback,
   timingSafeEqual
 } from "node:crypto";
-import { Model, Types } from "mongoose";
 import {
   AUTH_COOKIE_NAME_FALLBACK,
   PASSWORD_HASH_KEY_LENGTH,
@@ -29,8 +28,8 @@ import {
 } from "./auth.constants";
 import type { AuthResponse, RequestSessionContext } from "./auth.types";
 import { LoginRateLimitService } from "./login-rate-limit.service";
-import { Session, type SessionDocument } from "./schemas/session.schema";
-import { User, type UserDocument } from "./schemas/user.schema";
+import { SessionsRepository } from "./repositories/sessions.repository";
+import { UsersRepository } from "./repositories/users.repository";
 
 interface AuthSessionLookupResult {
   sessionId: string;
@@ -42,20 +41,13 @@ interface AuthSessionResult {
   sessionToken: string;
 }
 
-interface AuthUserRecord {
-  _id: Types.ObjectId | string;
-  displayName?: string | null;
-  username: string;
-}
-
 @Injectable()
 export class AuthService {
   constructor(
     private readonly configService: ConfigService,
     private readonly loginRateLimitService: LoginRateLimitService,
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-    @InjectModel(Session.name)
-    private readonly sessionModel: Model<SessionDocument>
+    private readonly usersRepository: UsersRepository,
+    private readonly sessionsRepository: SessionsRepository
   ) {}
 
   async register(
@@ -63,13 +55,13 @@ export class AuthService {
     context: RequestSessionContext
   ): Promise<AuthSessionResult> {
     const username = this.normalizeUsername(input.username);
-    const existingUser = await this.userModel.exists({ username });
+    const existingUser = await this.usersRepository.existsByUsername(username);
 
     if (existingUser) {
       throw new ConflictException("That username is already in use.");
     }
 
-    const user = await this.userModel.create({
+    const user = await this.usersRepository.create({
       displayName: this.normalizeDisplayName(input.displayName),
       passwordHash: await this.hashPassword(input.password),
       settings: {
@@ -79,7 +71,7 @@ export class AuthService {
       username
     });
 
-    const sessionToken = await this.createSession(user._id, context);
+    const sessionToken = await this.createSession(user.id, context);
 
     return {
       response: {
@@ -99,7 +91,7 @@ export class AuthService {
 
     this.loginRateLimitService.assertWithinLimit(rateLimitKey);
 
-    const user = await this.userModel.findOne({ username });
+    const user = await this.usersRepository.findByUsername(username);
 
     if (!user) {
       this.loginRateLimitService.recordFailure(rateLimitKey);
@@ -122,7 +114,7 @@ export class AuthService {
       await this.revokeSession(existingSessionToken);
     }
 
-    const sessionToken = await this.createSession(user._id, context);
+    const sessionToken = await this.createSession(user.id, context);
 
     return {
       response: {
@@ -144,39 +136,32 @@ export class AuthService {
     sessionToken: string
   ): Promise<AuthSessionLookupResult | null> {
     const tokenHash = this.hashSessionToken(sessionToken);
-    const session = await this.sessionModel.findOne({ tokenHash }).lean();
+    const session = await this.sessionsRepository.findByTokenHash(tokenHash);
 
     if (!session) {
       return null;
     }
 
-    if (session.expiresAt.getTime() <= Date.now()) {
-      await this.sessionModel.deleteOne({ _id: session._id });
+    if (new Date(session.expiresAt).getTime() <= Date.now()) {
+      await this.sessionsRepository.deleteById(session.id);
       return null;
     }
 
-    const user = await this.userModel.findById(session.userId).lean();
+    const user = await this.usersRepository.findById(session.userId);
 
     if (!user) {
-      await this.sessionModel.deleteOne({ _id: session._id });
+      await this.sessionsRepository.deleteById(session.id);
       return null;
     }
 
     return {
-      sessionId: session._id.toString(),
+      sessionId: session.id,
       user: this.toAuthUser(user)
     };
   }
 
   async touchSession(sessionId: string): Promise<void> {
-    await this.sessionModel.updateOne(
-      { _id: sessionId },
-      {
-        $set: {
-          lastUsedAt: new Date()
-        }
-      }
-    );
+    await this.sessionsRepository.touch(sessionId, new Date());
   }
 
   getSessionCookieName(): string {
@@ -206,12 +191,12 @@ export class AuthService {
   }
 
   private async createSession(
-    userId: Types.ObjectId,
+    userId: string,
     context: RequestSessionContext
   ): Promise<string> {
     const sessionToken = randomBytes(32).toString("base64url");
 
-    await this.sessionModel.create({
+    await this.sessionsRepository.create({
       expiresAt: new Date(Date.now() + this.getSessionTtlMs()),
       ipAddress: context.ipAddress,
       lastUsedAt: new Date(),
@@ -224,15 +209,17 @@ export class AuthService {
   }
 
   private async revokeSession(sessionToken: string): Promise<void> {
-    await this.sessionModel.deleteOne({
-      tokenHash: this.hashSessionToken(sessionToken)
-    });
+    await this.sessionsRepository.deleteByTokenHash(
+      this.hashSessionToken(sessionToken)
+    );
   }
 
-  private toAuthUser(user: AuthUserRecord): AuthUser {
+  private toAuthUser(
+    user: Pick<UserEntity, "id" | "username" | "displayName">
+  ): AuthUser {
     return {
       displayName: user.displayName ?? null,
-      id: user._id.toString(),
+      id: user.id,
       username: user.username
     };
   }

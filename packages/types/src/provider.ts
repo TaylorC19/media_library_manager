@@ -1,5 +1,13 @@
-import type { MediaType } from "./library";
-import type { ExternalRatings, ProviderRefs } from "./media";
+import type { MediaType } from "./library.js";
+import type {
+  AlbumMediaDetails,
+  BookMediaDetails,
+  ExternalRatings,
+  GameMediaDetails,
+  MovieMediaDetails,
+  ProviderRefs,
+  TvMediaDetails
+} from "./media.js";
 
 export const providerNames = [
   "tmdb",
@@ -25,7 +33,7 @@ export interface NormalizedSearchResult {
   confidence?: number | null;
 }
 
-export interface NormalizedMediaRecordInput {
+interface NormalizedMediaRecordInputBase {
   mediaType: MediaType;
   title: string;
   sortTitle?: string | null;
@@ -36,5 +44,41 @@ export interface NormalizedMediaRecordInput {
   providerRefs: ProviderRefs;
   externalRatings?: ExternalRatings;
   barcodeCandidates?: string[];
-  details: Record<string, unknown>;
 }
+
+export interface NormalizedMovieMediaRecordInput
+  extends NormalizedMediaRecordInputBase {
+  mediaType: "movie";
+  details: MovieMediaDetails;
+}
+
+export interface NormalizedTvMediaRecordInput
+  extends NormalizedMediaRecordInputBase {
+  mediaType: "tv";
+  details: TvMediaDetails;
+}
+
+export interface NormalizedAlbumMediaRecordInput
+  extends NormalizedMediaRecordInputBase {
+  mediaType: "album";
+  details: AlbumMediaDetails;
+}
+
+export interface NormalizedBookMediaRecordInput
+  extends NormalizedMediaRecordInputBase {
+  mediaType: "book";
+  details: BookMediaDetails;
+}
+
+export interface NormalizedGameMediaRecordInput
+  extends NormalizedMediaRecordInputBase {
+  mediaType: "game";
+  details: GameMediaDetails;
+}
+
+export type NormalizedMediaRecordInput =
+  | NormalizedMovieMediaRecordInput
+  | NormalizedTvMediaRecordInput
+  | NormalizedAlbumMediaRecordInput
+  | NormalizedBookMediaRecordInput
+  | NormalizedGameMediaRecordInput;
