@@ -160,7 +160,7 @@ export function AuthForm({ mode }: AuthFormProps) {
               mode === "login" ? "current-password" : "new-password"
             }
             className="w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-400"
-            minLength={mode === "register" ? 10 : 1}
+            minLength={mode === "register" ? 8 : 1}
             name="password"
             onChange={(event) => setPassword(event.target.value)}
             required

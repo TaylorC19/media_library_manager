@@ -18,7 +18,7 @@ export class RegisterDto {
   username!: string;
 
   @IsString()
-  @Length(10, 72)
+  @Length(8, 72)
   password!: string;
 
   @Transform(({ value }) =>
