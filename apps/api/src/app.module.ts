@@ -5,6 +5,7 @@ import { AuthModule } from "./modules/auth/auth.module";
 import { HealthModule } from "./modules/health/health.module";
 import { LibraryModule } from "./modules/library/library.module";
 import { MediaModule } from "./modules/media/media.module";
+import { ProvidersModule } from "./modules/providers/providers.module";
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { MediaModule } from "./modules/media/media.module";
     AuthModule,
     LibraryModule,
     MediaModule,
+    ProvidersModule,
     HealthModule
   ]
 })

@@ -2,10 +2,12 @@ services:
   deps:
     image: node:22-alpine
     working_dir: /workspace
+    environment:
+      CI: "true"
     command: >
       sh -c "corepack enable &&
       pnpm config set store-dir /pnpm/store &&
-      pnpm install --no-frozen-lockfile"
+      pnpm install --no-frozen-lockfile --config.confirmModulesPurge=false"
     volumes:
       - .:/workspace
       - pnpm-store:/pnpm/store

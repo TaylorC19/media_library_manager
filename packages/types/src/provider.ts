@@ -19,6 +19,21 @@ export const providerNames = [
 
 export type ProviderName = (typeof providerNames)[number];
 
+export const providerMediaTypes = {
+  tmdb: ["movie", "tv"],
+  musicbrainz: ["album"],
+  discogs: ["album"],
+  openlibrary: ["book"],
+  rawg: ["game"]
+} as const satisfies Record<ProviderName, readonly MediaType[]>;
+
+export type ProviderMediaTypeMap = {
+  [Provider in ProviderName]: (typeof providerMediaTypes)[Provider][number];
+};
+
+export type ProviderMediaType<Provider extends ProviderName = ProviderName> =
+  ProviderMediaTypeMap[Provider];
+
 export interface NormalizedSearchResult {
   provider: ProviderName;
   providerId: string;

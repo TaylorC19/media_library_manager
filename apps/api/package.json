@@ -9,6 +9,7 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@media-library/provider-sdk": "workspace:*",
     "@media-library/types": "workspace:*",
     "@nestjs/common": "latest",
     "@nestjs/config": "latest",
