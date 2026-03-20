@@ -1,5 +1,7 @@
 import { Module } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
+import { MediaModule } from "../media/media.module";
+import { LibraryController } from "./library.controller";
 import { LibraryEntryRepository } from "./repositories/library-entry.repository";
 import {
   LibraryEntryDocumentModel,
@@ -9,6 +11,7 @@ import { LibraryService } from "./library.service";
 
 @Module({
   imports: [
+    MediaModule,
     MongooseModule.forFeature([
       {
         name: LibraryEntryDocumentModel.name,
@@ -16,6 +19,7 @@ import { LibraryService } from "./library.service";
       }
     ])
   ],
+  controllers: [LibraryController],
   providers: [LibraryEntryRepository, LibraryService],
   exports: [LibraryEntryRepository, LibraryService]
 })

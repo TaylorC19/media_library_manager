@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
+import { MediaController } from "./media.controller";
 import { MediaRecordRepository } from "./repositories/media-record.repository";
 import { MediaService } from "./media.service";
 import {
@@ -32,6 +33,7 @@ import {
       }
     ])
   ],
+  controllers: [MediaController],
   providers: [MediaRecordRepository, MediaService],
   exports: [MediaRecordRepository, MediaService]
 })

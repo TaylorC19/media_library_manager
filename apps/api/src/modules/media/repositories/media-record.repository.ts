@@ -47,6 +47,21 @@ export class MediaRecordRepository {
     return mediaRecord ? this.toDomain(mediaRecord) : null;
   }
 
+  async findManyByIds(ids: string[]): Promise<MediaRecord[]> {
+    const validIds = ids.filter((id) => Types.ObjectId.isValid(id));
+
+    if (validIds.length === 0) {
+      return [];
+    }
+
+    const objectIds = validIds.map((id) => new Types.ObjectId(id));
+    const mediaRecords = await this.mediaRecordModel
+      .find({ _id: { $in: objectIds } })
+      .exec();
+
+    return mediaRecords.map((mediaRecord) => this.toDomain(mediaRecord));
+  }
+
   async findByProviderRef(
     provider: ProviderRefKey,
     providerId: string,
@@ -74,6 +89,31 @@ export class MediaRecordRepository {
     const query: Record<string, unknown> = {
       mediaType: params.mediaType,
       title: params.title.trim()
+    };
+
+    if (params.year !== undefined) {
+      query.year = params.year;
+    }
+
+    const mediaRecords = await this.mediaRecordModel.find(query).exec();
+    return mediaRecords.map((mediaRecord) => this.toDomain(mediaRecord));
+  }
+
+  async findByLooseTitleYear(params: {
+    mediaType: MediaRecord["mediaType"];
+    title: string;
+    year?: number | null;
+  }): Promise<MediaRecord[]> {
+    const escapedTitle = params.title
+      .trim()
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const query: Record<string, unknown> = {
+      mediaType: params.mediaType,
+      title: {
+        $regex: `^${escapedTitle}$`,
+        $options: "i"
+      }
     };
 
     if (params.year !== undefined) {

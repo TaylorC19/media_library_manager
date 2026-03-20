@@ -30,6 +30,15 @@ export interface LibraryEntryFilters {
   tag?: string;
 }
 
+export interface UpdateLibraryEntryInput {
+  bucket?: LibraryBucket;
+  format?: PhysicalFormat | null;
+  barcode?: string | null;
+  purchaseDate?: string | null;
+  notes?: string | null;
+  tags?: string[];
+}
+
 @Injectable()
 export class LibraryEntryRepository {
   constructor(
@@ -117,6 +126,70 @@ export class LibraryEntryRepository {
       .exec();
 
     return libraryEntries.map((libraryEntry) => this.toDomain(libraryEntry));
+  }
+
+  async updateForUser(
+    id: string,
+    userId: string,
+    input: UpdateLibraryEntryInput
+  ): Promise<LibraryEntry | null> {
+    if (!Types.ObjectId.isValid(id) || !Types.ObjectId.isValid(userId)) {
+      return null;
+    }
+
+    const nextValues: Record<string, unknown> = {};
+
+    if (input.bucket !== undefined) {
+      nextValues.bucket = input.bucket;
+    }
+
+    if (input.format !== undefined) {
+      nextValues.format = input.format;
+    }
+
+    if (input.barcode !== undefined) {
+      nextValues.barcode = input.barcode;
+    }
+
+    if (input.purchaseDate !== undefined) {
+      nextValues.purchaseDate = input.purchaseDate;
+    }
+
+    if (input.notes !== undefined) {
+      nextValues.notes = input.notes;
+    }
+
+    if (input.tags !== undefined) {
+      nextValues.tags = input.tags;
+    }
+
+    const libraryEntry = await this.libraryEntryModel
+      .findOneAndUpdate(
+        {
+          _id: id,
+          userId
+        },
+        { $set: nextValues },
+        { new: true }
+      )
+      .exec();
+
+    return libraryEntry ? this.toDomain(libraryEntry) : null;
+  }
+
+  async deleteForUser(id: string, userId: string): Promise<boolean> {
+    if (!Types.ObjectId.isValid(id) || !Types.ObjectId.isValid(userId)) {
+      return false;
+    }
+
+    const result = await this.libraryEntryModel
+      .deleteOne({
+        _id: id,
+        userId
+      })
+      .exec();
+
+    return result.deletedCount > 0;
   }
 
   private toDomain(libraryEntry: LibraryEntryDocument): LibraryEntry {
