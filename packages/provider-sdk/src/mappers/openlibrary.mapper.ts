@@ -23,6 +23,8 @@ export interface OpenLibrarySearchDoc {
   isbn?: string[];
   cover_i?: number;
   edition_key?: string[];
+  cover_edition_key?: string;
+  lending_edition_s?: string;
 }
 
 export interface OpenLibraryBookAuthor {
@@ -71,7 +73,10 @@ function getOpenLibrarySummary(
 export function mapOpenLibrarySearchResult(
   doc: OpenLibrarySearchDoc
 ): NormalizedSearchResult | null {
-  const providerId = doc.edition_key?.[0];
+  const providerId =
+    doc.edition_key?.[0] ??
+    normalizeOptionalText(doc.cover_edition_key) ??
+    normalizeOptionalText(doc.lending_edition_s);
   const title = normalizeOptionalText(doc.title);
 
   if (!providerId || !title) {
