@@ -68,6 +68,7 @@ export class MusicBrainzProvider extends BaseMediaProvider {
         provider: this.name,
         cacheKey,
         ttlMs: this.providerCacheService.getSearchTtlMs(),
+        negativeTtlMs: this.providerCacheService.getNegativeSearchTtlMs(),
         loader: async () => {
           const response = await this.request<MusicBrainzReleaseSearchResponse>(
             "/release",
@@ -107,6 +108,7 @@ export class MusicBrainzProvider extends BaseMediaProvider {
         provider: this.name,
         cacheKey,
         ttlMs: this.providerCacheService.getDetailsTtlMs(),
+        negativeTtlMs: this.providerCacheService.getNegativeDetailsTtlMs(),
         loader: async () => {
           const response = await this.request<MusicBrainzRelease>(
             `/release/${params.providerId}`,
@@ -152,6 +154,7 @@ export class MusicBrainzProvider extends BaseMediaProvider {
         provider: this.name,
         cacheKey,
         ttlMs: this.providerCacheService.getBarcodeTtlMs(),
+        negativeTtlMs: this.providerCacheService.getNegativeBarcodeTtlMs(),
         loader: async () => {
           const response = await this.request<MusicBrainzReleaseSearchResponse>(
             "/release",

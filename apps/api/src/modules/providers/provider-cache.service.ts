@@ -1,7 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import type { MediaType, ProviderName } from "@media-library/types";
 import { normalizeBarcode } from "@media-library/provider-sdk";
-import { PROVIDER_CACHE_TTLS } from "./providers.constants";
+import {
+  PROVIDER_CACHE_TTLS,
+  PROVIDER_CACHE_VERSION
+} from "./providers.constants";
 import { ProviderCacheRepository } from "./repositories/provider-cache.repository";
 
 @Injectable()
@@ -11,15 +14,17 @@ export class ProviderCacheService {
   ) {}
 
   getSearchCacheKey(mediaType: MediaType, query: string): string {
-    return `search:${mediaType}:${query.trim().toLowerCase()}`;
+    return this.withVersion(`search:${mediaType}:${query.trim().toLowerCase()}`);
   }
 
   getDetailsCacheKey(mediaType: MediaType, providerId: string): string {
-    return `detail:${mediaType}:${providerId}`;
+    return this.withVersion(`detail:${mediaType}:${providerId}`);
   }
 
   getBarcodeCacheKey(mediaType: MediaType | undefined, barcode: string): string {
-    return `barcode:${mediaType ?? "any"}:${normalizeBarcode(barcode) ?? barcode}`;
+    return this.withVersion(
+      `barcode:${mediaType ?? "any"}:${normalizeBarcode(barcode) ?? barcode}`
+    );
   }
 
   async get<Payload>(
@@ -62,6 +67,8 @@ export class ProviderCacheService {
     provider: ProviderName;
     cacheKey: string;
     ttlMs: number;
+    negativeTtlMs?: number;
+    isNegative?: (value: Payload) => boolean;
     loader: () => Promise<Payload>;
   }): Promise<Payload> {
     const cachedValue = await this.get<Payload>(
@@ -73,7 +80,13 @@ export class ProviderCacheService {
     }
 
     const value = await options.loader();
-    await this.set(options.provider, options.cacheKey, value, options.ttlMs);
+    const isNegative = (options.isNegative ?? defaultNegativeResultPredicate)(value);
+    await this.set(
+      options.provider,
+      options.cacheKey,
+      value,
+      isNegative ? options.negativeTtlMs ?? options.ttlMs : options.ttlMs
+    );
     return value;
   }
 
@@ -85,7 +98,27 @@ export class ProviderCacheService {
     return PROVIDER_CACHE_TTLS.detailMs;
   }
 
+  getNegativeDetailsTtlMs(): number {
+    return PROVIDER_CACHE_TTLS.negativeDetailMs;
+  }
+
   getBarcodeTtlMs(): number {
     return PROVIDER_CACHE_TTLS.barcodeMs;
   }
+
+  getNegativeSearchTtlMs(): number {
+    return PROVIDER_CACHE_TTLS.negativeSearchMs;
+  }
+
+  getNegativeBarcodeTtlMs(): number {
+    return PROVIDER_CACHE_TTLS.negativeBarcodeMs;
+  }
+
+  private withVersion(cacheKey: string): string {
+    return `${PROVIDER_CACHE_VERSION}:${cacheKey}`;
+  }
+}
+
+function defaultNegativeResultPredicate<Payload>(value: Payload): boolean {
+  return value === null || (Array.isArray(value) && value.length === 0);
 }

@@ -69,6 +69,7 @@ export class OpenLibraryProvider extends BaseMediaProvider {
         provider: this.name,
         cacheKey,
         ttlMs: this.providerCacheService.getSearchTtlMs(),
+        negativeTtlMs: this.providerCacheService.getNegativeSearchTtlMs(),
         loader: async () => {
           const response = await this.providerHttpService.getJson<OpenLibrarySearchResponse>(
             `${this.runtimeConfig.baseUrl}/search.json`,
@@ -110,6 +111,7 @@ export class OpenLibraryProvider extends BaseMediaProvider {
         provider: this.name,
         cacheKey,
         ttlMs: this.providerCacheService.getDetailsTtlMs(),
+        negativeTtlMs: this.providerCacheService.getNegativeDetailsTtlMs(),
         loader: async () => {
           const response =
             await this.providerHttpService.getJson<OpenLibraryBooksApiResponse>(
@@ -165,6 +167,7 @@ export class OpenLibraryProvider extends BaseMediaProvider {
         provider: this.name,
         cacheKey,
         ttlMs: this.providerCacheService.getBarcodeTtlMs(),
+        negativeTtlMs: this.providerCacheService.getNegativeBarcodeTtlMs(),
         loader: async () => {
           const response = await this.providerHttpService.getJson<OpenLibrarySearchResponse>(
             `${this.runtimeConfig.baseUrl}/search.json`,

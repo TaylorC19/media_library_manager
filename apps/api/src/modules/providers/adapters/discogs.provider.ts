@@ -67,6 +67,7 @@ export class DiscogsProvider extends BaseMediaProvider {
         provider: this.name,
         cacheKey,
         ttlMs: this.providerCacheService.getSearchTtlMs(),
+        negativeTtlMs: this.providerCacheService.getNegativeSearchTtlMs(),
         loader: async () => {
           const response = await this.request<DiscogsSearchResponse>(
             "/database/search",
@@ -108,6 +109,7 @@ export class DiscogsProvider extends BaseMediaProvider {
         provider: this.name,
         cacheKey,
         ttlMs: this.providerCacheService.getDetailsTtlMs(),
+        negativeTtlMs: this.providerCacheService.getNegativeDetailsTtlMs(),
         loader: async () => {
           const response = await this.request<DiscogsReleaseDetails>(
             `/releases/${params.providerId}`
@@ -147,6 +149,7 @@ export class DiscogsProvider extends BaseMediaProvider {
         provider: this.name,
         cacheKey,
         ttlMs: this.providerCacheService.getBarcodeTtlMs(),
+        negativeTtlMs: this.providerCacheService.getNegativeBarcodeTtlMs(),
         loader: async () => {
           const response = await this.request<DiscogsSearchResponse>(
             "/database/search",

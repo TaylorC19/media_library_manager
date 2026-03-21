@@ -68,6 +68,7 @@ export class TmdbProvider extends BaseMediaProvider {
         provider: this.name,
         cacheKey,
         ttlMs: this.providerCacheService.getSearchTtlMs(),
+        negativeTtlMs: this.providerCacheService.getNegativeSearchTtlMs(),
         loader: async () => {
           const response = await this.providerHttpService.getJson<TmdbSearchResponse>(
             `${this.runtimeConfig.baseUrl}/search/${mediaType}`,
@@ -113,6 +114,7 @@ export class TmdbProvider extends BaseMediaProvider {
         provider: this.name,
         cacheKey,
         ttlMs: this.providerCacheService.getDetailsTtlMs(),
+        negativeTtlMs: this.providerCacheService.getNegativeDetailsTtlMs(),
         loader: async () => {
           const response = await this.providerHttpService.getJson<TmdbDetailsResponse>(
             `${this.runtimeConfig.baseUrl}/${mediaType}/${params.providerId}`,

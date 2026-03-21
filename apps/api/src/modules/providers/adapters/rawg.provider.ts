@@ -65,6 +65,7 @@ export class RawgProvider extends BaseMediaProvider {
         provider: this.name,
         cacheKey,
         ttlMs: this.providerCacheService.getSearchTtlMs(),
+        negativeTtlMs: this.providerCacheService.getNegativeSearchTtlMs(),
         loader: async () => {
           const response = await this.providerHttpService.getJson<RawgSearchResponse>(
             `${this.runtimeConfig.baseUrl}/games`,
@@ -105,6 +106,7 @@ export class RawgProvider extends BaseMediaProvider {
         provider: this.name,
         cacheKey,
         ttlMs: this.providerCacheService.getDetailsTtlMs(),
+        negativeTtlMs: this.providerCacheService.getNegativeDetailsTtlMs(),
         loader: async () => {
           const response = await this.providerHttpService.getJson<RawgDetailsResponse>(
             `${this.runtimeConfig.baseUrl}/games/${params.providerId}`,
