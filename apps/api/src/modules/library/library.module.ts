@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { MediaModule } from "../media/media.module";
 import { LibraryController } from "./library.controller";
@@ -11,7 +11,7 @@ import { LibraryService } from "./library.service";
 
 @Module({
   imports: [
-    MediaModule,
+    forwardRef(() => MediaModule),
     MongooseModule.forFeature([
       {
         name: LibraryEntryDocumentModel.name,

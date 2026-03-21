@@ -48,6 +48,12 @@ export default async function ProtectedLayout({
               >
                 Wishlist
               </Link>
+              <Link
+                className="rounded-full border border-slate-700 px-3 py-1 transition hover:border-sky-400 hover:text-white"
+                href="/search"
+              >
+                Search
+              </Link>
             </nav>
           </div>
 

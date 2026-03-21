@@ -1,5 +1,7 @@
-import { Module } from "@nestjs/common";
+import { forwardRef, Module } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
+import { LibraryModule } from "../library/library.module";
+import { ProvidersModule } from "../providers/providers.module";
 import { MediaController } from "./media.controller";
 import { MediaRecordRepository } from "./repositories/media-record.repository";
 import { MediaService } from "./media.service";
@@ -18,6 +20,8 @@ import {
 
 @Module({
   imports: [
+    forwardRef(() => LibraryModule),
+    ProvidersModule,
     MongooseModule.forFeature([
       {
         name: MediaRecordDocumentModel.name,

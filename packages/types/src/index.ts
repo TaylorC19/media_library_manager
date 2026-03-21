@@ -5,3 +5,4 @@ export * from "./library-api.js";
 export * from "./media.js";
 export * from "./media-api.js";
 export * from "./provider.js";
+export * from "./search-api.js";

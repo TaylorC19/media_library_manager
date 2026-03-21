@@ -6,6 +6,7 @@ import { HealthModule } from "./modules/health/health.module";
 import { LibraryModule } from "./modules/library/library.module";
 import { MediaModule } from "./modules/media/media.module";
 import { ProvidersModule } from "./modules/providers/providers.module";
+import { SearchModule } from "./modules/search/search.module";
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ProvidersModule } from "./modules/providers/providers.module";
     LibraryModule,
     MediaModule,
     ProvidersModule,
+    SearchModule,
     HealthModule
   ]
 })

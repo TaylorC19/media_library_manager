@@ -6,6 +6,9 @@ import type {
   MovieMediaDetails,
   TvMediaDetails
 } from "./media.js";
+import type { LibraryBucket } from "./library.js";
+import type { LibraryEntryResponse } from "./library-api.js";
+import type { ProviderName } from "./provider.js";
 
 export interface ManualMediaRecordBaseInput {
   title: string;
@@ -55,4 +58,21 @@ export type CreateManualMediaRecordRequest =
 
 export interface ManualMediaRecordResponse {
   mediaRecord: MediaRecord;
+}
+
+export interface ImportMediaRecordRequest {
+  provider: ProviderName;
+  providerId: string;
+  mediaType: CreateManualMediaRecordRequest["mediaType"];
+  bucket?: LibraryBucket;
+  format?: LibraryEntryResponse["entry"]["format"];
+  barcode?: LibraryEntryResponse["entry"]["barcode"];
+  purchaseDate?: LibraryEntryResponse["entry"]["purchaseDate"];
+  notes?: LibraryEntryResponse["entry"]["notes"];
+  tags?: LibraryEntryResponse["entry"]["tags"];
+}
+
+export interface ImportMediaRecordResponse {
+  mediaRecord: MediaRecord;
+  libraryEntry?: LibraryEntryResponse;
 }
