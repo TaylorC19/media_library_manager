@@ -1,0 +1,261 @@
+{
+  "common": {
+    "appName": "Media Library Manager",
+    "optional": "任意",
+    "required": "必須",
+    "notSet": "未設定",
+    "unspecified": "未指定",
+    "unknown": "不明",
+    "commaSeparated": "カンマ区切り",
+    "actions": {
+      "apply": "適用",
+      "backToDashboard": "ダッシュボードに戻る",
+      "clearFilters": "フィルターをクリア",
+      "clearSearch": "検索をクリア",
+      "createAccount": "アカウントを作成",
+      "delete": "エントリを削除",
+      "deleting": "削除中...",
+      "logout": "ログアウト",
+      "next": "次へ",
+      "previous": "前へ",
+      "save": "変更を保存",
+      "saving": "保存中...",
+      "search": "検索",
+      "signIn": "サインイン",
+      "signingOut": "サインアウト中...",
+      "tryAgain": "再試行",
+      "working": "処理中..."
+    },
+    "pagination": {
+      "pageOf": "{currentPage} / {totalPages} ページ"
+    },
+    "states": {
+      "loading": "読み込み中...",
+      "noImage": "画像なし",
+      "noImportedSummary": "取り込まれた概要はありません。",
+      "noPersonalNotes": "個人メモはまだありません。",
+      "noTags": "タグはまだありません。"
+    },
+    "notFound": {
+      "description": "指定したページは見つかりませんでした。",
+      "title": "ページが見つかりません"
+    }
+  },
+  "nav": {
+    "catalog": "カタログ",
+    "dashboard": "ダッシュボード",
+    "languageLabel": "言語",
+    "login": "ログイン",
+    "register": "登録",
+    "scan": "スキャン",
+    "search": "検索",
+    "settings": "設定",
+    "wishlist": "ウィッシュリスト",
+    "locale": {
+      "en": "English",
+      "ja": "日本語"
+    }
+  },
+  "auth": {
+    "login": {
+      "altLabel": "アカウントを作成",
+      "subtitle": "サインインしてカタログとウィッシュリストにアクセスします。",
+      "title": "お帰りなさい"
+    },
+    "register": {
+      "altLabel": "すでにアカウントをお持ちですか？",
+      "subtitle": "非公開アカウントを作成してライブラリを始めましょう。",
+      "title": "アカウントを作成"
+    },
+    "fields": {
+      "displayName": "表示名",
+      "password": "パスワード",
+      "username": "ユーザー名"
+    },
+    "placeholders": {
+      "displayName": "任意",
+      "username": "your_username"
+    }
+  },
+  "dashboard": {
+    "description": "あなた専用のメディアライブラリの準備ができました。カタログ登録を始めたり、最近追加した項目を確認したり、今後欲しいものをウィッシュリストにまとめたりできます。",
+    "emptyCounts": "最初のエントリを追加すると、ここに件数が表示されます。",
+    "emptyRecent": "何かを保存すると、最近追加した項目がここに表示されます。",
+    "quickNav": "クイック移動",
+    "recentAdditions": "最近の追加",
+    "sectionLabel": "ダッシュボード",
+    "totalEntries": "総エントリ数",
+    "totalEntriesDescription": "カタログとウィッシュリストの合計です。",
+    "welcome": "{name}さん、ようこそ。",
+    "countsByMediaType": "メディアタイプ別件数",
+    "cards": {
+      "catalogDescription": "すでに所有している項目を管理します。",
+      "catalogTitle": "カタログ",
+      "wishlistTitle": "ウィッシュリスト",
+      "wishlistDescription": "所有コレクションと混ぜずに、今後追加したい項目を管理します。"
+    }
+  },
+  "catalog": {
+    "label": "カタログ",
+    "emptyView": "このカタログ表示に一致するエントリはまだありません。"
+  },
+  "wishlist": {
+    "label": "ウィッシュリスト",
+    "emptyView": "このウィッシュリスト表示に一致するエントリはまだありません。"
+  },
+  "library": {
+    "filters": {
+      "allMedia": "すべてのメディア",
+      "heading": "コレクションを絞り込む",
+      "mediaTypeLabel": "メディアタイプ",
+      "searchLabel": "検索",
+      "searchPlaceholder": "タイトル、制作者、メモ、バーコード...",
+      "tagLabel": "タグ",
+      "tagPlaceholder": "vinyl, gift, signed..."
+    },
+    "manualAdd": {
+      "label": "手動追加",
+      "description": "最小限のメディアレコードを作成してから、あなたの非公開ライブラリに紐付けます。",
+      "myCopyHeading": "私の所蔵",
+      "myCopyDescription": "あなたのライブラリエントリに保存される任意項目です。",
+      "catalogTitle": "カタログに追加",
+      "wishlistTitle": "ウィッシュリストに追加",
+      "submitCatalog": "カタログに追加",
+      "submitWishlist": "ウィッシュリストに追加",
+      "notesPlaceholder": "版の詳細、状態、入手場所など..."
+    },
+    "manualMedia": {
+      "barcodeCandidates": "バーコード候補",
+      "barcodeCandidatesPlaceholder": "UPC/EAN/ISBN をカンマ区切りで入力",
+      "mediaType": "メディアタイプ",
+      "summary": "概要",
+      "summaryPlaceholder": "任意のメタデータスナップショット",
+      "title": "タイトル",
+      "year": "年",
+      "contributorLabel": {
+        "album": "アーティスト",
+        "book": "著者",
+        "game": "開発元",
+        "movie": "監督",
+        "tv": "制作者"
+      },
+      "contributorPlaceholder": {
+        "album": "アーティストをカンマ区切りで入力",
+        "book": "著者をカンマ区切りで入力",
+        "game": "開発元をカンマ区切りで入力",
+        "movie": "監督をカンマ区切りで入力",
+        "tv": "制作者をカンマ区切りで入力"
+      }
+    },
+    "entryForm": {
+      "success": "保存しました。"
+    },
+    "detail": {
+      "added": "追加日時",
+      "barcode": "バーコード",
+      "bucket": "保存先",
+      "editHeading": "私の所蔵を編集",
+      "editTitle": "保存先、形式、タグ、メモを更新",
+      "entryActions": "エントリアクション",
+      "format": "形式",
+      "lastSynced": "最終同期",
+      "manageDescription": "このエントリを削除しても、削除されるのはあなたのライブラリ行だけです。メディアレコードは後で再利用できます。",
+      "manageTitle": "エントリを管理",
+      "mediaDetails": "メディア詳細",
+      "myCopy": "私の所蔵",
+      "notes": "メモ",
+      "providerRefs": "プロバイダー参照",
+      "purchaseDate": "購入日",
+      "releaseDate": "発売日",
+      "summary": "概要",
+      "tags": "タグ",
+      "updated": "更新日時",
+      "year": "年"
+    },
+    "placeholders": {
+      "tags": "カンマ区切り"
+    },
+    "confirmDelete": "このライブラリエントリを削除しますか？ メディアレコードは今後のエントリで引き続き利用できます。"
+  },
+  "search": {
+    "clearSearch": "検索をクリア",
+    "description": "タイトルを見つけて、プロバイダーの生データを UI に直接出さずにカタログやウィッシュリストへ取り込みます。",
+    "emptyQueryDescription": "正規化された結果を得るために、一度に 1 つのメディアタイプを検索してください。",
+    "emptyQueryTitle": "まずは検索語を入力してください",
+    "errorDescription": "プロバイダー結果の読み込み中に問題が発生しました。",
+    "errorTitle": "検索ページを読み込めませんでした",
+    "errorLabel": "検索エラー",
+    "failurePrefix": "一部のプロバイダーに接続できませんでした:",
+    "heading": "プロバイダーを横断して検索",
+    "mediaTypeLabel": "メディアタイプ",
+    "metadataFallback": "メタデータはプロバイダーによって異なります",
+    "noResultsDescription": "より広いタイトル、別の綴り、または別のメディアタイプを試してください。",
+    "noResultsTitle": "一致する結果がありません",
+    "queryLabel": "クエリ",
+    "queryPlaceholder": "タイトル、アーティスト、著者、監督...",
+    "resultsLabel": "結果",
+    "resultsTitle": "\"{query}\" の一致件数: {count, plural, one {# 件} other {# 件}}",
+    "resultActions": {
+      "addToCatalog": "カタログに追加",
+      "addToWishlist": "ウィッシュリストに追加",
+      "adding": "追加中..."
+    },
+    "coverAlt": "{title} のカバー"
+  },
+  "scan": {
+    "description": "バーコードスキャンの本実装はマイルストーン 7 で対応します。今はこのプレースホルダーでロケール対応ルートが準備できていることを確認します。",
+    "title": "スキャン機能は準備中です"
+  },
+  "settings": {
+    "description": "設定画面はマイルストーン 7 で拡張します。今はこのプレースホルダーでローカライズ済みルート構成を維持します。",
+    "title": "設定機能は準備中です"
+  },
+  "errors": {
+    "apiUnavailable": "現在 API に接続できません。",
+    "deleteFailed": "現在このエントリを削除できません。",
+    "duplicateEntry": "この項目は同じ形式ですでにこの保存先に登録されています。",
+    "generic": "問題が発生しました。もう一度お試しください。",
+    "importMissingEntry": "項目は取り込まれましたが、ライブラリエントリは作成されませんでした。",
+    "invalidCredentials": "ユーザー名またはパスワードが正しくありません。",
+    "libraryEntryNotFound": "ライブラリエントリが見つかりません。",
+    "mediaRecordNotFound": "メディアレコードが見つかりません。",
+    "searchLoadFailed": "プロバイダー検索に失敗しました。",
+    "sessionRequired": "認証が必要です。",
+    "usernameTaken": "そのユーザー名はすでに使用されています。"
+  },
+  "enums": {
+    "bucket": {
+      "catalog": "カタログ",
+      "wishlist": "ウィッシュリスト"
+    },
+    "mediaType": {
+      "album": "アルバム",
+      "book": "本",
+      "game": "ゲーム",
+      "movie": "映画",
+      "tv": "テレビ"
+    },
+    "physicalFormat": {
+      "blu_ray": "Blu-ray",
+      "cassette": "カセット",
+      "cd": "CD",
+      "digital": "デジタル",
+      "dvd": "DVD",
+      "hardcover": "ハードカバー",
+      "other": "その他",
+      "paperback": "ペーパーバック",
+      "ps5": "PS5",
+      "switch": "Switch",
+      "vhs": "VHS",
+      "vinyl": "レコード",
+      "xbox": "Xbox"
+    },
+    "provider": {
+      "discogs": "Discogs",
+      "musicbrainz": "MusicBrainz",
+      "openlibrary": "Open Library",
+      "rawg": "RAWG",
+      "tmdb": "TMDB"
+    }
+  }
+}

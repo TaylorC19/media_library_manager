@@ -9,9 +9,14 @@ import type {
   MediaType,
   PhysicalFormat
 } from "@media-library/types";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
+import {
+  getLocalizedApiErrorMessageFromResponse
+} from "../../i18n/errors";
+import { useRouter } from "../../i18n/navigation";
+import { getPhysicalFormatLabel } from "../../i18n/ui";
 import { browserApiFetch } from "../../lib/api-client";
 import { physicalFormatOptions } from "../../lib/library-options";
 import {
@@ -51,6 +56,11 @@ export function CreateLibraryEntryForm({
   bucket
 }: CreateLibraryEntryFormProps) {
   const router = useRouter();
+  const tCommon = useTranslations("common");
+  const tErrors = useTranslations("errors");
+  const tLibraryDetail = useTranslations("library.detail");
+  const tManualAdd = useTranslations("library.manualAdd");
+  const tPhysicalFormat = useTranslations("enums.physicalFormat");
   const [mediaType, setMediaType] = useState<MediaType>("movie");
   const [mediaDraft, setMediaDraft] = useState<ManualMediaDraft>(emptyMediaDraft);
   const [entryDraft, setEntryDraft] = useState<EntryDraft>(emptyEntryDraft);
@@ -58,8 +68,11 @@ export function CreateLibraryEntryForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const bucketTitle = useMemo(
-    () => (bucket === "catalog" ? "Add to catalog" : "Add to wishlist"),
-    [bucket]
+    () =>
+      bucket === "catalog"
+        ? tManualAdd("catalogTitle")
+        : tManualAdd("wishlistTitle"),
+    [bucket, tManualAdd]
   );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -77,7 +90,9 @@ export function CreateLibraryEntryForm({
       });
 
       if (!mediaResponse.ok) {
-        setErrorMessage(await readErrorMessage(mediaResponse));
+        setErrorMessage(
+          await getLocalizedApiErrorMessageFromResponse(mediaResponse, tErrors)
+        );
         return;
       }
 
@@ -93,7 +108,9 @@ export function CreateLibraryEntryForm({
       });
 
       if (!libraryResponse.ok) {
-        setErrorMessage(await readErrorMessage(libraryResponse));
+        setErrorMessage(
+          await getLocalizedApiErrorMessageFromResponse(libraryResponse, tErrors)
+        );
         return;
       }
 
@@ -103,7 +120,7 @@ export function CreateLibraryEntryForm({
       router.push(`/library/${libraryPayload.entry.id}`);
       router.refresh();
     } catch {
-      setErrorMessage("Unable to reach the API right now.");
+      setErrorMessage(tErrors("apiUnavailable"));
     } finally {
       setIsSubmitting(false);
     }
@@ -113,11 +130,11 @@ export function CreateLibraryEntryForm({
     <section className="rounded-3xl border border-slate-800 bg-slate-950/70 p-6">
       <div className="space-y-3">
         <p className="text-sm font-medium uppercase tracking-[0.35em] text-sky-300">
-          Manual add
+          {tManualAdd("label")}
         </p>
         <h2 className="text-2xl font-semibold text-white">{bucketTitle}</h2>
         <p className="max-w-2xl text-sm text-slate-300">
-          Create a minimal media record, then link it into your private library.
+          {tManualAdd("description")}
         </p>
       </div>
 
@@ -131,15 +148,19 @@ export function CreateLibraryEntryForm({
 
         <div className="space-y-5 border-t border-slate-800 pt-6">
           <div>
-            <h3 className="text-lg font-semibold text-white">My copy</h3>
+            <h3 className="text-lg font-semibold text-white">
+              {tManualAdd("myCopyHeading")}
+            </h3>
             <p className="mt-1 text-sm text-slate-300">
-              Optional fields stored on your personal library entry.
+              {tManualAdd("myCopyDescription")}
             </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-2">
-              <span className="text-sm font-medium text-slate-200">Format</span>
+              <span className="text-sm font-medium text-slate-200">
+                {tLibraryDetail("format")}
+              </span>
               <select
                 className="w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-400"
                 onChange={(event) =>
@@ -150,10 +171,10 @@ export function CreateLibraryEntryForm({
                 }
                 value={entryDraft.format}
               >
-                <option value="">Unspecified</option>
+                <option value="">{tCommon("unspecified")}</option>
                 {physicalFormatOptions.map((format) => (
                   <option key={format} value={format}>
-                    {format.replaceAll("_", " ")}
+                    {getPhysicalFormatLabel(tPhysicalFormat, tCommon, format)}
                   </option>
                 ))}
               </select>
@@ -161,7 +182,7 @@ export function CreateLibraryEntryForm({
 
             <label className="block space-y-2">
               <span className="text-sm font-medium text-slate-200">
-                Purchase date
+                {tLibraryDetail("purchaseDate")}
               </span>
               <input
                 className="w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-400"
@@ -175,37 +196,43 @@ export function CreateLibraryEntryForm({
           </div>
 
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-200">Barcode</span>
+            <span className="text-sm font-medium text-slate-200">
+              {tLibraryDetail("barcode")}
+            </span>
             <input
               className="w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-400"
               onChange={(event) =>
                 setEntryDraft({ ...entryDraft, barcode: event.target.value })
               }
-              placeholder="Optional"
+              placeholder={tCommon("optional")}
               value={entryDraft.barcode}
             />
           </label>
 
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-200">Tags</span>
+            <span className="text-sm font-medium text-slate-200">
+              {tLibraryDetail("tags")}
+            </span>
             <input
               className="w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-400"
               onChange={(event) =>
                 setEntryDraft({ ...entryDraft, tags: event.target.value })
               }
-              placeholder="Comma-separated"
+              placeholder={tCommon("commaSeparated")}
               value={entryDraft.tags}
             />
           </label>
 
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-200">Notes</span>
+            <span className="text-sm font-medium text-slate-200">
+              {tLibraryDetail("notes")}
+            </span>
             <textarea
               className="min-h-28 w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-400"
               onChange={(event) =>
                 setEntryDraft({ ...entryDraft, notes: event.target.value })
               }
-              placeholder="Edition details, condition, where you found it..."
+              placeholder={tManualAdd("notesPlaceholder")}
               value={entryDraft.notes}
             />
           </label>
@@ -222,7 +249,7 @@ export function CreateLibraryEntryForm({
           disabled={isSubmitting}
           type="submit"
         >
-          {isSubmitting ? "Saving..." : bucketTitle}
+          {isSubmitting ? tCommon("actions.saving") : bucketTitle}
         </button>
       </form>
     </section>
@@ -306,18 +333,3 @@ function splitCommaSeparated(value: string): string[] {
   );
 }
 
-async function readErrorMessage(response: Response): Promise<string> {
-  const payload = (await response.json().catch(() => null)) as
-    | { message?: string | string[] }
-    | null;
-
-  if (typeof payload?.message === "string") {
-    return payload.message;
-  }
-
-  if (Array.isArray(payload?.message)) {
-    return payload.message.join(", ");
-  }
-
-  return "Something went wrong. Please try again.";
-}

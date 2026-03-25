@@ -1,6 +1,6 @@
 export default function SearchLoading() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" aria-busy="true" aria-live="polite">
       <section className="rounded-3xl border border-slate-800 bg-slate-950/70 p-6">
         <div className="h-5 w-24 rounded bg-slate-800" />
         <div className="mt-4 h-10 w-64 rounded bg-slate-900" />

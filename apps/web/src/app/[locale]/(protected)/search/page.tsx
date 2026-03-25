@@ -1,8 +1,8 @@
 import type { MediaType } from "@media-library/types";
-import { SearchFilters } from "../../../components/search/search-filters";
-import { SearchResults } from "../../../components/search/search-results";
-import { mediaTypeOptions } from "../../../lib/library-options";
-import { getSearchResults } from "../../../lib/search-api";
+import { SearchFilters } from "../../../../components/search/search-filters";
+import { SearchResults } from "../../../../components/search/search-results";
+import { mediaTypeOptions } from "../../../../lib/library-options";
+import { getSearchResults } from "../../../../lib/search-api";
 
 interface SearchPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

@@ -1,6 +1,7 @@
 "use client";
 
 import type { MediaType } from "@media-library/types";
+import { useTranslations } from "next-intl";
 
 export interface ManualMediaDraft {
   title: string;
@@ -23,45 +24,61 @@ export function ManualMediaForm({
   onChange,
   onMediaTypeChange
 }: ManualMediaFormProps) {
-  const contributorLabel = getContributorLabel(mediaType);
-  const contributorPlaceholder = getContributorPlaceholder(mediaType);
+  const tCommon = useTranslations("common");
+  const tManualMedia = useTranslations("library.manualMedia");
+  const tMediaType = useTranslations("enums.mediaType");
+  const tContributorLabel = useTranslations("library.manualMedia.contributorLabel");
+  const tContributorPlaceholder = useTranslations(
+    "library.manualMedia.contributorPlaceholder"
+  );
+  const contributorLabel = getContributorLabel(tContributorLabel, mediaType);
+  const contributorPlaceholder = getContributorPlaceholder(
+    tContributorPlaceholder,
+    mediaType
+  );
 
   return (
     <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-slate-200">Media type</span>
+          <span className="text-sm font-medium text-slate-200">
+            {tManualMedia("mediaType")}
+          </span>
           <select
             className="w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-400"
             onChange={(event) => onMediaTypeChange(event.target.value as MediaType)}
             value={mediaType}
           >
-            <option value="movie">Movie</option>
-            <option value="tv">TV</option>
-            <option value="album">Album</option>
-            <option value="book">Book</option>
-            <option value="game">Game</option>
+            <option value="movie">{tMediaType("movie")}</option>
+            <option value="tv">{tMediaType("tv")}</option>
+            <option value="album">{tMediaType("album")}</option>
+            <option value="book">{tMediaType("book")}</option>
+            <option value="game">{tMediaType("game")}</option>
           </select>
         </label>
 
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-slate-200">Year</span>
+          <span className="text-sm font-medium text-slate-200">
+            {tManualMedia("year")}
+          </span>
           <input
             className="w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-400"
             inputMode="numeric"
             onChange={(event) => onChange({ ...draft, year: event.target.value })}
-            placeholder="Optional"
+            placeholder={tCommon("optional")}
             value={draft.year}
           />
         </label>
       </div>
 
       <label className="block space-y-2">
-        <span className="text-sm font-medium text-slate-200">Title</span>
+        <span className="text-sm font-medium text-slate-200">
+          {tManualMedia("title")}
+        </span>
         <input
           className="w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-400"
           onChange={(event) => onChange({ ...draft, title: event.target.value })}
-          placeholder="Required"
+          placeholder={tCommon("required")}
           required
           value={draft.title}
         />
@@ -81,24 +98,26 @@ export function ManualMediaForm({
 
       <label className="block space-y-2">
         <span className="text-sm font-medium text-slate-200">
-          Barcode candidates
+          {tManualMedia("barcodeCandidates")}
         </span>
         <input
           className="w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-400"
           onChange={(event) =>
             onChange({ ...draft, barcodeCandidates: event.target.value })
           }
-          placeholder="Comma-separated UPC/EAN/ISBN values"
+          placeholder={tManualMedia("barcodeCandidatesPlaceholder")}
           value={draft.barcodeCandidates}
         />
       </label>
 
       <label className="block space-y-2">
-        <span className="text-sm font-medium text-slate-200">Summary</span>
+        <span className="text-sm font-medium text-slate-200">
+          {tManualMedia("summary")}
+        </span>
         <textarea
           className="min-h-28 w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-400"
           onChange={(event) => onChange({ ...draft, summary: event.target.value })}
-          placeholder="Optional metadata snapshot"
+          placeholder={tManualMedia("summaryPlaceholder")}
           value={draft.summary}
         />
       </label>
@@ -106,32 +125,38 @@ export function ManualMediaForm({
   );
 }
 
-function getContributorLabel(mediaType: MediaType): string {
+function getContributorLabel(
+  tContributorLabel: (key: string) => string,
+  mediaType: MediaType
+): string {
   switch (mediaType) {
     case "album":
-      return "Artists";
+      return tContributorLabel("album");
     case "book":
-      return "Authors";
+      return tContributorLabel("book");
     case "movie":
-      return "Directors";
+      return tContributorLabel("movie");
     case "tv":
-      return "Creators";
+      return tContributorLabel("tv");
     case "game":
-      return "Developers";
+      return tContributorLabel("game");
   }
 }
 
-function getContributorPlaceholder(mediaType: MediaType): string {
+function getContributorPlaceholder(
+  tContributorPlaceholder: (key: string) => string,
+  mediaType: MediaType
+): string {
   switch (mediaType) {
     case "album":
-      return "Comma-separated artists";
+      return tContributorPlaceholder("album");
     case "book":
-      return "Comma-separated authors";
+      return tContributorPlaceholder("book");
     case "movie":
-      return "Comma-separated directors";
+      return tContributorPlaceholder("movie");
     case "tv":
-      return "Comma-separated creators";
+      return tContributorPlaceholder("tv");
     case "game":
-      return "Comma-separated developers";
+      return tContributorPlaceholder("game");
   }
 }

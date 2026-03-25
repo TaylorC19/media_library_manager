@@ -6,8 +6,12 @@ import type {
   MediaType,
   ProviderName
 } from "@media-library/types";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
+import {
+  getLocalizedApiErrorMessageFromResponse
+} from "../../i18n/errors";
+import { useRouter } from "../../i18n/navigation";
 import { browserApiFetch } from "../../lib/api-client";
 
 interface SearchResultActionsProps {
@@ -22,6 +26,8 @@ export function SearchResultActions({
   providerId
 }: SearchResultActionsProps) {
   const router = useRouter();
+  const tErrors = useTranslations("errors");
+  const tSearch = useTranslations("search.resultActions");
   const [activeBucket, setActiveBucket] = useState<LibraryBucket | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -44,7 +50,9 @@ export function SearchResultActions({
       });
 
       if (!response.ok) {
-        setErrorMessage(await readErrorMessage(response));
+        setErrorMessage(
+          await getLocalizedApiErrorMessageFromResponse(response, tErrors)
+        );
         return;
       }
 
@@ -52,14 +60,14 @@ export function SearchResultActions({
       const entryId = payload.libraryEntry?.entry.id;
 
       if (!entryId) {
-        setErrorMessage("The item was imported, but no library entry was created.");
+        setErrorMessage(tErrors("importMissingEntry"));
         return;
       }
 
       router.push(`/library/${entryId}`);
       router.refresh();
     } catch {
-      setErrorMessage("Unable to reach the API right now.");
+      setErrorMessage(tErrors("apiUnavailable"));
     } finally {
       setActiveBucket(null);
     }
@@ -74,7 +82,9 @@ export function SearchResultActions({
           onClick={() => handleAdd("catalog")}
           type="button"
         >
-          {activeBucket === "catalog" ? "Adding..." : "Add to catalog"}
+          {activeBucket === "catalog"
+            ? tSearch("adding")
+            : tSearch("addToCatalog")}
         </button>
         <button
           className="rounded-2xl border border-slate-700 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-sky-400 hover:text-white disabled:cursor-not-allowed disabled:opacity-70"
@@ -82,7 +92,9 @@ export function SearchResultActions({
           onClick={() => handleAdd("wishlist")}
           type="button"
         >
-          {activeBucket === "wishlist" ? "Adding..." : "Add to wishlist"}
+          {activeBucket === "wishlist"
+            ? tSearch("adding")
+            : tSearch("addToWishlist")}
         </button>
       </div>
 
@@ -95,18 +107,3 @@ export function SearchResultActions({
   );
 }
 
-async function readErrorMessage(response: Response): Promise<string> {
-  const payload = (await response.json().catch(() => null)) as
-    | { message?: string | string[] }
-    | null;
-
-  if (typeof payload?.message === "string") {
-    return payload.message;
-  }
-
-  if (Array.isArray(payload?.message)) {
-    return payload.message.join(", ");
-  }
-
-  return "Something went wrong. Please try again.";
-}

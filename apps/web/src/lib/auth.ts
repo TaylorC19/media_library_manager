@@ -1,6 +1,7 @@
 import type { AuthSessionResponse, AuthUser } from "@media-library/types";
-import { redirect } from "next/navigation";
 import { serverApiFetch } from "./server-api-client";
+import { type AppLocale } from "../i18n/routing";
+import { redirect } from "../i18n/navigation";
 
 export async function getSessionUser(): Promise<AuthUser | null> {
   const response = await serverApiFetch("/auth/me");
@@ -17,20 +18,20 @@ export async function getSessionUser(): Promise<AuthUser | null> {
   return payload.user;
 }
 
-export async function requireAuth(): Promise<AuthUser> {
+export async function requireAuth(locale: AppLocale): Promise<AuthUser> {
   const user = await getSessionUser();
 
   if (!user) {
-    redirect("/login");
+    return redirect({ href: "/login", locale });
   }
 
   return user;
 }
 
-export async function redirectIfAuthenticated(): Promise<void> {
+export async function redirectIfAuthenticated(locale: AppLocale): Promise<void> {
   const user = await getSessionUser();
 
   if (user) {
-    redirect("/");
+    return redirect({ href: "/", locale });
   }
 }

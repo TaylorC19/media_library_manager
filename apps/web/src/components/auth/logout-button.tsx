@@ -1,11 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { useRouter } from "../../i18n/navigation";
 import { browserApiFetch } from "../../lib/api-client";
 
 export function LogoutButton() {
   const router = useRouter();
+  const tCommon = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleLogout() {
@@ -29,7 +31,7 @@ export function LogoutButton() {
       onClick={handleLogout}
       type="button"
     >
-      {isSubmitting ? "Signing out..." : "Logout"}
+      {isSubmitting ? tCommon("actions.signingOut") : tCommon("actions.logout")}
     </button>
   );
 }

@@ -1,0 +1,261 @@
+{
+  "common": {
+    "appName": "Media Library Manager",
+    "optional": "Optional",
+    "required": "Required",
+    "notSet": "Not set",
+    "unspecified": "Unspecified",
+    "unknown": "Unknown",
+    "commaSeparated": "Comma-separated",
+    "actions": {
+      "apply": "Apply",
+      "backToDashboard": "Back to dashboard",
+      "clearFilters": "Clear filters",
+      "clearSearch": "Clear search",
+      "createAccount": "Create account",
+      "delete": "Delete entry",
+      "deleting": "Deleting...",
+      "logout": "Logout",
+      "next": "Next",
+      "previous": "Previous",
+      "save": "Save changes",
+      "saving": "Saving...",
+      "search": "Search",
+      "signIn": "Sign in",
+      "signingOut": "Signing out...",
+      "tryAgain": "Try again",
+      "working": "Working..."
+    },
+    "pagination": {
+      "pageOf": "Page {currentPage} of {totalPages}"
+    },
+    "states": {
+      "loading": "Loading...",
+      "noImage": "No image",
+      "noImportedSummary": "No imported summary available.",
+      "noPersonalNotes": "No personal notes yet.",
+      "noTags": "No tags yet."
+    },
+    "notFound": {
+      "description": "The page you requested could not be found.",
+      "title": "Page not found"
+    }
+  },
+  "nav": {
+    "catalog": "Catalog",
+    "dashboard": "Dashboard",
+    "languageLabel": "Language",
+    "login": "Login",
+    "register": "Register",
+    "scan": "Scan",
+    "search": "Search",
+    "settings": "Settings",
+    "wishlist": "Wishlist",
+    "locale": {
+      "en": "English",
+      "ja": "Japanese"
+    }
+  },
+  "auth": {
+    "login": {
+      "altLabel": "Create an account",
+      "subtitle": "Sign in to access your catalog and wishlist.",
+      "title": "Welcome back"
+    },
+    "register": {
+      "altLabel": "Already have an account?",
+      "subtitle": "Create a private account to start building your library.",
+      "title": "Create your account"
+    },
+    "fields": {
+      "displayName": "Display name",
+      "password": "Password",
+      "username": "Username"
+    },
+    "placeholders": {
+      "displayName": "Optional",
+      "username": "your_username"
+    }
+  },
+  "dashboard": {
+    "description": "Your private media library is ready. Jump into cataloging, browse recent additions, or start a wishlist for future pickups.",
+    "emptyCounts": "Add your first entry to start seeing counts here.",
+    "emptyRecent": "Your recent additions will show up here once you save something.",
+    "quickNav": "Quick nav",
+    "recentAdditions": "Recent additions",
+    "sectionLabel": "Dashboard",
+    "totalEntries": "Total entries",
+    "totalEntriesDescription": "Across catalog and wishlist.",
+    "welcome": "Welcome, {name}.",
+    "countsByMediaType": "Counts by media type",
+    "cards": {
+      "catalogDescription": "Manage the items you already own.",
+      "catalogTitle": "Catalog",
+      "wishlistTitle": "Wishlist",
+      "wishlistDescription": "Track future additions without mixing them into your owned collection."
+    }
+  },
+  "catalog": {
+    "label": "Catalog",
+    "emptyView": "No entries matched this catalog view yet."
+  },
+  "wishlist": {
+    "label": "Wishlist",
+    "emptyView": "No entries matched this wishlist view yet."
+  },
+  "library": {
+    "filters": {
+      "allMedia": "All media",
+      "heading": "Filter your collection",
+      "mediaTypeLabel": "Media type",
+      "searchLabel": "Search",
+      "searchPlaceholder": "Title, creator, notes, barcode...",
+      "tagLabel": "Tag",
+      "tagPlaceholder": "vinyl, gift, signed..."
+    },
+    "manualAdd": {
+      "label": "Manual add",
+      "description": "Create a minimal media record, then link it into your private library.",
+      "myCopyHeading": "My copy",
+      "myCopyDescription": "Optional fields stored on your personal library entry.",
+      "catalogTitle": "Add to catalog",
+      "wishlistTitle": "Add to wishlist",
+      "submitCatalog": "Add to catalog",
+      "submitWishlist": "Add to wishlist",
+      "notesPlaceholder": "Edition details, condition, where you found it..."
+    },
+    "manualMedia": {
+      "barcodeCandidates": "Barcode candidates",
+      "barcodeCandidatesPlaceholder": "Comma-separated UPC/EAN/ISBN values",
+      "mediaType": "Media type",
+      "summary": "Summary",
+      "summaryPlaceholder": "Optional metadata snapshot",
+      "title": "Title",
+      "year": "Year",
+      "contributorLabel": {
+        "album": "Artists",
+        "book": "Authors",
+        "game": "Developers",
+        "movie": "Directors",
+        "tv": "Creators"
+      },
+      "contributorPlaceholder": {
+        "album": "Comma-separated artists",
+        "book": "Comma-separated authors",
+        "game": "Comma-separated developers",
+        "movie": "Comma-separated directors",
+        "tv": "Comma-separated creators"
+      }
+    },
+    "entryForm": {
+      "success": "Saved."
+    },
+    "detail": {
+      "added": "Added",
+      "barcode": "Barcode",
+      "bucket": "Bucket",
+      "editHeading": "Edit my copy",
+      "editTitle": "Update bucket, format, tags, and notes",
+      "entryActions": "Entry actions",
+      "format": "Format",
+      "lastSynced": "Last synced",
+      "manageDescription": "Deleting this entry removes only your library row. The media record can still be reused later.",
+      "manageTitle": "Manage entry",
+      "mediaDetails": "Media details",
+      "myCopy": "My copy",
+      "notes": "Notes",
+      "providerRefs": "Provider refs",
+      "purchaseDate": "Purchase date",
+      "releaseDate": "Release date",
+      "summary": "Summary",
+      "tags": "Tags",
+      "updated": "Updated",
+      "year": "Year"
+    },
+    "placeholders": {
+      "tags": "Comma-separated"
+    },
+    "confirmDelete": "Delete this library entry? The media record will stay available for future entries."
+  },
+  "search": {
+    "clearSearch": "Clear search",
+    "description": "Find a title, then import it into your catalog or wishlist without exposing raw provider data to the UI.",
+    "emptyQueryDescription": "Search one media type at a time to get normalized results from the matching providers.",
+    "emptyQueryTitle": "Start with a query",
+    "errorDescription": "Something went wrong while loading provider results.",
+    "errorTitle": "The search page could not load",
+    "errorLabel": "Search error",
+    "failurePrefix": "Some providers could not be reached:",
+    "heading": "Search across providers",
+    "mediaTypeLabel": "Media type",
+    "metadataFallback": "Metadata varies by provider",
+    "noResultsDescription": "Try a broader title, a different spelling, or another media type.",
+    "noResultsTitle": "No matches found",
+    "queryLabel": "Query",
+    "queryPlaceholder": "Title, artist, author, director...",
+    "resultsLabel": "Results",
+    "resultsTitle": "{count, plural, one {# match} other {# matches}} for \"{query}\"",
+    "resultActions": {
+      "addToCatalog": "Add to catalog",
+      "addToWishlist": "Add to wishlist",
+      "adding": "Adding..."
+    },
+    "coverAlt": "{title} cover"
+  },
+  "scan": {
+    "description": "Barcode scanning will be localized in milestone 7. For now, this placeholder confirms the locale-aware route is ready.",
+    "title": "Scan is coming soon"
+  },
+  "settings": {
+    "description": "Settings will be expanded in milestone 7. This placeholder keeps the localized route structure in place.",
+    "title": "Settings are coming soon"
+  },
+  "errors": {
+    "apiUnavailable": "Unable to reach the API right now.",
+    "deleteFailed": "Unable to delete this entry right now.",
+    "duplicateEntry": "That item is already saved in this bucket with the same format.",
+    "generic": "Something went wrong. Please try again.",
+    "importMissingEntry": "The item was imported, but no library entry was created.",
+    "invalidCredentials": "Invalid username or password.",
+    "libraryEntryNotFound": "Library entry not found.",
+    "mediaRecordNotFound": "Media record not found.",
+    "searchLoadFailed": "Failed to search providers.",
+    "sessionRequired": "Authentication required.",
+    "usernameTaken": "That username is already in use."
+  },
+  "enums": {
+    "bucket": {
+      "catalog": "Catalog",
+      "wishlist": "Wishlist"
+    },
+    "mediaType": {
+      "album": "Album",
+      "book": "Book",
+      "game": "Game",
+      "movie": "Movie",
+      "tv": "TV"
+    },
+    "physicalFormat": {
+      "blu_ray": "Blu-ray",
+      "cassette": "Cassette",
+      "cd": "CD",
+      "digital": "Digital",
+      "dvd": "DVD",
+      "hardcover": "Hardcover",
+      "other": "Other",
+      "paperback": "Paperback",
+      "ps5": "PS5",
+      "switch": "Switch",
+      "vhs": "VHS",
+      "vinyl": "Vinyl",
+      "xbox": "Xbox"
+    },
+    "provider": {
+      "discogs": "Discogs",
+      "musicbrainz": "MusicBrainz",
+      "openlibrary": "Open Library",
+      "rawg": "RAWG",
+      "tmdb": "TMDB"
+    }
+  }
+}

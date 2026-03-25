@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "../../i18n/navigation";
 
 interface PaginationControlsProps {
   basePath: string;
@@ -15,6 +16,8 @@ export function PaginationControls({
   totalPages,
   query
 }: PaginationControlsProps) {
+  const tCommon = useTranslations("common");
+
   if (totalPages <= 1) {
     return null;
   }
@@ -30,11 +33,14 @@ export function PaginationControls({
         }`}
         href={buildHref(basePath, query, currentPage - 1)}
       >
-        Previous
+        {tCommon("actions.previous")}
       </Link>
 
       <span>
-        Page {currentPage} of {totalPages}
+        {tCommon("pagination.pageOf", {
+          currentPage,
+          totalPages
+        })}
       </span>
 
       <Link
@@ -46,7 +52,7 @@ export function PaginationControls({
         }`}
         href={buildHref(basePath, query, currentPage + 1)}
       >
-        Next
+        {tCommon("actions.next")}
       </Link>
     </div>
   );

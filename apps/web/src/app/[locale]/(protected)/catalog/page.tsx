@@ -1,4 +1,4 @@
-import { LibraryBucketPage } from "../../../components/library/library-bucket-page";
+import { LibraryBucketPage } from "../../../../components/library/library-bucket-page";
 
 interface CatalogPageProps {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;

@@ -1,11 +1,5 @@
-import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
-
-export const metadata: Metadata = {
-  title: "Media Library Manager",
-  description: "A private, self-hostable media library manager."
-};
 
 type RootLayoutProps = Readonly<{
   children: ReactNode;
@@ -13,7 +7,7 @@ type RootLayoutProps = Readonly<{
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en">
+    <html suppressHydrationWarning>
       <body>{children}</body>
     </html>
   );

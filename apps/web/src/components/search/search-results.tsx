@@ -1,5 +1,6 @@
 import type { SearchResponse } from "@media-library/types";
-import { getMediaTypeLabel } from "../../lib/media-api";
+import { useTranslations } from "next-intl";
+import { getMediaTypeLabel, getProviderLabel } from "../../i18n/ui";
 import { SearchResultActions } from "./search-result-actions";
 
 interface SearchResultsProps {
@@ -7,13 +8,19 @@ interface SearchResultsProps {
 }
 
 export function SearchResults({ response }: SearchResultsProps) {
+  const tCommon = useTranslations("common");
+  const tMediaType = useTranslations("enums.mediaType");
+  const tProvider = useTranslations("enums.provider");
+  const tSearch = useTranslations("search");
+
   if (!response) {
     return (
       <section className="rounded-3xl border border-dashed border-slate-800 bg-slate-950/40 p-8 text-center">
-        <h2 className="text-2xl font-semibold text-white">Start with a query</h2>
+        <h2 className="text-2xl font-semibold text-white">
+          {tSearch("emptyQueryTitle")}
+        </h2>
         <p className="mt-3 text-sm text-slate-300">
-          Search one media type at a time to get normalized results from the matching
-          providers.
+          {tSearch("emptyQueryDescription")}
         </p>
       </section>
     );
@@ -24,34 +31,40 @@ export function SearchResults({ response }: SearchResultsProps) {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-medium uppercase tracking-[0.35em] text-sky-300">
-            Results
+            {tSearch("resultsLabel")}
           </p>
           <h2 className="mt-2 text-2xl font-semibold text-white">
-            {response.results.length} match{response.results.length === 1 ? "" : "es"} for
-            {" "}
-            &ldquo;{response.query}&rdquo;
+            {tSearch("resultsTitle", {
+              count: response.results.length,
+              query: response.query
+            })}
           </h2>
           <p className="mt-1 text-sm text-slate-400">
-            {getMediaTypeLabel(response.mediaType)}
+            {getMediaTypeLabel(tMediaType, response.mediaType)}
           </p>
         </div>
       </div>
 
       {response.failures.length > 0 ? (
         <div className="rounded-3xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
-          Some providers could not be reached:
+          {tSearch("failurePrefix")}
           {" "}
           {response.failures
-            .map((failure) => `${getProviderLabel(failure.provider)} (${failure.message})`)
+            .map(
+              (failure) =>
+                `${getProviderLabel(tProvider, failure.provider)} (${failure.message})`
+            )
             .join(", ")}
         </div>
       ) : null}
 
       {response.results.length === 0 ? (
         <div className="rounded-3xl border border-slate-800 bg-slate-950/60 p-8 text-center">
-          <h3 className="text-xl font-semibold text-white">No matches found</h3>
+          <h3 className="text-xl font-semibold text-white">
+            {tSearch("noResultsTitle")}
+          </h3>
           <p className="mt-2 text-sm text-slate-300">
-            Try a broader title, a different spelling, or another media type.
+            {tSearch("noResultsDescription")}
           </p>
         </div>
       ) : (
@@ -65,12 +78,12 @@ export function SearchResults({ response }: SearchResultsProps) {
                 <div className="flex h-40 w-full shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 text-sm text-slate-500 sm:w-28">
                   {result.imageUrl ? (
                     <img
-                      alt={`${result.title} cover`}
+                      alt={tSearch("coverAlt", { title: result.title })}
                       className="h-full w-full object-cover"
                       src={result.imageUrl}
                     />
                   ) : (
-                    <span>No image</span>
+                    <span>{tCommon("states.noImage")}</span>
                   )}
                 </div>
 
@@ -78,17 +91,22 @@ export function SearchResults({ response }: SearchResultsProps) {
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-full border border-sky-400/40 bg-sky-400/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.25em] text-sky-200">
-                        {getProviderLabel(result.provider)}
+                        {getProviderLabel(tProvider, result.provider)}
                       </span>
                       <span className="rounded-full border border-slate-700 px-3 py-1 text-xs uppercase tracking-[0.25em] text-slate-300">
-                        {getMediaTypeLabel(result.mediaType)}
+                        {getMediaTypeLabel(tMediaType, result.mediaType)}
                       </span>
                     </div>
 
                     <div>
                       <h3 className="text-2xl font-semibold text-white">{result.title}</h3>
                       <p className="mt-1 text-sm text-slate-300">
-                        {buildMetaLine(result.year, result.creatorLine, result.subtitle)}
+                        {buildMetaLine(
+                          tSearch("metadataFallback"),
+                          result.year,
+                          result.creatorLine,
+                          result.subtitle
+                        )}
                       </p>
                     </div>
                   </div>
@@ -113,6 +131,7 @@ export function SearchResults({ response }: SearchResultsProps) {
 }
 
 function buildMetaLine(
+  metadataFallback: string,
   year?: number | null,
   creatorLine?: string | null,
   subtitle?: string | null
@@ -121,20 +140,5 @@ function buildMetaLine(
     (value): value is string => Boolean(value && value.trim().length > 0)
   );
 
-  return parts.length > 0 ? parts.join(" · ") : "Metadata varies by provider";
-}
-
-function getProviderLabel(provider: SearchResponse["failures"][number]["provider"]): string {
-  switch (provider) {
-    case "tmdb":
-      return "TMDB";
-    case "musicbrainz":
-      return "MusicBrainz";
-    case "discogs":
-      return "Discogs";
-    case "openlibrary":
-      return "Open Library";
-    case "rawg":
-      return "RAWG";
-  }
+  return parts.length > 0 ? parts.join(" · ") : metadataFallback;
 }

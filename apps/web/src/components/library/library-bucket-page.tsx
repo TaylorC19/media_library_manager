@@ -1,4 +1,5 @@
 import type { LibraryBucket, MediaType } from "@media-library/types";
+import { getTranslations } from "next-intl/server";
 import { CreateLibraryEntryForm } from "./create-library-entry-form";
 import { LibraryFilters } from "./library-filters";
 import { LibraryList } from "./library-list";
@@ -17,13 +18,15 @@ export async function LibraryBucketPage({
   bucket,
   searchParams
 }: LibraryBucketPageProps) {
+  const tBucket = await getTranslations(bucket);
   const currentFilters = {
     mediaType: readMediaType(searchParams.mediaType),
     search: readString(searchParams.search),
     tag: readString(searchParams.tag)
   };
   const currentPage = Number.parseInt(readString(searchParams.page) ?? "1", 10);
-  const bucketLabel = bucket === "catalog" ? "Catalog" : "Wishlist";
+  const bucketLabel = tBucket("label");
+  const emptyMessage = tBucket("emptyView");
   const result = await getLibraryEntries({
     ...currentFilters,
     bucket,
@@ -41,7 +44,10 @@ export async function LibraryBucketPage({
 
       <CreateLibraryEntryForm bucket={bucket} />
 
-      <LibraryList bucketLabel={bucketLabel} items={result.items} />
+      <LibraryList
+        emptyMessage={emptyMessage}
+        items={result.items}
+      />
 
       <PaginationControls
         basePath={basePath}

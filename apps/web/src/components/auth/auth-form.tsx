@@ -4,10 +4,11 @@ import type {
   LoginRequest,
   RegisterRequest
 } from "@media-library/types";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
+import { getLocalizedApiErrorMessageFromResponse } from "../../i18n/errors";
+import { Link, useRouter } from "../../i18n/navigation";
 import { browserApiFetch } from "../../lib/api-client";
 
 type AuthMode = "login" | "register";
@@ -16,30 +17,11 @@ interface AuthFormProps {
   mode: AuthMode;
 }
 
-function getErrorMessage(payload: unknown): string {
-  if (
-    typeof payload === "object" &&
-    payload !== null &&
-    "message" in payload &&
-    typeof payload.message === "string"
-  ) {
-    return payload.message;
-  }
-
-  if (
-    typeof payload === "object" &&
-    payload !== null &&
-    "message" in payload &&
-    Array.isArray(payload.message)
-  ) {
-    return payload.message.join(", ");
-  }
-
-  return "Something went wrong. Please try again.";
-}
-
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
+  const tAuth = useTranslations("auth");
+  const tCommon = useTranslations("common");
+  const tErrors = useTranslations("errors");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -50,22 +32,22 @@ export function AuthForm({ mode }: AuthFormProps) {
     () =>
       mode === "login"
         ? {
-            actionLabel: "Sign in",
+            actionLabel: tCommon("actions.signIn"),
             altHref: "/register",
-            altLabel: "Create an account",
+            altLabel: tAuth("login.altLabel"),
             endpoint: "/auth/login",
-            subtitle: "Sign in to access your catalog and wishlist.",
-            title: "Welcome back"
+            subtitle: tAuth("login.subtitle"),
+            title: tAuth("login.title")
           }
         : {
-            actionLabel: "Create account",
+            actionLabel: tCommon("actions.createAccount"),
             altHref: "/login",
-            altLabel: "Already have an account?",
+            altLabel: tAuth("register.altLabel"),
             endpoint: "/auth/register",
-            subtitle: "Create a private account to start building your library.",
-            title: "Create your account"
+            subtitle: tAuth("register.subtitle"),
+            title: tAuth("register.title")
           },
-    [mode]
+    [mode, tAuth, tCommon]
   );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -95,8 +77,9 @@ export function AuthForm({ mode }: AuthFormProps) {
       });
 
       if (!response.ok) {
-        const errorPayload = (await response.json().catch(() => null)) as unknown;
-        setErrorMessage(getErrorMessage(errorPayload));
+        setErrorMessage(
+          await getLocalizedApiErrorMessageFromResponse(response, tErrors)
+        );
         return;
       }
 
@@ -104,7 +87,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       router.replace("/");
       router.refresh();
     } catch {
-      setErrorMessage("Unable to reach the API right now.");
+      setErrorMessage(tErrors("apiUnavailable"));
     } finally {
       setIsSubmitting(false);
     }
@@ -114,7 +97,7 @@ export function AuthForm({ mode }: AuthFormProps) {
     <div className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-950/70 p-8 shadow-2xl shadow-slate-950/30">
       <div className="space-y-3">
         <p className="text-sm font-medium uppercase tracking-[0.35em] text-sky-300">
-          Media Library Manager
+          {tCommon("appName")}
         </p>
         <h1 className="text-3xl font-semibold tracking-tight text-white">
           {copy.title}
@@ -126,35 +109,39 @@ export function AuthForm({ mode }: AuthFormProps) {
         {mode === "register" ? (
           <label className="block space-y-2">
             <span className="text-sm font-medium text-slate-200">
-              Display name
+              {tAuth("fields.displayName")}
             </span>
             <input
               autoComplete="nickname"
               className="w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-400"
               name="displayName"
               onChange={(event) => setDisplayName(event.target.value)}
-              placeholder="Optional"
+              placeholder={tAuth("placeholders.displayName")}
               value={displayName}
             />
           </label>
         ) : null}
 
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-slate-200">Username</span>
+          <span className="text-sm font-medium text-slate-200">
+            {tAuth("fields.username")}
+          </span>
           <input
             autoCapitalize="none"
             autoComplete="username"
             className="w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-sky-400"
             name="username"
             onChange={(event) => setUsername(event.target.value)}
-            placeholder="your_username"
+            placeholder={tAuth("placeholders.username")}
             required
             value={username}
           />
         </label>
 
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-slate-200">Password</span>
+          <span className="text-sm font-medium text-slate-200">
+            {tAuth("fields.password")}
+          </span>
           <input
             autoComplete={
               mode === "login" ? "current-password" : "new-password"
@@ -180,7 +167,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           disabled={isSubmitting}
           type="submit"
         >
-          {isSubmitting ? "Working..." : copy.actionLabel}
+          {isSubmitting ? tCommon("actions.working") : copy.actionLabel}
         </button>
       </form>
 

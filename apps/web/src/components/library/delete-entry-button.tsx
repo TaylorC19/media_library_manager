@@ -1,7 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { useRouter } from "../../i18n/navigation";
 import { browserApiFetch } from "../../lib/api-client";
 
 interface DeleteEntryButtonProps {
@@ -10,13 +11,14 @@ interface DeleteEntryButtonProps {
 
 export function DeleteEntryButton({ entryId }: DeleteEntryButtonProps) {
   const router = useRouter();
+  const tCommon = useTranslations("common");
+  const tErrors = useTranslations("errors");
+  const tLibrary = useTranslations("library");
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   async function handleDelete() {
-    const shouldDelete = window.confirm(
-      "Delete this library entry? The media record will stay available for future entries."
-    );
+    const shouldDelete = window.confirm(tLibrary("confirmDelete"));
 
     if (!shouldDelete) {
       return;
@@ -31,14 +33,14 @@ export function DeleteEntryButton({ entryId }: DeleteEntryButtonProps) {
       });
 
       if (!response.ok) {
-        setErrorMessage("Unable to delete this entry right now.");
+        setErrorMessage(tErrors("deleteFailed"));
         return;
       }
 
       router.push("/");
       router.refresh();
     } catch {
-      setErrorMessage("Unable to reach the API right now.");
+      setErrorMessage(tErrors("apiUnavailable"));
     } finally {
       setIsDeleting(false);
     }
@@ -52,7 +54,7 @@ export function DeleteEntryButton({ entryId }: DeleteEntryButtonProps) {
         onClick={handleDelete}
         type="button"
       >
-        {isDeleting ? "Deleting..." : "Delete entry"}
+        {isDeleting ? tCommon("actions.deleting") : tCommon("actions.delete")}
       </button>
 
       {errorMessage ? (

@@ -1,17 +1,34 @@
 import type { LibraryEntryListItem } from "@media-library/types";
-import Link from "next/link";
-import { formatDateTimeLabel, getMediaCreatorLine, getMediaTypeLabel, getPhysicalFormatLabel } from "../../lib/media-api";
+import { useFormatter, useTranslations } from "next-intl";
+import { Link } from "../../i18n/navigation";
+import {
+  formatDateTimeLabel,
+  getBucketLabel,
+  getMediaTypeLabel,
+  getPhysicalFormatLabel
+} from "../../i18n/ui";
+import { getMediaCreatorLine } from "../../lib/media-api";
 
 interface LibraryListProps {
-  bucketLabel: string;
+  emptyMessage: string;
   items: LibraryEntryListItem[];
 }
 
-export function LibraryList({ bucketLabel, items }: LibraryListProps) {
+export function LibraryList({
+  emptyMessage,
+  items
+}: LibraryListProps) {
+  const format = useFormatter();
+  const tBucket = useTranslations("enums.bucket");
+  const tCommon = useTranslations("common");
+  const tLibrary = useTranslations("library.detail");
+  const tMediaType = useTranslations("enums.mediaType");
+  const tPhysicalFormat = useTranslations("enums.physicalFormat");
+
   if (items.length === 0) {
     return (
       <section className="rounded-3xl border border-dashed border-slate-700 bg-slate-950/40 p-8 text-center text-slate-300">
-        No entries matched this {bucketLabel.toLowerCase()} view yet.
+        {emptyMessage}
       </section>
     );
   }
@@ -31,7 +48,7 @@ export function LibraryList({ bucketLabel, items }: LibraryListProps) {
               <div className="space-y-3">
                 <div>
                   <p className="text-sm font-medium uppercase tracking-[0.3em] text-sky-300">
-                    {getMediaTypeLabel(media.mediaType)}
+                    {getMediaTypeLabel(tMediaType, media.mediaType)}
                   </p>
                   <h3 className="mt-2 text-2xl font-semibold text-white">
                     {media.title}
@@ -43,10 +60,10 @@ export function LibraryList({ bucketLabel, items }: LibraryListProps) {
 
                 <div className="flex flex-wrap gap-2 text-xs text-slate-300">
                   <span className="rounded-full border border-slate-700 px-3 py-1">
-                    {entry.bucket}
+                    {getBucketLabel(tBucket, entry.bucket)}
                   </span>
                   <span className="rounded-full border border-slate-700 px-3 py-1">
-                    {getPhysicalFormatLabel(entry.format)}
+                    {getPhysicalFormatLabel(tPhysicalFormat, tCommon, entry.format)}
                   </span>
                   {media.year ? (
                     <span className="rounded-full border border-slate-700 px-3 py-1">
@@ -69,7 +86,8 @@ export function LibraryList({ bucketLabel, items }: LibraryListProps) {
               </div>
 
               <div className="text-sm text-slate-400">
-                Added {formatDateTimeLabel(entry.createdAt)}
+                {tLibrary("added")}{" "}
+                {formatDateTimeLabel(format.dateTime, entry.createdAt)}
               </div>
             </div>
           </Link>
