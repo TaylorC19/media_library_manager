@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MongooseModule } from "@nestjs/mongoose";
 import { AuthModule } from "./modules/auth/auth.module";
+import { BarcodeModule } from "./modules/barcode/barcode.module";
 import { HealthModule } from "./modules/health/health.module";
 import { LibraryModule } from "./modules/library/library.module";
 import { MediaModule } from "./modules/media/media.module";
@@ -23,6 +24,7 @@ import { SearchModule } from "./modules/search/search.module";
       })
     }),
     AuthModule,
+    BarcodeModule,
     LibraryModule,
     MediaModule,
     ProvidersModule,

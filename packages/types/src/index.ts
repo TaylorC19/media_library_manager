@@ -1,5 +1,6 @@
 export * from "./api.js";
 export * from "./auth.js";
+export * from "./barcode-api.js";
 export * from "./library.js";
 export * from "./library-api.js";
 export * from "./media.js";

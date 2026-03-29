@@ -8,6 +8,7 @@ import { MediaDeduplicationService } from "./media-deduplication.service";
 import { MediaImportService } from "./media-import.service";
 import { MediaNormalizationService } from "./media-normalization.service";
 import { MediaRecordRepository } from "./repositories/media-record.repository";
+import { ScanLogRepository } from "./repositories/scan-log.repository";
 import { MediaService } from "./media.service";
 import {
   MediaRecordDocumentModel,
@@ -45,11 +46,12 @@ import {
   providers: [
     ImportMediaDtoPipe,
     MediaRecordRepository,
+    ScanLogRepository,
     MediaNormalizationService,
     MediaService,
     MediaDeduplicationService,
     MediaImportService
   ],
-  exports: [MediaRecordRepository, MediaService]
+  exports: [MediaRecordRepository, MediaService, ScanLogRepository]
 })
 export class MediaModule {}

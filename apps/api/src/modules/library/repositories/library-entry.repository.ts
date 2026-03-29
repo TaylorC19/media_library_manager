@@ -128,6 +128,30 @@ export class LibraryEntryRepository {
     return libraryEntries.map((libraryEntry) => this.toDomain(libraryEntry));
   }
 
+  async findByMediaRecordIdsForUser(
+    userId: string,
+    mediaRecordIds: string[]
+  ): Promise<LibraryEntry[]> {
+    if (!Types.ObjectId.isValid(userId)) {
+      return [];
+    }
+
+    const validMediaRecordIds = mediaRecordIds.filter((id) => Types.ObjectId.isValid(id));
+    if (validMediaRecordIds.length === 0) {
+      return [];
+    }
+
+    const libraryEntries = await this.libraryEntryModel
+      .find({
+        userId,
+        mediaRecordId: { $in: validMediaRecordIds }
+      })
+      .sort({ createdAt: -1 })
+      .exec();
+
+    return libraryEntries.map((libraryEntry) => this.toDomain(libraryEntry));
+  }
+
   async updateForUser(
     id: string,
     userId: string,

@@ -103,6 +103,16 @@ export class LibraryService {
     return this.libraryEntryRepository.findByIdForUser(id, userId);
   }
 
+  getEntriesForUserByMediaRecordIds(
+    userId: string,
+    mediaRecordIds: string[]
+  ): Promise<LibraryEntry[]> {
+    return this.libraryEntryRepository.findByMediaRecordIdsForUser(
+      userId,
+      mediaRecordIds
+    );
+  }
+
   async getEntryDetailForUser(
     id: string,
     userId: string
