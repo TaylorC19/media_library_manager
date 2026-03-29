@@ -116,9 +116,7 @@ export function SearchResults({ response }: SearchResultsProps) {
                   ) : null}
 
                   <SearchResultActions
-                    mediaType={result.mediaType}
-                    provider={result.provider}
-                    providerId={result.providerId}
+                    result={result}
                   />
                 </div>
               </div>

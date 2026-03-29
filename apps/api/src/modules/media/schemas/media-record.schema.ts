@@ -1,8 +1,10 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import {
+  mediaRecordSources,
   mediaTypes,
   type ExternalRatings,
   type MediaRecord,
+  type MediaRecordSource,
   type MediaType,
   type ProviderRefs
 } from "@media-library/types";
@@ -15,6 +17,13 @@ export type MediaRecordDocument = HydratedDocument<MediaRecordDocumentModel>;
   timestamps: true
 })
 export class MediaRecordDocumentModel {
+  @Prop({
+    type: String,
+    enum: mediaRecordSources,
+    required: true
+  })
+  source!: MediaRecordSource;
+
   @Prop({
     type: String,
     enum: mediaTypes,
@@ -122,6 +131,7 @@ export const MediaRecordSchema =
 
 MediaRecordSchema.index({ mediaType: 1, title: 1, year: 1 });
 MediaRecordSchema.index({ barcodeCandidates: 1 });
+MediaRecordSchema.index({ source: 1 });
 MediaRecordSchema.index({
   "providerRefs.tmdb.id": 1,
   "providerRefs.tmdb.mediaKind": 1

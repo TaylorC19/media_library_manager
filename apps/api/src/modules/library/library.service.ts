@@ -34,6 +34,24 @@ export class LibraryService {
     userId: string,
     input: CreateLibraryEntryRequest
   ): Promise<LibraryEntryResponse> {
+    const result = await this.createOrReuseEntryForUser(userId, input);
+
+    if (result.wasExistingLibraryEntry) {
+      throw new ConflictException(
+        "That item is already saved in this bucket with the same format."
+      );
+    }
+
+    return result.libraryEntry;
+  }
+
+  async createOrReuseEntryForUser(
+    userId: string,
+    input: CreateLibraryEntryRequest
+  ): Promise<{
+    libraryEntry: LibraryEntryResponse;
+    wasExistingLibraryEntry: boolean;
+  }> {
     const mediaRecord = await this.mediaService.getRecord(input.mediaRecordId);
 
     if (!mediaRecord) {
@@ -48,9 +66,13 @@ export class LibraryService {
     });
 
     if (duplicateEntry) {
-      throw new ConflictException(
-        "That item is already saved in this bucket with the same format."
-      );
+      return {
+        libraryEntry: {
+          entry: duplicateEntry,
+          media: mediaRecord
+        },
+        wasExistingLibraryEntry: true
+      };
     }
 
     const entry = await this.libraryEntryRepository.create({
@@ -60,8 +82,11 @@ export class LibraryService {
     });
 
     return {
-      entry,
-      media: mediaRecord
+      libraryEntry: {
+        entry,
+        media: mediaRecord
+      },
+      wasExistingLibraryEntry: false
     };
   }
 

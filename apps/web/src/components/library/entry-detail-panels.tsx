@@ -5,9 +5,15 @@ import {
   formatDateTimeLabel,
   getBucketLabel,
   getMediaTypeLabel,
-  getPhysicalFormatLabel
+  getPhysicalFormatLabel,
+  getProviderLabel
 } from "../../i18n/ui";
-import { getMediaCreatorLine } from "../../lib/media-api";
+import {
+  getExternalRatingEntries,
+  getMediaCreatorLine,
+  getMediaDetailFields,
+  getProviderRefEntries
+} from "../../lib/media-api";
 
 interface EntryDetailPanelsProps {
   item: LibraryEntryResponse;
@@ -22,6 +28,10 @@ export function EntryDetailPanels({ item }: EntryDetailPanelsProps) {
   const tLibrary = useTranslations("library.detail");
   const tMediaType = useTranslations("enums.mediaType");
   const tPhysicalFormat = useTranslations("enums.physicalFormat");
+  const tProvider = useTranslations("enums.provider");
+  const detailFields = getMediaDetailFields(media);
+  const providerRefs = getProviderRefEntries(media);
+  const ratings = getExternalRatingEntries(media);
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -87,21 +97,35 @@ export function EntryDetailPanels({ item }: EntryDetailPanelsProps) {
         <p className="text-sm font-medium uppercase tracking-[0.35em] text-sky-300">
           {tLibrary("mediaDetails")}
         </p>
-        <div className="mt-4">
-          <p className="text-sm uppercase tracking-[0.25em] text-slate-500">
-            {getMediaTypeLabel(tMediaType, media.mediaType)}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold text-white">{media.title}</h1>
-          {creatorLine ? (
-            <p className="mt-2 text-sm text-slate-300">{creatorLine}</p>
-          ) : null}
+        <div className="mt-5 flex flex-col gap-5 xl:flex-row">
+          <div className="flex h-56 w-full shrink-0 items-center justify-center overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 text-sm text-slate-500 xl:w-40">
+            {media.imageUrl ? (
+              <img
+                alt={tLibrary("coverAlt", { title: media.title })}
+                className="h-full w-full object-cover"
+                src={media.imageUrl}
+              />
+            ) : (
+              <span>{tCommon("states.noImage")}</span>
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <p className="text-sm uppercase tracking-[0.25em] text-slate-500">
+              {getMediaTypeLabel(tMediaType, media.mediaType)}
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold text-white">{media.title}</h1>
+            {creatorLine ? (
+              <p className="mt-2 text-sm text-slate-300">{creatorLine}</p>
+            ) : null}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <MetadataBadge label={tLibrary(`source.${media.source}`)} />
+              {media.year ? <MetadataBadge label={String(media.year)} /> : null}
+            </div>
+          </div>
         </div>
 
         <div className="mt-6 grid gap-4 text-sm text-slate-200">
-          <DetailRow
-            label={tLibrary("year")}
-            value={media.year ? String(media.year) : tCommon("unknown")}
-          />
           <DetailRow
             label={tLibrary("releaseDate")}
             value={formatDateLabel(format.dateTime, tCommon, media.releaseDate)}
@@ -110,6 +134,28 @@ export function EntryDetailPanels({ item }: EntryDetailPanelsProps) {
             label={tLibrary("lastSynced")}
             value={formatDateLabel(format.dateTime, tCommon, media.lastSyncedAt)}
           />
+          <DetailRow
+            label={tLibrary("providerCount")}
+            value={String(providerRefs.length)}
+          />
+
+          {detailFields.length > 0 ? (
+            <div>
+              <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
+                {tLibrary("canonicalFields")}
+              </p>
+              <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                {detailFields.map((field) => (
+                  <DetailRow
+                    key={field.key}
+                    label={tLibrary(`detailFields.${field.key}`)}
+                    value={field.value}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
               {tLibrary("summary")}
@@ -118,13 +164,61 @@ export function EntryDetailPanels({ item }: EntryDetailPanelsProps) {
               {media.summary ?? tCommon("states.noImportedSummary")}
             </p>
           </div>
+
+          <div>
+            <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
+              {tLibrary("barcodeCandidates")}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {media.barcodeCandidates && media.barcodeCandidates.length > 0 ? (
+                media.barcodeCandidates.map((barcode) => (
+                  <span
+                    key={barcode}
+                    className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-300"
+                  >
+                    {barcode}
+                  </span>
+                ))
+              ) : (
+                <span className="text-sm text-slate-400">{tCommon("notSet")}</span>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
+              {tLibrary("externalRatings")}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {ratings.length > 0 ? (
+                ratings.map((rating) => (
+                  <MetadataBadge
+                    key={rating.key}
+                    label={`${tLibrary(`ratings.${rating.key}`)}: ${rating.value}`}
+                  />
+                ))
+              ) : (
+                <span className="text-sm text-slate-400">{tCommon("notSet")}</span>
+              )}
+            </div>
+          </div>
+
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-slate-500">
               {tLibrary("providerRefs")}
             </p>
-            <pre className="mt-2 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900 p-4 text-xs text-slate-300">
-              {JSON.stringify(media.providerRefs, null, 2)}
-            </pre>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {providerRefs.length > 0 ? (
+                providerRefs.map((providerRef) => (
+                  <MetadataBadge
+                    key={`${providerRef.provider}:${providerRef.id}`}
+                    label={`${getProviderLabel(tProvider, providerRef.provider)}: ${providerRef.id}`}
+                  />
+                ))
+              ) : (
+                <span className="text-sm text-slate-400">{tCommon("notSet")}</span>
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -143,5 +237,13 @@ function DetailRow({ label, value }: DetailRowProps) {
       <p className="text-xs uppercase tracking-[0.25em] text-slate-500">{label}</p>
       <p className="mt-1 text-sm text-slate-200">{value}</p>
     </div>
+  );
+}
+
+function MetadataBadge({ label }: { label: string }) {
+  return (
+    <span className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-300">
+      {label}
+    </span>
   );
 }

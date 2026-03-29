@@ -8,7 +8,11 @@ import type {
 } from "./media.js";
 import type { LibraryBucket } from "./library.js";
 import type { LibraryEntryResponse } from "./library-api.js";
-import type { ProviderName } from "./provider.js";
+import type {
+  NormalizedSearchResult,
+  ProviderName
+} from "./provider.js";
+import type { MediaType, PhysicalFormat } from "./library.js";
 
 export interface ManualMediaRecordBaseInput {
   title: string;
@@ -60,19 +64,60 @@ export interface ManualMediaRecordResponse {
   mediaRecord: MediaRecord;
 }
 
-export interface ImportMediaRecordRequest {
+interface ImportMediaRecordRequestBase {
+  mode: "provider_ref" | "search_result";
+  entry?: ImportMediaEntryInput;
+}
+
+export interface ImportMediaEntryInput {
+  bucket: LibraryBucket;
+  format?: PhysicalFormat | null;
+  barcode?: string | null;
+  purchaseDate?: string | null;
+  notes?: string | null;
+  tags?: string[];
+}
+
+export interface ImportMediaRecordFromProviderRefRequest
+  extends ImportMediaRecordRequestBase {
+  mode: "provider_ref";
   provider: ProviderName;
   providerId: string;
-  mediaType: CreateManualMediaRecordRequest["mediaType"];
-  bucket?: LibraryBucket;
-  format?: LibraryEntryResponse["entry"]["format"];
-  barcode?: LibraryEntryResponse["entry"]["barcode"];
-  purchaseDate?: LibraryEntryResponse["entry"]["purchaseDate"];
-  notes?: LibraryEntryResponse["entry"]["notes"];
-  tags?: LibraryEntryResponse["entry"]["tags"];
+  mediaType: MediaType;
 }
+
+export interface ImportMediaRecordFromSearchResultRequest
+  extends ImportMediaRecordRequestBase {
+  mode: "search_result";
+  result: NormalizedSearchResult;
+}
+
+export type ImportMediaRecordRequest =
+  | ImportMediaRecordFromProviderRefRequest
+  | ImportMediaRecordFromSearchResultRequest;
 
 export interface ImportMediaRecordResponse {
   mediaRecord: MediaRecord;
   libraryEntry?: LibraryEntryResponse;
+  wasExistingMediaRecord: boolean;
+  wasExistingLibraryEntry?: boolean;
+}
+
+export interface GetMediaRecordResponse {
+  mediaRecord: MediaRecord;
+}
+
+export const refreshMediaRecordUnavailableReasons = [
+  "provider_ref_unavailable",
+  "provider_record_unavailable"
+] as const;
+
+export type RefreshMediaRecordUnavailableReason =
+  (typeof refreshMediaRecordUnavailableReasons)[number];
+
+export interface RefreshMediaRecordResponse {
+  mediaRecord: MediaRecord;
+  wasRefreshed: boolean;
+  refreshedFromProvider?: ProviderName;
+  unavailableReason?: RefreshMediaRecordUnavailableReason;
 }

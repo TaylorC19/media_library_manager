@@ -8,6 +8,9 @@ export interface ProviderRefs {
   rawg?: { id: string };
 }
 
+export const mediaRecordSources = ["manual", "provider"] as const;
+export type MediaRecordSource = (typeof mediaRecordSources)[number];
+
 export interface ExternalRatings {
   imdb?: number | null;
   rottenTomatoes?: number | null;
@@ -54,6 +57,7 @@ export interface GameMediaDetails {
 
 export interface MediaRecordBase {
   id: string;
+  source: MediaRecordSource;
   mediaType: MediaType;
   title: string;
   sortTitle?: string | null;

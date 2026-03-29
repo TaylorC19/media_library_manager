@@ -14,6 +14,11 @@ export type CreateMediaRecordInput = Omit<
   "id" | "createdAt" | "updatedAt"
 >;
 
+export type UpdateMediaRecordInput = Omit<
+  MediaRecord,
+  "id" | "createdAt" | "updatedAt"
+>;
+
 @Injectable()
 export class MediaRecordRepository {
   constructor(
@@ -30,9 +35,57 @@ export class MediaRecordRepository {
     return this.toDomain(mediaRecord);
   }
 
-  async findByBarcodeCandidate(barcode: string): Promise<MediaRecord[]> {
+  async update(id: string, input: UpdateMediaRecordInput): Promise<MediaRecord | null> {
+    if (!Types.ObjectId.isValid(id)) {
+      return null;
+    }
+
+    const mediaRecord = await this.mediaRecordModel
+      .findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            ...input,
+            lastSyncedAt: input.lastSyncedAt ? new Date(input.lastSyncedAt) : null
+          }
+        },
+        { new: true }
+      )
+      .exec();
+
+    return mediaRecord ? this.toDomain(mediaRecord) : null;
+  }
+
+  async findByBarcodeCandidate(
+    barcode: string,
+    mediaType?: MediaRecord["mediaType"]
+  ): Promise<MediaRecord[]> {
+    const query: Record<string, unknown> = {
+      barcodeCandidates: barcode
+    };
+
+    if (mediaType) {
+      query.mediaType = mediaType;
+    }
+
+    const mediaRecords = await this.mediaRecordModel.find(query).exec();
+
+    return mediaRecords.map((mediaRecord) => this.toDomain(mediaRecord));
+  }
+
+  async findByAnyBarcodeCandidates(params: {
+    barcodes: string[];
+    mediaType: MediaRecord["mediaType"];
+  }): Promise<MediaRecord[]> {
+    if (params.barcodes.length === 0) {
+      return [];
+    }
+
     const mediaRecords = await this.mediaRecordModel
-      .find({ barcodeCandidates: barcode })
+      .find({
+        mediaType: params.mediaType,
+        barcodeCandidates: { $in: params.barcodes }
+      })
       .exec();
 
     return mediaRecords.map((mediaRecord) => this.toDomain(mediaRecord));
@@ -127,6 +180,7 @@ export class MediaRecordRepository {
   private toDomain(mediaRecord: MediaRecordDocument): MediaRecord {
     return {
       id: mediaRecord._id.toString(),
+      source: mediaRecord.source,
       mediaType: mediaRecord.mediaType,
       title: mediaRecord.title,
       sortTitle: mediaRecord.sortTitle ?? null,

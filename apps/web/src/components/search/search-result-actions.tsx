@@ -3,8 +3,7 @@
 import type {
   ImportMediaRecordResponse,
   LibraryBucket,
-  MediaType,
-  ProviderName
+  NormalizedSearchResult
 } from "@media-library/types";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -15,16 +14,10 @@ import { useRouter } from "../../i18n/navigation";
 import { browserApiFetch } from "../../lib/api-client";
 
 interface SearchResultActionsProps {
-  mediaType: MediaType;
-  provider: ProviderName;
-  providerId: string;
+  result: NormalizedSearchResult;
 }
 
-export function SearchResultActions({
-  mediaType,
-  provider,
-  providerId
-}: SearchResultActionsProps) {
+export function SearchResultActions({ result }: SearchResultActionsProps) {
   const router = useRouter();
   const tErrors = useTranslations("errors");
   const tSearch = useTranslations("search.resultActions");
@@ -42,10 +35,11 @@ export function SearchResultActions({
           "content-type": "application/json"
         },
         body: JSON.stringify({
-          provider,
-          providerId,
-          mediaType,
-          bucket
+          mode: "search_result",
+          result,
+          entry: {
+            bucket
+          }
         })
       });
 

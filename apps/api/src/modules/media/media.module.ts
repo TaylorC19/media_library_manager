@@ -2,7 +2,11 @@ import { forwardRef, Module } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 import { LibraryModule } from "../library/library.module";
 import { ProvidersModule } from "../providers/providers.module";
+import { ImportMediaDtoPipe } from "./dto/import-media.dto";
 import { MediaController } from "./media.controller";
+import { MediaDeduplicationService } from "./media-deduplication.service";
+import { MediaImportService } from "./media-import.service";
+import { MediaNormalizationService } from "./media-normalization.service";
 import { MediaRecordRepository } from "./repositories/media-record.repository";
 import { MediaService } from "./media.service";
 import {
@@ -38,7 +42,14 @@ import {
     ])
   ],
   controllers: [MediaController],
-  providers: [MediaRecordRepository, MediaService],
+  providers: [
+    ImportMediaDtoPipe,
+    MediaRecordRepository,
+    MediaNormalizationService,
+    MediaService,
+    MediaDeduplicationService,
+    MediaImportService
+  ],
   exports: [MediaRecordRepository, MediaService]
 })
 export class MediaModule {}

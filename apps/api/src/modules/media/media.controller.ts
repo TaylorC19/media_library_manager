@@ -1,21 +1,34 @@
-import { Body, Controller, Post } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Post
+} from "@nestjs/common";
 import type {
   AuthUser,
   CreateLibraryEntryRequest,
+  GetMediaRecordResponse,
   ImportMediaRecordResponse,
   CreateManualMediaRecordRequest,
-  ManualMediaRecordResponse
+  ImportMediaRecordRequest,
+  MediaRecord,
+  ManualMediaRecordResponse,
+  RefreshMediaRecordResponse
 } from "@media-library/types";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { LibraryService } from "../library/library.service";
 import { CreateManualMediaRecordDto } from "./dto/create-manual-media-record.dto";
-import { ImportMediaDto } from "./dto/import-media.dto";
+import { ImportMediaDtoPipe } from "./dto/import-media.dto";
+import { MediaImportService } from "./media-import.service";
 import { MediaService } from "./media.service";
 
 @Controller("media")
 export class MediaController {
   constructor(
     private readonly mediaService: MediaService,
+    private readonly mediaImportService: MediaImportService,
     private readonly libraryService: LibraryService
   ) {}
 
@@ -33,37 +46,66 @@ export class MediaController {
   @Post("import")
   async importMediaRecord(
     @CurrentUser() user: AuthUser,
-    @Body() body: ImportMediaDto
+    @Body(ImportMediaDtoPipe) body: ImportMediaRecordRequest
   ): Promise<ImportMediaRecordResponse> {
-    const mediaRecord = await this.mediaService.importFromProvider(body);
+    const importResult = await this.mediaImportService.importMediaRecord(body);
 
-    if (!body.bucket) {
-      return { mediaRecord };
+    if (!body.entry) {
+      return {
+        mediaRecord: importResult.mediaRecord,
+        wasExistingMediaRecord: importResult.wasExistingMediaRecord
+      };
     }
 
-    const libraryEntry = await this.libraryService.createEntryForUser(
+    const libraryResult = await this.libraryService.createOrReuseEntryForUser(
       user.id,
-      buildCreateLibraryEntryPayload(body, mediaRecord.id)
+      buildCreateLibraryEntryPayload(body.entry, importResult.mediaRecord)
     );
 
     return {
-      mediaRecord,
-      libraryEntry
+      mediaRecord: importResult.mediaRecord,
+      libraryEntry: libraryResult.libraryEntry,
+      wasExistingMediaRecord: importResult.wasExistingMediaRecord,
+      wasExistingLibraryEntry: libraryResult.wasExistingLibraryEntry
     };
+  }
+
+  @Get(":mediaRecordId")
+  async getMediaRecord(
+    @Param("mediaRecordId") mediaRecordId: string
+  ): Promise<GetMediaRecordResponse> {
+    const mediaRecord = await this.mediaService.getRecord(mediaRecordId);
+
+    if (!mediaRecord) {
+      throw new NotFoundException("Media record not found.");
+    }
+
+    return { mediaRecord };
+  }
+
+  @Post("refresh/:mediaRecordId")
+  refreshMediaRecord(
+    @Param("mediaRecordId") mediaRecordId: string
+  ): Promise<RefreshMediaRecordResponse> {
+    return this.mediaImportService.refreshMediaRecord(mediaRecordId);
   }
 }
 
 function buildCreateLibraryEntryPayload(
-  body: ImportMediaDto,
-  mediaRecordId: string
+  entry: NonNullable<ImportMediaRecordRequest["entry"]>,
+  mediaRecord: MediaRecord
 ): CreateLibraryEntryRequest {
   return {
-    mediaRecordId,
-    bucket: body.bucket!,
-    format: body.format ?? null,
-    barcode: body.barcode ?? null,
-    purchaseDate: body.purchaseDate ?? null,
-    notes: body.notes ?? null,
-    tags: body.tags ?? []
+    mediaRecordId: mediaRecord.id,
+    bucket: entry.bucket,
+    format: entry.format ?? null,
+    barcode:
+      entry.barcode ??
+      (mediaRecord.barcodeCandidates?.length === 1
+        ? mediaRecord.barcodeCandidates[0] ?? null
+        : null),
+    purchaseDate: entry.purchaseDate ?? null,
+    notes: entry.notes ?? null,
+    tags: entry.tags ?? []
   };
 }
