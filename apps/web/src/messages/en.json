@@ -249,6 +249,7 @@
     "cameraPaused": "The camera has been paused while the current barcode is being reviewed.",
     "cameraPermissionDenied": "Camera access is unavailable right now. You can retry or continue with manual search.",
     "cameraUnavailable": "The camera scanner is unavailable in this browser or on this device.",
+    "cameraStartPrompt": "Click Start camera to request webcam permission and begin scanning.",
     "cameraReadyPlaceholder": "The camera will appear here when scanning starts.",
     "barcodeLabel": "Scanned barcode",
     "barcodeTitle": "Current code",
@@ -335,6 +336,7 @@
       "alreadyInCatalog": "Already in catalog",
       "alreadyInWishlist": "Already in wishlist",
       "manualSearch": "Manual search",
+      "startCamera": "Start camera",
       "retryCamera": "Retry camera",
       "retryScan": "Retry scan",
       "selectCandidate": "Select candidate",
@@ -342,8 +344,14 @@
       "viewExistingEntry": "View existing entry"
     },
     "errors": {
+      "cameraBusy": "The camera appears to be in use by another app or browser tab.",
+      "cameraConstraintsFailed": "The browser could not find a usable camera configuration.",
+      "cameraStartAborted": "Camera startup was interrupted. Try again.",
+      "cameraStartTimedOut": "The browser never finished opening the camera. Check the address bar permission icon and try again.",
       "cameraUnavailable": "Unable to start camera scanning on this device.",
+      "noCameraFound": "No camera was found on this device.",
       "permissionDenied": "Camera access was denied.",
+      "secureContextRequired": "Camera access requires a secure page. Use localhost or HTTPS to request permission.",
       "scanFailed": "The scanner could not read the camera feed."
     }
   },

@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  BarcodeFormat,
+  BrowserMultiFormatReader,
+  type IScannerControls
+} from "@zxing/browser";
 import type {
   BarcodeLookupResponse,
   LibraryBucket,
@@ -22,16 +27,13 @@ import {
 import { SelectedScanCandidatePanel } from "./selected-scan-candidate-panel";
 
 const RECENT_SCAN_COOLDOWN_MS = 4000;
-const SUPPORTED_FORMATS = ["ean_13", "ean_8", "upc_a", "upc_e"];
-
-interface BarcodeDetectorLike {
-  detect(source: HTMLVideoElement): Promise<Array<{ rawValue?: string | null }>>;
-}
-
-interface BarcodeDetectorLikeConstructor {
-  new (options?: { formats?: string[] }): BarcodeDetectorLike;
-  getSupportedFormats?: () => Promise<string[]>;
-}
+const CAMERA_START_TIMEOUT_MS = 12000;
+const SUPPORTED_FORMATS = [
+  BarcodeFormat.EAN_13,
+  BarcodeFormat.EAN_8,
+  BarcodeFormat.UPC_A,
+  BarcodeFormat.UPC_E
+];
 
 export function BarcodeScanExperience() {
   const router = useRouter();
@@ -51,9 +53,9 @@ export function BarcodeScanExperience() {
   const [actionErrorMessage, setActionErrorMessage] = useState<string | null>(null);
   const [activeBucket, setActiveBucket] = useState<LibraryBucket | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const detectorRef = useRef<BarcodeDetectorLike | null>(null);
+  const readerRef = useRef<BrowserMultiFormatReader | null>(null);
+  const scannerControlsRef = useRef<IScannerControls | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const frameRef = useRef<number | null>(null);
   const scanSessionRef = useRef(0);
   const decodeLockedRef = useRef(false);
   const lookupInFlightRef = useRef(false);
@@ -99,13 +101,10 @@ export function BarcodeScanExperience() {
 
   const stopScanner = useCallback(() => {
     scanSessionRef.current += 1;
-
-    if (frameRef.current !== null) {
-      window.cancelAnimationFrame(frameRef.current);
-      frameRef.current = null;
-    }
-
-    detectorRef.current = null;
+    scannerControlsRef.current?.stop();
+    scannerControlsRef.current = null;
+    readerRef.current = null;
+    BrowserMultiFormatReader.releaseAllStreams();
 
     if (streamRef.current) {
       for (const track of streamRef.current.getTracks()) {
@@ -193,17 +192,14 @@ export function BarcodeScanExperience() {
     setScannedBarcode(null);
     setActionErrorMessage(null);
     setErrorMessage(null);
-    setPermissionState("prompt");
 
-    const barcodeDetector = getBarcodeDetectorConstructor();
-    if (!navigator.mediaDevices?.getUserMedia || !barcodeDetector) {
-      setPermissionState("unsupported");
-      setErrorMessage(tScan("errors.cameraUnavailable"));
+    if (!window.isSecureContext) {
+      setErrorMessage(tScan("errors.secureContextRequired"));
       setScanState("cameraUnavailable");
       return;
     }
 
-    if (!(await supportsRequestedFormats(barcodeDetector))) {
+    if (!navigator.mediaDevices?.getUserMedia) {
       setPermissionState("unsupported");
       setErrorMessage(tScan("errors.cameraUnavailable"));
       setScanState("cameraUnavailable");
@@ -213,17 +209,8 @@ export function BarcodeScanExperience() {
     setScanState("requestingPermission");
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: {
-          facingMode: {
-            ideal: "environment"
-          }
-        }
-      });
       const sessionId = scanSessionRef.current + 1;
       scanSessionRef.current = sessionId;
-      streamRef.current = stream;
 
       if (!videoRef.current) {
         setErrorMessage(tScan("errors.cameraUnavailable"));
@@ -232,45 +219,51 @@ export function BarcodeScanExperience() {
         return;
       }
 
-      videoRef.current.srcObject = stream;
-      await videoRef.current.play();
-      detectorRef.current = new barcodeDetector({
-        formats: SUPPORTED_FORMATS
-      });
-      setPermissionState("granted");
-      setScanState("ready");
+      const reader = new BrowserMultiFormatReader();
+      reader.possibleFormats = SUPPORTED_FORMATS;
+      readerRef.current = reader;
 
-      const scanNextFrame = async () => {
-        if (scanSessionRef.current !== sessionId || !videoRef.current || !detectorRef.current) {
-          return;
-        }
-
-        try {
-          if (videoRef.current.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-            const detections = await detectorRef.current.detect(videoRef.current);
-            const detectedBarcode = detections
-              .map((detection) => detection.rawValue ?? "")
-              .find((value) => normalizeDecodedBarcode(value).length > 0);
-
-            if (detectedBarcode) {
-              await handleDecodedBarcode(detectedBarcode);
-              return;
+      const stream = await requestCameraStream(
+        {
+          audio: false,
+          video: {
+            facingMode: {
+              ideal: "environment"
             }
           }
-        } catch {
-          // Ignore transient detector errors and keep polling frames.
-        }
+        },
+        CAMERA_START_TIMEOUT_MS
+      );
 
-        if (scanSessionRef.current === sessionId) {
-          frameRef.current = window.requestAnimationFrame(() => {
-            void scanNextFrame();
-          });
+      if (scanSessionRef.current !== sessionId) {
+        for (const track of stream.getTracks()) {
+          track.stop();
         }
-      };
+        return;
+      }
 
-      frameRef.current = window.requestAnimationFrame(() => {
-        void scanNextFrame();
-      });
+      streamRef.current = stream;
+      setPermissionState("granted");
+
+      const controls = await reader.decodeFromStream(
+        stream,
+        videoRef.current,
+        (result) => {
+          if (scanSessionRef.current !== sessionId || !result) {
+            return;
+          }
+
+          void handleDecodedBarcode(result.getText());
+        }
+      );
+
+      if (scanSessionRef.current !== sessionId) {
+        controls.stop();
+        return;
+      }
+
+      scannerControlsRef.current = controls;
+      setScanState("ready");
     } catch (error) {
       if (isPermissionDeniedError(error)) {
         setPermissionState("denied");
@@ -279,7 +272,7 @@ export function BarcodeScanExperience() {
         return;
       }
 
-      setErrorMessage(tScan("errors.cameraUnavailable"));
+      setErrorMessage(getCameraErrorMessage(error, tScan));
       setScanState("cameraUnavailable");
     }
   }, [handleDecodedBarcode, stopScanner, tScan]);
@@ -320,13 +313,7 @@ export function BarcodeScanExperience() {
     };
   }, []);
 
-  useEffect(() => {
-    void startScanner();
-
-    return () => {
-      stopScanner();
-    };
-  }, [startScanner, stopScanner]);
+  useEffect(() => stopScanner, [stopScanner]);
 
   async function handleAdd(bucket: LibraryBucket) {
     if (!selectedCandidate) {
@@ -439,9 +426,11 @@ export function BarcodeScanExperience() {
               onClick={handleRetryScan}
               type="button"
             >
-              {scanState === "permissionDenied" || scanState === "cameraUnavailable"
-                ? tScan("actions.retryCamera")
-                : tScan("actions.retryScan")}
+              {scanState === "idle"
+                ? tScan("actions.startCamera")
+                : scanState === "permissionDenied" || scanState === "cameraUnavailable"
+                  ? tScan("actions.retryCamera")
+                  : tScan("actions.retryScan")}
             </button>
             <Link
               className="rounded-2xl border border-slate-700 px-4 py-3 text-center text-sm font-semibold text-slate-100 transition hover:border-sky-400 hover:text-white"
@@ -452,24 +441,29 @@ export function BarcodeScanExperience() {
           </div>
         </div>
 
-        <div className="mt-6 overflow-hidden rounded-3xl border border-slate-800 bg-black">
-          {scanState === "ready" || scanState === "requestingPermission" ? (
-            <video
-              autoPlay
-              className="aspect-[4/3] w-full object-cover"
-              muted
-              playsInline
-              ref={videoRef}
-            />
-          ) : (
-            <div className="flex aspect-[4/3] items-center justify-center px-6 text-center text-sm text-slate-400">
+        <div className="relative mt-6 overflow-hidden rounded-3xl border border-slate-800 bg-black">
+          <video
+            autoPlay
+            className={`aspect-[4/3] w-full object-cover transition ${
+              scanState === "ready" || scanState === "requestingPermission"
+                ? "opacity-100"
+                : "opacity-0"
+            }`}
+            muted
+            playsInline
+            ref={videoRef}
+          />
+          {scanState === "ready" || scanState === "requestingPermission" ? null : (
+            <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-sm text-slate-400">
               {scanState === "lookingUp" || scanState === "saving"
                 ? tScan("cameraPaused")
-                : scanState === "permissionDenied"
-                  ? tScan("cameraPermissionDenied")
-                  : scanState === "cameraUnavailable"
-                    ? tScan("cameraUnavailable")
-                    : tScan("cameraReadyPlaceholder")}
+                : scanState === "idle"
+                  ? tScan("cameraStartPrompt")
+                  : scanState === "permissionDenied"
+                    ? tScan("cameraPermissionDenied")
+                    : scanState === "cameraUnavailable"
+                      ? tScan("cameraUnavailable")
+                      : tScan("cameraReadyPlaceholder")}
             </div>
           )}
         </div>
@@ -542,28 +536,6 @@ export function BarcodeScanExperience() {
   );
 }
 
-function getBarcodeDetectorConstructor(): BarcodeDetectorLikeConstructor | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  return (
-    (window as Window & { BarcodeDetector?: BarcodeDetectorLikeConstructor })
-      .BarcodeDetector ?? null
-  );
-}
-
-async function supportsRequestedFormats(
-  barcodeDetector: BarcodeDetectorLikeConstructor
-): Promise<boolean> {
-  if (!barcodeDetector.getSupportedFormats) {
-    return true;
-  }
-
-  const supportedFormats = await barcodeDetector.getSupportedFormats();
-  return SUPPORTED_FORMATS.every((format) => supportedFormats.includes(format));
-}
-
 function normalizeDecodedBarcode(value: string): string {
   return value.replace(/[^0-9xX]/g, "").toUpperCase();
 }
@@ -573,4 +545,45 @@ function isPermissionDeniedError(error: unknown): boolean {
     error instanceof DOMException &&
     (error.name === "NotAllowedError" || error.name === "SecurityError")
   );
+}
+
+function getCameraErrorMessage(
+  error: unknown,
+  tScan: ReturnType<typeof useTranslations>
+): string {
+  if (error instanceof Error && error.message === "CAMERA_START_TIMEOUT") {
+    return tScan("errors.cameraStartTimedOut");
+  }
+
+  if (!(error instanceof DOMException)) {
+    return tScan("errors.cameraUnavailable");
+  }
+
+  switch (error.name) {
+    case "NotFoundError":
+      return tScan("errors.noCameraFound");
+    case "NotReadableError":
+    case "TrackStartError":
+      return tScan("errors.cameraBusy");
+    case "OverconstrainedError":
+      return tScan("errors.cameraConstraintsFailed");
+    case "AbortError":
+      return tScan("errors.cameraStartAborted");
+    default:
+      return tScan("errors.cameraUnavailable");
+  }
+}
+
+async function requestCameraStream(
+  constraints: MediaStreamConstraints,
+  timeoutMs: number
+): Promise<MediaStream> {
+  return await Promise.race([
+    navigator.mediaDevices.getUserMedia(constraints),
+    new Promise<never>((_, reject) => {
+      window.setTimeout(() => {
+        reject(new Error("CAMERA_START_TIMEOUT"));
+      }, timeoutMs);
+    })
+  ]);
 }

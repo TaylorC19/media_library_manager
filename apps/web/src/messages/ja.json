@@ -249,6 +249,7 @@
     "cameraPaused": "現在のバーコードを確認できるように、カメラは一時停止されています。",
     "cameraPermissionDenied": "現在カメラにアクセスできません。再試行するか、手動検索に進めます。",
     "cameraUnavailable": "このブラウザーまたは端末ではカメラスキャンを利用できません。",
+    "cameraStartPrompt": "「カメラを開始」を押すと、Web カメラ権限を要求してスキャンを始めます。",
     "cameraReadyPlaceholder": "スキャンが始まるとここにカメラ映像が表示されます。",
     "barcodeLabel": "読み取ったバーコード",
     "barcodeTitle": "現在のコード",
@@ -335,6 +336,7 @@
       "alreadyInCatalog": "すでにカタログにあります",
       "alreadyInWishlist": "すでにウィッシュリストにあります",
       "manualSearch": "手動検索",
+      "startCamera": "カメラを開始",
       "retryCamera": "カメラを再試行",
       "retryScan": "再スキャン",
       "selectCandidate": "候補を選択",
@@ -342,8 +344,14 @@
       "viewExistingEntry": "既存エントリを見る"
     },
     "errors": {
+      "cameraBusy": "カメラは別のアプリまたはブラウザータブで使用中の可能性があります。",
+      "cameraConstraintsFailed": "利用できるカメラ構成をブラウザーが見つけられませんでした。",
+      "cameraStartAborted": "カメラの開始が中断されました。再試行してください。",
+      "cameraStartTimedOut": "ブラウザーがカメラを開く処理を完了できませんでした。アドレスバーの権限アイコンを確認して再試行してください。",
       "cameraUnavailable": "この端末ではカメラスキャンを開始できません。",
+      "noCameraFound": "この端末ではカメラが見つかりませんでした。",
       "permissionDenied": "カメラアクセスが拒否されました。",
+      "secureContextRequired": "カメラアクセスには安全なページが必要です。localhost または HTTPS で開いてください。",
       "scanFailed": "カメラ映像からバーコードを読み取れませんでした。"
     }
   },
