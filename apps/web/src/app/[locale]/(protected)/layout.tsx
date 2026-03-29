@@ -3,13 +3,12 @@ import { getTranslations } from "next-intl/server";
 import { LogoutButton } from "../../../components/auth/logout-button";
 import { LocaleSwitcher } from "../../../components/locale/locale-switcher";
 import { Link } from "../../../i18n/navigation";
-import { type AppLocale } from "../../../i18n/routing";
 import { requireAuth } from "../../../lib/auth";
 
 interface ProtectedLayoutProps {
   children: ReactNode;
   params: Promise<{
-    locale: AppLocale;
+    locale: string;
   }>;
 }
 
@@ -18,7 +17,7 @@ export default async function ProtectedLayout({
   params
 }: ProtectedLayoutProps) {
   const { locale } = await params;
-  const user = await requireAuth(locale);
+  const user = await requireAuth(locale === "ja" ? "ja" : "en");
   const tCommon = await getTranslations("common");
   const tNav = await getTranslations("nav");
 

@@ -240,8 +240,112 @@
     "coverAlt": "{title} cover"
   },
   "scan": {
-    "description": "Barcode scanning will be localized in milestone 7. For now, this placeholder confirms the locale-aware route is ready.",
-    "title": "Scan is coming soon"
+    "pageLabel": "Barcode scan",
+    "title": "Scan a barcode",
+    "description": "Use your camera to scan UPC, EAN, and ISBN-style barcodes, review the candidate matches, then choose exactly where to save the item.",
+    "supportedFormats": "No QR flow in this milestone. Camera scanning stays confirmation-first and never auto-saves.",
+    "cameraLabel": "Camera",
+    "cameraTitle": "Mobile-friendly scanner",
+    "cameraPaused": "The camera has been paused while the current barcode is being reviewed.",
+    "cameraPermissionDenied": "Camera access is unavailable right now. You can retry or continue with manual search.",
+    "cameraUnavailable": "The camera scanner is unavailable in this browser or on this device.",
+    "cameraReadyPlaceholder": "The camera will appear here when scanning starts.",
+    "barcodeLabel": "Scanned barcode",
+    "barcodeTitle": "Current code",
+    "barcodeEmpty": "Waiting for a scan",
+    "permissionLabel": "Camera permission",
+    "permissionHelp": "If access is blocked, the manual search fallback remains available.",
+    "permission": {
+      "denied": "Denied",
+      "granted": "Allowed",
+      "prompt": "Awaiting permission",
+      "unsupported": "Unavailable"
+    },
+    "status": {
+      "label": "Scan status",
+      "errorTitle": "Something needs attention",
+      "idle": {
+        "title": "Preparing the scanner",
+        "description": "The page is getting the scan flow ready."
+      },
+      "requestingPermission": {
+        "title": "Requesting camera access",
+        "description": "Allow camera access to start scanning physical media barcodes."
+      },
+      "ready": {
+        "title": "Scanner is active",
+        "description": "Point the camera at a UPC, EAN, or ISBN-style barcode."
+      },
+      "decoded": {
+        "title": "Barcode captured",
+        "description": "The camera has been paused so this scan can be processed only once."
+      },
+      "lookingUp": {
+        "title": "Looking up matches",
+        "description": "Checking local media records and provider candidates for this barcode."
+      },
+      "results": {
+        "title": "Review the candidates",
+        "description": "Select the best match, then explicitly choose a bucket before anything is saved."
+      },
+      "saving": {
+        "title": "Saving the selected match",
+        "description": "Creating or reusing the library entry for the chosen bucket."
+      },
+      "permissionDenied": {
+        "title": "Camera access was denied",
+        "description": "Retry camera access if available, or continue with manual search."
+      },
+      "cameraUnavailable": {
+        "title": "Camera scanning is unavailable",
+        "description": "This device or browser cannot provide the scan camera right now."
+      },
+      "lookupEmpty": {
+        "title": "No strong barcode match found",
+        "description": "Continue with manual search using the scanned code or fallback query."
+      },
+      "error": {
+        "title": "Scan flow error",
+        "description": "Retry the scanner or continue with manual search."
+      }
+    },
+    "resultsLabel": "Candidates",
+    "resultsTitle": "{count, plural, one {# candidate} other {# candidates}}",
+    "resultsDescription": "Select one match to unlock the save actions below.",
+    "selectedLabel": "Selected candidate",
+    "selectedEmptyTitle": "Select a candidate to continue",
+    "selectedEmptyDescription": "Candidate cards stay selection-only. Save actions appear here after you choose one result.",
+    "providerSelectionDescription": "This provider match will be imported only after you explicitly pick catalog or wishlist.",
+    "existingBucketsDescription": "This local record already has entries in these buckets.",
+    "localRecordDescription": "This local media record exists already, but you can still add it to another bucket when available.",
+    "notInLibraryYet": "No existing entries",
+    "selectionActive": "Selected. Use the action panel below to continue.",
+    "localMatchBadge": "Local match",
+    "metadataFallback": "Details vary by source",
+    "manualSearchLabel": "Manual search",
+    "manualSearchPrimaryTitle": "Continue with manual search",
+    "manualSearchPrimaryDescription": "Use the scanned code or suggested fallback query to keep searching when camera or barcode matching is not enough.",
+    "manualSearchSecondaryTitle": "Need a different match?",
+    "manualSearchSecondaryDescription": "Manual search stays available as a secondary path when none of the current candidates looks right.",
+    "coverAlt": "{title} cover",
+    "actions": {
+      "addToCatalog": "Add to catalog",
+      "addToWishlist": "Add to wishlist",
+      "adding": "Saving...",
+      "alreadyInCatalog": "Already in catalog",
+      "alreadyInWishlist": "Already in wishlist",
+      "manualSearch": "Manual search",
+      "retryCamera": "Retry camera",
+      "retryScan": "Retry scan",
+      "selectCandidate": "Select candidate",
+      "selected": "Selected",
+      "viewExistingEntry": "View existing entry"
+    },
+    "errors": {
+      "cameraUnavailable": "Unable to start camera scanning on this device.",
+      "permissionDenied": "Camera access was denied.",
+      "scanFailed": "The scanner could not read the camera feed."
+    }
   },
   "settings": {
     "description": "Settings will be expanded in milestone 7. This placeholder keeps the localized route structure in place.",

@@ -240,8 +240,112 @@
     "coverAlt": "{title} のカバー"
   },
   "scan": {
-    "description": "バーコードスキャンの本実装はマイルストーン 7 で対応します。今はこのプレースホルダーでロケール対応ルートが準備できていることを確認します。",
-    "title": "スキャン機能は準備中です"
+    "pageLabel": "バーコードスキャン",
+    "title": "バーコードをスキャン",
+    "description": "カメラで UPC / EAN / ISBN 系のバーコードを読み取り、候補を確認してから、保存先を明示的に選択します。",
+    "supportedFormats": "このマイルストーンでは QR フローは含みません。確認前の自動保存も行いません。",
+    "cameraLabel": "カメラ",
+    "cameraTitle": "モバイル向けスキャナー",
+    "cameraPaused": "現在のバーコードを確認できるように、カメラは一時停止されています。",
+    "cameraPermissionDenied": "現在カメラにアクセスできません。再試行するか、手動検索に進めます。",
+    "cameraUnavailable": "このブラウザーまたは端末ではカメラスキャンを利用できません。",
+    "cameraReadyPlaceholder": "スキャンが始まるとここにカメラ映像が表示されます。",
+    "barcodeLabel": "読み取ったバーコード",
+    "barcodeTitle": "現在のコード",
+    "barcodeEmpty": "スキャン待機中",
+    "permissionLabel": "カメラ権限",
+    "permissionHelp": "アクセスできなくても、手動検索のフォールバックは引き続き利用できます。",
+    "permission": {
+      "denied": "拒否",
+      "granted": "許可",
+      "prompt": "許可待ち",
+      "unsupported": "利用不可"
+    },
+    "status": {
+      "label": "スキャン状態",
+      "errorTitle": "確認が必要です",
+      "idle": {
+        "title": "スキャナーを準備しています",
+        "description": "スキャンフローの初期化を進めています。"
+      },
+      "requestingPermission": {
+        "title": "カメラ権限を要求しています",
+        "description": "物理メディアのバーコードを読むためにカメラアクセスを許可してください。"
+      },
+      "ready": {
+        "title": "スキャナーは有効です",
+        "description": "UPC / EAN / ISBN 系のバーコードをカメラに向けてください。"
+      },
+      "decoded": {
+        "title": "バーコードを取得しました",
+        "description": "同じコードを重複処理しないよう、カメラを一時停止しました。"
+      },
+      "lookingUp": {
+        "title": "候補を照合しています",
+        "description": "ローカル記録とプロバイダー候補をバーコードから確認しています。"
+      },
+      "results": {
+        "title": "候補を確認してください",
+        "description": "一致しそうな候補を選択し、保存先を明示的に選ぶまで保存は行いません。"
+      },
+      "saving": {
+        "title": "選択した候補を保存しています",
+        "description": "選んだ保存先に対してライブラリエントリを作成または再利用しています。"
+      },
+      "permissionDenied": {
+        "title": "カメラアクセスが拒否されました",
+        "description": "再試行できる場合はカメラを再試行し、難しければ手動検索に進んでください。"
+      },
+      "cameraUnavailable": {
+        "title": "カメラスキャンを利用できません",
+        "description": "この端末またはブラウザーでは現在スキャン用カメラを利用できません。"
+      },
+      "lookupEmpty": {
+        "title": "十分な候補が見つかりませんでした",
+        "description": "読み取ったコードやフォールバック語句を使って手動検索に進んでください。"
+      },
+      "error": {
+        "title": "スキャンフローで問題が発生しました",
+        "description": "スキャナーを再試行するか、手動検索に進んでください。"
+      }
+    },
+    "resultsLabel": "候補",
+    "resultsTitle": "{count, plural, one {# 件の候補} other {# 件の候補}}",
+    "resultsDescription": "保存アクションを有効にするには、まず 1 件選択してください。",
+    "selectedLabel": "選択中の候補",
+    "selectedEmptyTitle": "続行する候補を選択してください",
+    "selectedEmptyDescription": "候補カードでは選択だけを行います。保存アクションは選択後にここへ表示されます。",
+    "providerSelectionDescription": "このプロバイダー候補は、カタログかウィッシュリストを明示的に選んだ後にのみ取り込まれます。",
+    "existingBucketsDescription": "このローカルレコードには、すでに次の保存先のエントリがあります。",
+    "localRecordDescription": "このローカルメディアレコードはすでに存在します。未使用の保存先があれば追加できます。",
+    "notInLibraryYet": "既存エントリなし",
+    "selectionActive": "選択済みです。続行するには下のアクションパネルを使ってください。",
+    "localMatchBadge": "ローカル一致",
+    "metadataFallback": "詳細はソースによって異なります",
+    "manualSearchLabel": "手動検索",
+    "manualSearchPrimaryTitle": "手動検索で続行",
+    "manualSearchPrimaryDescription": "カメラやバーコード一致だけでは不十分な場合は、読み取ったコードや候補語句で検索を続けられます。",
+    "manualSearchSecondaryTitle": "別の候補を探しますか？",
+    "manualSearchSecondaryDescription": "現在の候補が適切でない場合でも、手動検索を補助ルートとして利用できます。",
+    "coverAlt": "{title} のカバー",
+    "actions": {
+      "addToCatalog": "カタログに追加",
+      "addToWishlist": "ウィッシュリストに追加",
+      "adding": "保存中...",
+      "alreadyInCatalog": "すでにカタログにあります",
+      "alreadyInWishlist": "すでにウィッシュリストにあります",
+      "manualSearch": "手動検索",
+      "retryCamera": "カメラを再試行",
+      "retryScan": "再スキャン",
+      "selectCandidate": "候補を選択",
+      "selected": "選択済み",
+      "viewExistingEntry": "既存エントリを見る"
+    },
+    "errors": {
+      "cameraUnavailable": "この端末ではカメラスキャンを開始できません。",
+      "permissionDenied": "カメラアクセスが拒否されました。",
+      "scanFailed": "カメラ映像からバーコードを読み取れませんでした。"
+    }
   },
   "settings": {
     "description": "設定画面はマイルストーン 7 で拡張します。今はこのプレースホルダーでローカライズ済みルート構成を維持します。",
