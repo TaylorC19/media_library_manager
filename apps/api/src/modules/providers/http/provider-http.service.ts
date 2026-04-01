@@ -1,6 +1,17 @@
 import { Injectable } from "@nestjs/common";
 
 type QueryValue = string | number | boolean | null | undefined;
+type ProviderHttpErrorCode =
+  | "timeout"
+  | "network"
+  | "rate_limited"
+  | "not_found"
+  | "invalid_response"
+  | "unauthorized"
+  | "forbidden"
+  | "configuration"
+  | "upstream"
+  | "unknown";
 
 export interface ProviderHttpGetJsonOptions {
   query?: Record<string, QueryValue>;
@@ -9,12 +20,17 @@ export interface ProviderHttpGetJsonOptions {
 }
 
 export class ProviderHttpError extends Error {
+  readonly code: ProviderHttpErrorCode;
   readonly statusCode?: number;
   readonly url: string;
 
-  constructor(message: string, options: { statusCode?: number; url: string }) {
+  constructor(
+    message: string,
+    options: { code: ProviderHttpErrorCode; statusCode?: number; url: string }
+  ) {
     super(message);
     this.name = "ProviderHttpError";
+    this.code = options.code;
     this.statusCode = options.statusCode;
     this.url = options.url;
   }
@@ -39,6 +55,7 @@ export class ProviderHttpService {
     const controller = new AbortController();
     const timeoutMs = options.timeoutMs ?? 10_000;
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const safeUrl = `${requestUrl.origin}${requestUrl.pathname}`;
 
     try {
       const response = await fetch(requestUrl, {
@@ -51,33 +68,83 @@ export class ProviderHttpService {
       });
 
       if (!response.ok) {
-        const responseText = await response.text();
-        throw new ProviderHttpError(
-          `Request failed with status ${response.status}: ${responseText.slice(0, 200)}`,
-          {
-            statusCode: response.status,
-            url: requestUrl.toString()
-          }
-        );
+        throw createHttpStatusError(response.status, safeUrl);
       }
 
-      return (await response.json()) as Response;
+      try {
+        return (await response.json()) as Response;
+      } catch {
+        throw new ProviderHttpError("Provider returned an invalid response.", {
+          code: "invalid_response",
+          url: safeUrl
+        });
+      }
     } catch (error) {
       if (error instanceof ProviderHttpError) {
         throw error;
       }
 
       if (error instanceof Error && error.name === "AbortError") {
-        throw new ProviderHttpError(`Request timed out after ${timeoutMs}ms`, {
-          url: requestUrl.toString()
+        throw new ProviderHttpError("Provider request timed out.", {
+          code: "timeout",
+          url: safeUrl
         });
       }
 
-      throw new ProviderHttpError("Network request failed", {
-        url: requestUrl.toString()
+      throw new ProviderHttpError("Provider network request failed.", {
+        code: "network",
+        url: safeUrl
       });
     } finally {
       clearTimeout(timeout);
     }
   }
+}
+
+function createHttpStatusError(statusCode: number, url: string): ProviderHttpError {
+  if (statusCode === 404) {
+    return new ProviderHttpError("Provider record was not found.", {
+      code: "not_found",
+      statusCode,
+      url
+    });
+  }
+
+  if (statusCode === 429) {
+    return new ProviderHttpError("Provider rate limit was reached.", {
+      code: "rate_limited",
+      statusCode,
+      url
+    });
+  }
+
+  if (statusCode === 401) {
+    return new ProviderHttpError("Provider credentials were rejected.", {
+      code: "unauthorized",
+      statusCode,
+      url
+    });
+  }
+
+  if (statusCode === 403) {
+    return new ProviderHttpError("Provider request was forbidden.", {
+      code: "forbidden",
+      statusCode,
+      url
+    });
+  }
+
+  if (statusCode >= 500) {
+    return new ProviderHttpError("Provider service is temporarily unavailable.", {
+      code: "upstream",
+      statusCode,
+      url
+    });
+  }
+
+  return new ProviderHttpError("Provider request failed.", {
+    code: "unknown",
+    statusCode,
+    url
+  });
 }

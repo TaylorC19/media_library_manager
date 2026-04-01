@@ -18,7 +18,10 @@ import type {
   NormalizedSearchResult,
   ProviderName
 } from "@media-library/types";
-import { toProviderError } from "../errors/provider-error.utils";
+import {
+  createInvalidProviderResponseError,
+  toProviderError
+} from "../errors/provider-error.utils";
 import { ProviderCacheService } from "../provider-cache.service";
 import { ProviderHttpService } from "../http/provider-http.service";
 
@@ -64,8 +67,7 @@ export class RawgProvider extends BaseMediaProvider {
       return await this.providerCacheService.wrap({
         provider: this.name,
         cacheKey,
-        ttlMs: this.providerCacheService.getSearchTtlMs(),
-        negativeTtlMs: this.providerCacheService.getNegativeSearchTtlMs(),
+        operation: "search",
         loader: async () => {
           const response = await this.providerHttpService.getJson<RawgSearchResponse>(
             `${this.runtimeConfig.baseUrl}/games`,
@@ -78,6 +80,13 @@ export class RawgProvider extends BaseMediaProvider {
               timeoutMs: this.runtimeConfig.timeoutMs
             }
           );
+
+          if (response.results !== undefined && !Array.isArray(response.results)) {
+            throw createInvalidProviderResponseError(
+              this.name,
+              "searchByText"
+            );
+          }
 
           return normalizeSearchResults(
             (response.results ?? []).map(mapRawgSearchResult)
@@ -105,20 +114,32 @@ export class RawgProvider extends BaseMediaProvider {
       return await this.providerCacheService.wrap({
         provider: this.name,
         cacheKey,
-        ttlMs: this.providerCacheService.getDetailsTtlMs(),
-        negativeTtlMs: this.providerCacheService.getNegativeDetailsTtlMs(),
+        operation: "detail",
         loader: async () => {
-          const response = await this.providerHttpService.getJson<RawgDetailsResponse>(
-            `${this.runtimeConfig.baseUrl}/games/${params.providerId}`,
-            {
-              query: {
-                key: this.runtimeConfig.apiKey
-              },
-              timeoutMs: this.runtimeConfig.timeoutMs
-            }
-          );
+          try {
+            const response = await this.providerHttpService.getJson<RawgDetailsResponse>(
+              `${this.runtimeConfig.baseUrl}/games/${params.providerId}`,
+              {
+                query: {
+                  key: this.runtimeConfig.apiKey
+                },
+                timeoutMs: this.runtimeConfig.timeoutMs
+              }
+            );
 
-          return normalizeMediaRecord(mapRawgDetails(response));
+            if (!isRecord(response)) {
+              throw createInvalidProviderResponseError(this.name, "getDetails");
+            }
+
+            return normalizeMediaRecord(mapRawgDetails(response));
+          } catch (error) {
+            const providerError = toProviderError(this.name, "getDetails", error);
+            if (providerError.code === "not_found") {
+              return null;
+            }
+
+            throw providerError;
+          }
         }
       });
     } catch (error) {
@@ -137,4 +158,8 @@ export class RawgProvider extends BaseMediaProvider {
       }
     );
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

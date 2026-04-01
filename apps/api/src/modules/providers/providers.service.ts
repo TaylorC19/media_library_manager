@@ -5,6 +5,7 @@ import type {
 } from "@media-library/types";
 import { ProviderError } from "./errors/provider.error";
 import { toProviderError } from "./errors/provider-error.utils";
+import { ProviderReliabilityService } from "./provider-reliability.service";
 import { ProviderRegistryService } from "./provider-registry.service";
 import type {
   ProviderBarcodeSearchRequest,
@@ -20,7 +21,10 @@ import type {
 export class ProvidersService {
   private readonly logger = new Logger(ProvidersService.name);
 
-  constructor(private readonly providerRegistry: ProviderRegistryService) {}
+  constructor(
+    private readonly providerRegistry: ProviderRegistryService,
+    private readonly providerReliabilityService: ProviderReliabilityService
+  ) {}
 
   async searchByText(
     request: ProviderSearchTextRequest
@@ -72,13 +76,35 @@ export class ProvidersService {
   async getDetails(request: ProviderDetailsRequest): Promise<ProviderDetailsResponse> {
     const provider = this.providerRegistry.getProvider(request.provider);
 
-    if (!provider || !provider.enabled || !provider.supportsMediaType(request.mediaType)) {
+    if (!provider) {
+      const fallbackFailure =
+        this.providerReliabilityService.getFallbackFailure("detail lookup");
+
       return {
         record: null,
         failure: {
           provider: request.provider,
           operation: "getDetails",
-          message: "Provider is unavailable for this media type"
+          code: fallbackFailure.code,
+          message: fallbackFailure.message,
+          retryable: false
+        }
+      };
+    }
+
+    if (!provider.enabled || !provider.supportsMediaType(request.mediaType)) {
+      return {
+        record: null,
+        failure: {
+          provider: request.provider,
+          operation: "getDetails",
+          code: provider.supportsMediaType(request.mediaType)
+            ? "configuration"
+            : "unsupported",
+          message: provider.supportsMediaType(request.mediaType)
+            ? "Provider is unavailable for this media type."
+            : "Provider does not support this media type.",
+          retryable: false
         }
       };
     }
@@ -141,12 +167,24 @@ function toFailure(error: ProviderError): ProviderFailure {
   return {
     provider: error.provider,
     operation: error.operation,
-    message: error.message
+    code: error.code,
+    message: error.safeMessage,
+    statusCode: error.statusCode,
+    retryable: error.retryable
   };
 }
 
 function logProviderFailure(logger: Logger, error: ProviderError): void {
   logger.warn(
-    `[${error.provider}:${error.operation}] ${error.message}`
+    JSON.stringify({
+      event: "provider_failure",
+      provider: error.provider,
+      operation: error.operation,
+      code: error.code,
+      statusCode: error.statusCode,
+      retryable: error.retryable,
+      requestUrl: error.requestUrl,
+      message: error.safeMessage
+    })
   );
 }

@@ -3,6 +3,7 @@ import { MongooseModule } from "@nestjs/mongoose";
 import { DiscogsProvider } from "./adapters/discogs.provider";
 import { MusicBrainzProvider } from "./adapters/musicbrainz.provider";
 import { OpenLibraryProvider } from "./adapters/openlibrary.provider";
+import { ProviderReliabilityService } from "./provider-reliability.service";
 import { RawgProvider } from "./adapters/rawg.provider";
 import { TmdbProvider } from "./adapters/tmdb.provider";
 import { ProviderCacheService } from "./provider-cache.service";
@@ -27,6 +28,7 @@ import {
     ])
   ],
   providers: [
+    ProviderReliabilityService,
     ProviderHttpService,
     ProviderCacheRepository,
     ProviderCacheService,

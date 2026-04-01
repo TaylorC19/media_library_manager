@@ -19,7 +19,10 @@ import type {
   NormalizedSearchResult,
   ProviderName
 } from "@media-library/types";
-import { toProviderError } from "../errors/provider-error.utils";
+import {
+  createInvalidProviderResponseError,
+  toProviderError
+} from "../errors/provider-error.utils";
 import { ProviderCacheService } from "../provider-cache.service";
 import { ProviderHttpService } from "../http/provider-http.service";
 
@@ -67,8 +70,7 @@ export class TmdbProvider extends BaseMediaProvider {
       return await this.providerCacheService.wrap({
         provider: this.name,
         cacheKey,
-        ttlMs: this.providerCacheService.getSearchTtlMs(),
-        negativeTtlMs: this.providerCacheService.getNegativeSearchTtlMs(),
+        operation: "search",
         loader: async () => {
           const response = await this.providerHttpService.getJson<TmdbSearchResponse>(
             `${this.runtimeConfig.baseUrl}/search/${mediaType}`,
@@ -81,6 +83,13 @@ export class TmdbProvider extends BaseMediaProvider {
               timeoutMs: this.runtimeConfig.timeoutMs
             }
           );
+
+          if (!Array.isArray(response.results)) {
+            throw createInvalidProviderResponseError(
+              this.name,
+              "searchByText"
+            );
+          }
 
           return normalizeSearchResults(
             response.results.slice(0, params.limit ?? 10).map((item) => ({
@@ -113,23 +122,35 @@ export class TmdbProvider extends BaseMediaProvider {
       return await this.providerCacheService.wrap({
         provider: this.name,
         cacheKey,
-        ttlMs: this.providerCacheService.getDetailsTtlMs(),
-        negativeTtlMs: this.providerCacheService.getNegativeDetailsTtlMs(),
+        operation: "detail",
         loader: async () => {
-          const response = await this.providerHttpService.getJson<TmdbDetailsResponse>(
-            `${this.runtimeConfig.baseUrl}/${mediaType}/${params.providerId}`,
-            {
-              query: {
-                api_key: this.runtimeConfig.apiKey,
-                append_to_response: "credits"
-              },
-              timeoutMs: this.runtimeConfig.timeoutMs
-            }
-          );
+          try {
+            const response = await this.providerHttpService.getJson<TmdbDetailsResponse>(
+              `${this.runtimeConfig.baseUrl}/${mediaType}/${params.providerId}`,
+              {
+                query: {
+                  api_key: this.runtimeConfig.apiKey,
+                  append_to_response: "credits"
+                },
+                timeoutMs: this.runtimeConfig.timeoutMs
+              }
+            );
 
-          return normalizeMediaRecord(
-            mapTmdbDetails(response, mediaType)
-          );
+            if (!isRecord(response)) {
+              throw createInvalidProviderResponseError(this.name, "getDetails");
+            }
+
+            return normalizeMediaRecord(
+              mapTmdbDetails(response, mediaType)
+            );
+          } catch (error) {
+            const providerError = toProviderError(this.name, "getDetails", error);
+            if (providerError.code === "not_found") {
+              return null;
+            }
+
+            throw providerError;
+          }
         }
       });
     } catch (error) {
@@ -148,4 +169,8 @@ export class TmdbProvider extends BaseMediaProvider {
       }
     );
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

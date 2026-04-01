@@ -20,7 +20,10 @@ import type {
   NormalizedSearchResult,
   ProviderName
 } from "@media-library/types";
-import { toProviderError } from "../errors/provider-error.utils";
+import {
+  createInvalidProviderResponseError,
+  toProviderError
+} from "../errors/provider-error.utils";
 import { ProviderCacheService } from "../provider-cache.service";
 import { ProviderHttpService } from "../http/provider-http.service";
 
@@ -66,8 +69,7 @@ export class DiscogsProvider extends BaseMediaProvider {
       return await this.providerCacheService.wrap({
         provider: this.name,
         cacheKey,
-        ttlMs: this.providerCacheService.getSearchTtlMs(),
-        negativeTtlMs: this.providerCacheService.getNegativeSearchTtlMs(),
+        operation: "search",
         loader: async () => {
           const response = await this.request<DiscogsSearchResponse>(
             "/database/search",
@@ -79,6 +81,13 @@ export class DiscogsProvider extends BaseMediaProvider {
               }
             }
           );
+
+          if (response.results !== undefined && !Array.isArray(response.results)) {
+            throw createInvalidProviderResponseError(
+              this.name,
+              "searchByText"
+            );
+          }
 
           return normalizeSearchResults(
             (response.results ?? [])
@@ -108,14 +117,26 @@ export class DiscogsProvider extends BaseMediaProvider {
       return await this.providerCacheService.wrap({
         provider: this.name,
         cacheKey,
-        ttlMs: this.providerCacheService.getDetailsTtlMs(),
-        negativeTtlMs: this.providerCacheService.getNegativeDetailsTtlMs(),
+        operation: "detail",
         loader: async () => {
-          const response = await this.request<DiscogsReleaseDetails>(
-            `/releases/${params.providerId}`
-          );
+          try {
+            const response = await this.request<DiscogsReleaseDetails>(
+              `/releases/${params.providerId}`
+            );
 
-          return normalizeMediaRecord(mapDiscogsDetails(response));
+            if (!isRecord(response)) {
+              throw createInvalidProviderResponseError(this.name, "getDetails");
+            }
+
+            return normalizeMediaRecord(mapDiscogsDetails(response));
+          } catch (error) {
+            const providerError = toProviderError(this.name, "getDetails", error);
+            if (providerError.code === "not_found") {
+              return null;
+            }
+
+            throw providerError;
+          }
         }
       });
     } catch (error) {
@@ -148,8 +169,7 @@ export class DiscogsProvider extends BaseMediaProvider {
       return await this.providerCacheService.wrap({
         provider: this.name,
         cacheKey,
-        ttlMs: this.providerCacheService.getBarcodeTtlMs(),
-        negativeTtlMs: this.providerCacheService.getNegativeBarcodeTtlMs(),
+        operation: "barcode",
         loader: async () => {
           const response = await this.request<DiscogsSearchResponse>(
             "/database/search",
@@ -161,6 +181,13 @@ export class DiscogsProvider extends BaseMediaProvider {
               }
             }
           );
+
+          if (response.results !== undefined && !Array.isArray(response.results)) {
+            throw createInvalidProviderResponseError(
+              this.name,
+              "searchByBarcode"
+            );
+          }
 
           return normalizeSearchResults(
             (response.results ?? [])
@@ -202,4 +229,8 @@ export class DiscogsProvider extends BaseMediaProvider {
       }
     );
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

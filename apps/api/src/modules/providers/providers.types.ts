@@ -10,6 +10,28 @@ export type ProviderOperation =
   | "getDetails"
   | "searchByBarcode";
 
+export type ProviderCacheOperation = "search" | "detail" | "barcode";
+
+export type ProviderErrorCode =
+  | "timeout"
+  | "network"
+  | "rate_limited"
+  | "not_found"
+  | "invalid_response"
+  | "unauthorized"
+  | "forbidden"
+  | "configuration"
+  | "unsupported"
+  | "unavailable"
+  | "upstream"
+  | "unknown";
+
+export interface ProviderCachePolicy {
+  operation: ProviderCacheOperation;
+  ttlMs: number;
+  negativeTtlMs: number;
+}
+
 export interface ProviderSearchTextRequest {
   query: string;
   mediaType: MediaType;
@@ -33,7 +55,10 @@ export interface ProviderDetailsRequest {
 export interface ProviderFailure {
   provider: ProviderName;
   operation: ProviderOperation;
+  code: ProviderErrorCode;
   message: string;
+  statusCode?: number;
+  retryable: boolean;
 }
 
 export interface ProviderSearchResponse {

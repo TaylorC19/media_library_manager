@@ -1,16 +1,17 @@
 import { Injectable } from "@nestjs/common";
 import type { MediaType, ProviderName } from "@media-library/types";
 import { normalizeBarcode } from "@media-library/provider-sdk";
-import {
-  PROVIDER_CACHE_TTLS,
-  PROVIDER_CACHE_VERSION
-} from "./providers.constants";
+import { ProviderReliabilityService } from "./provider-reliability.service";
 import { ProviderCacheRepository } from "./repositories/provider-cache.repository";
+import type { ProviderCacheOperation } from "./providers.types";
 
 @Injectable()
 export class ProviderCacheService {
+  private readonly inFlightRequests = new Map<string, Promise<unknown>>();
+
   constructor(
-    private readonly providerCacheRepository: ProviderCacheRepository
+    private readonly providerCacheRepository: ProviderCacheRepository,
+    private readonly providerReliabilityService: ProviderReliabilityService
   ) {}
 
   getSearchCacheKey(mediaType: MediaType, query: string): string {
@@ -65,10 +66,8 @@ export class ProviderCacheService {
 
   async wrap<Payload>(options: {
     provider: ProviderName;
+    operation: ProviderCacheOperation;
     cacheKey: string;
-    ttlMs: number;
-    negativeTtlMs?: number;
-    isNegative?: (value: Payload) => boolean;
     loader: () => Promise<Payload>;
   }): Promise<Payload> {
     const cachedValue = await this.get<Payload>(
@@ -79,46 +78,46 @@ export class ProviderCacheService {
       return cachedValue.value as Payload;
     }
 
-    const value = await options.loader();
-    const isNegative = (options.isNegative ?? defaultNegativeResultPredicate)(value);
-    await this.set(
-      options.provider,
-      options.cacheKey,
-      value,
-      isNegative ? options.negativeTtlMs ?? options.ttlMs : options.ttlMs
-    );
-    return value;
-  }
+    const inFlightKey = `${options.provider}:${options.cacheKey}`;
+    const existingRequest = this.inFlightRequests.get(inFlightKey) as
+      | Promise<Payload>
+      | undefined;
 
-  getSearchTtlMs(): number {
-    return PROVIDER_CACHE_TTLS.searchMs;
-  }
+    if (existingRequest) {
+      return existingRequest;
+    }
 
-  getDetailsTtlMs(): number {
-    return PROVIDER_CACHE_TTLS.detailMs;
-  }
+    const request = this.loadAndCache(options);
+    this.inFlightRequests.set(inFlightKey, request);
 
-  getNegativeDetailsTtlMs(): number {
-    return PROVIDER_CACHE_TTLS.negativeDetailMs;
-  }
-
-  getBarcodeTtlMs(): number {
-    return PROVIDER_CACHE_TTLS.barcodeMs;
-  }
-
-  getNegativeSearchTtlMs(): number {
-    return PROVIDER_CACHE_TTLS.negativeSearchMs;
-  }
-
-  getNegativeBarcodeTtlMs(): number {
-    return PROVIDER_CACHE_TTLS.negativeBarcodeMs;
+    try {
+      return await request;
+    } finally {
+      this.inFlightRequests.delete(inFlightKey);
+    }
   }
 
   private withVersion(cacheKey: string): string {
-    return `${PROVIDER_CACHE_VERSION}:${cacheKey}`;
+    return `${this.providerReliabilityService.getCacheVersionPrefix()}:${cacheKey}`;
   }
-}
 
-function defaultNegativeResultPredicate<Payload>(value: Payload): boolean {
-  return value === null || (Array.isArray(value) && value.length === 0);
+  private async loadAndCache<Payload>(options: {
+    provider: ProviderName;
+    operation: ProviderCacheOperation;
+    cacheKey: string;
+    loader: () => Promise<Payload>;
+  }): Promise<Payload> {
+    const policy = this.providerReliabilityService.getCachePolicy(options.operation);
+    const value = await options.loader();
+    const ttlMs = this.providerReliabilityService.isNegativeCacheEligible(
+      options.operation,
+      value
+    )
+      ? policy.negativeTtlMs
+      : policy.ttlMs;
+
+    await this.set(options.provider, options.cacheKey, value, ttlMs);
+
+    return value;
+  }
 }

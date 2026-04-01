@@ -27,6 +27,7 @@ import { MediaService } from "../media/media.service";
 import { ScanLogRepository } from "../media/repositories/scan-log.repository";
 import { ProviderRegistryService } from "../providers/provider-registry.service";
 import { ProvidersService } from "../providers/providers.service";
+import type { ProviderFailure } from "../providers/providers.types";
 import {
   getBarcodeLookupStages,
   getLocalLookupMediaType,
@@ -191,7 +192,7 @@ export class BarcodeService {
           failures,
           seenFailures,
           failure.provider,
-          mapProviderFailureCode(failure.message)
+          mapProviderFailureCode(failure)
         );
       }
 
@@ -418,25 +419,23 @@ function getMissingProviderFailureCode(
   return "unavailable";
 }
 
-function mapProviderFailureCode(message: string): BarcodeLookupFailureCode {
-  const normalizedMessage = message.toLowerCase();
-
-  if (normalizedMessage.includes("timed out")) {
-    return "timeout";
+function mapProviderFailureCode(failure: ProviderFailure): BarcodeLookupFailureCode {
+  switch (failure.code) {
+    case "timeout":
+      return "timeout";
+    case "unsupported":
+      return "unsupported";
+    case "invalid_response":
+      return "invalid_response";
+    case "network":
+    case "rate_limited":
+    case "unauthorized":
+    case "forbidden":
+    case "configuration":
+    case "unavailable":
+    case "upstream":
+    case "not_found":
+    case "unknown":
+      return "unavailable";
   }
-
-  if (normalizedMessage.includes("unsupported")) {
-    return "unsupported";
-  }
-
-  if (
-    normalizedMessage.includes("unavailable") ||
-    normalizedMessage.includes("network request failed")
-  ) {
-    return "unavailable";
-  }
-
-  return normalizedMessage.includes("status")
-    ? "invalid_response"
-    : "unavailable";
 }

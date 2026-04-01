@@ -19,7 +19,10 @@ import type {
   NormalizedSearchResult,
   ProviderName
 } from "@media-library/types";
-import { toProviderError } from "../errors/provider-error.utils";
+import {
+  createInvalidProviderResponseError,
+  toProviderError
+} from "../errors/provider-error.utils";
 import { ProviderCacheService } from "../provider-cache.service";
 import { MusicBrainzThrottleService } from "../http/musicbrainz-throttle.service";
 import { ProviderHttpService } from "../http/provider-http.service";
@@ -67,8 +70,7 @@ export class MusicBrainzProvider extends BaseMediaProvider {
       return await this.providerCacheService.wrap({
         provider: this.name,
         cacheKey,
-        ttlMs: this.providerCacheService.getSearchTtlMs(),
-        negativeTtlMs: this.providerCacheService.getNegativeSearchTtlMs(),
+        operation: "search",
         loader: async () => {
           const response = await this.request<MusicBrainzReleaseSearchResponse>(
             "/release",
@@ -80,6 +82,13 @@ export class MusicBrainzProvider extends BaseMediaProvider {
               }
             }
           );
+
+          if (response.releases !== undefined && !Array.isArray(response.releases)) {
+            throw createInvalidProviderResponseError(
+              this.name,
+              "searchByText"
+            );
+          }
 
           return normalizeSearchResults(
             (response.releases ?? []).map(mapMusicBrainzSearchResult)
@@ -107,20 +116,32 @@ export class MusicBrainzProvider extends BaseMediaProvider {
       return await this.providerCacheService.wrap({
         provider: this.name,
         cacheKey,
-        ttlMs: this.providerCacheService.getDetailsTtlMs(),
-        negativeTtlMs: this.providerCacheService.getNegativeDetailsTtlMs(),
+        operation: "detail",
         loader: async () => {
-          const response = await this.request<MusicBrainzRelease>(
-            `/release/${params.providerId}`,
-            {
-              query: {
-                fmt: "json",
-                inc: "artists+labels+recordings"
+          try {
+            const response = await this.request<MusicBrainzRelease>(
+              `/release/${params.providerId}`,
+              {
+                query: {
+                  fmt: "json",
+                  inc: "artists+labels+recordings"
+                }
               }
-            }
-          );
+            );
 
-          return normalizeMediaRecord(mapMusicBrainzDetails(response));
+            if (!isRecord(response)) {
+              throw createInvalidProviderResponseError(this.name, "getDetails");
+            }
+
+            return normalizeMediaRecord(mapMusicBrainzDetails(response));
+          } catch (error) {
+            const providerError = toProviderError(this.name, "getDetails", error);
+            if (providerError.code === "not_found") {
+              return null;
+            }
+
+            throw providerError;
+          }
         }
       });
     } catch (error) {
@@ -153,8 +174,7 @@ export class MusicBrainzProvider extends BaseMediaProvider {
       return await this.providerCacheService.wrap({
         provider: this.name,
         cacheKey,
-        ttlMs: this.providerCacheService.getBarcodeTtlMs(),
-        negativeTtlMs: this.providerCacheService.getNegativeBarcodeTtlMs(),
+        operation: "barcode",
         loader: async () => {
           const response = await this.request<MusicBrainzReleaseSearchResponse>(
             "/release",
@@ -166,6 +186,13 @@ export class MusicBrainzProvider extends BaseMediaProvider {
               }
             }
           );
+
+          if (response.releases !== undefined && !Array.isArray(response.releases)) {
+            throw createInvalidProviderResponseError(
+              this.name,
+              "searchByBarcode"
+            );
+          }
 
           return normalizeSearchResults(
             (response.releases ?? []).map(mapMusicBrainzSearchResult)
@@ -212,4 +239,8 @@ export class MusicBrainzProvider extends BaseMediaProvider {
       }
     );
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
