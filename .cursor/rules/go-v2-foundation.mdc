@@ -1,0 +1,115 @@
+---
+description: Core architecture constraints for the Go rewrite of Media Library Manager
+alwaysApply: true
+---
+
+# Goal
+
+Build Media Library Manager as a single Go application that fully replaces the existing Next.js/NestJS implementation.
+
+# Migration intent
+
+This repository currently contains an older reference implementation in:
+- apps/web
+- apps/api
+
+These directories are reference only during migration.
+
+The final goal is:
+- one Go application
+- root-level Go app structure
+- removal of the old split-app structure when the Go implementation is ready
+
+Do not design this as a permanent parallel multi-app repository.
+
+# Stack
+
+- Go
+- net/http
+- chi
+- html/template
+- embed
+- MongoDB with the official Go driver
+
+# Architecture rules
+
+- Prefer full-page server rendering by default
+- Use htmx only where partial HTML updates clearly improve UX
+- Use vanilla JS only where browser-only behavior is required, especially barcode scanning
+- Do not build a React-style SPA inside templates
+- Do not split the final app into separate frontend/backend services
+- Keep handlers thin
+- Keep services business-focused
+- Keep repositories persistence-only
+- Keep provider integrations server-side only
+- Keep the app HTML-first and form-first where practical
+
+# Data model rules
+
+Keep these collections:
+- users
+- sessions
+- media_records
+- library_entries
+- optional provider_cache
+- optional scan_logs
+
+Do not:
+- collapse canonical media metadata and user-owned entry state into one document shape
+- move user-owned fields into media_records
+- store raw provider payloads as the internal app schema
+
+# Product rules
+
+- Private login-first app
+- Two buckets only: `catalog` and `wishlist`
+- Media types: `movie`, `tv`, `album`, `book`, `game`
+- Ratings are read-only external metadata only
+- Barcode lookup is best-effort candidate matching
+- Barcode lookup must never auto-save
+- Explicit user action is required for add/import/save
+- English and Japanese support
+- Locale-prefixed page routes
+
+# Auth rules
+
+- username/password only
+- secure password hashing
+- server-side sessions
+- HTTP-only cookie auth
+- no OAuth
+- no password reset
+- no email verification
+
+# Barcode rules
+
+- barcode lookup is lookup only
+- local-first behavior where useful
+- books and albums are the strongest barcode cases
+- movies, TV, and games may remain weaker/manual-fallback cases
+- scan page JS should remain small and focused
+
+# Localization rules
+
+- support English and Japanese
+- translate presentation/UI only
+- keep internal enum values stable and untranslated
+- preserve locale through redirects and navigation
+
+# Migration behavior rules
+
+- you may read apps/web and apps/api as reference
+- do not make casual/incidental edits to the old app
+- do not continue building new features into the old architecture
+- build toward the final root-level Go app structure
+- when enough replacement coverage exists, old code can be removed intentionally
+
+# Working style
+
+- Use Plan Mode before large edits
+- Before coding, summarize the target and list affected files
+- Explain how the change moves the repo toward the final Go-only structure
+- Prefer complete working code over pseudocode
+- Keep packages, templates, handlers, services, and repositories explicit
+- After major changes, run relevant checks
+- Avoid unnecessary abstractions

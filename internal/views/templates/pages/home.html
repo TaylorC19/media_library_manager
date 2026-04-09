@@ -1,0 +1,9 @@
+{{ define "content" }}
+<h1>{{ .Title }}</h1>
+<p>Go foundation is active for locale: {{ .Locale }}</p>
+<p>Try <code>/health</code> for service health.</p>
+{{ end }}
+
+{{ define "pages/home.html" }}
+{{ template "layout/base" . }}
+{{ end }}
