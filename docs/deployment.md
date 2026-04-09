@@ -34,7 +34,7 @@ Both Dockerfiles use `node:22-alpine`.
 
 ### 1. Create `.env`
 
-```bash
+```bash 
 cp .env.example .env
 ```
 

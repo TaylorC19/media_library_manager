@@ -1,4 +1,4 @@
-# Media Library Manager
+# Media Library Manager Version 1.0.0
 
 A self-hosted media library app for tracking movies, TV, albums, books, and games in one private collection.
 
@@ -48,7 +48,7 @@ That makes the app easier to reason about, easier to extend, and safer to run as
 
 The easiest way to run the app locally is with Docker Compose.
 
-1. Create a local env file:
+1. Create a local env file: 
 
 ```bash
 cp .env.example .env
