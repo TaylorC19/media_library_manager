@@ -31,10 +31,20 @@
     },
     "states": {
       "loading": "読み込み中...",
+      "emptyCollectionTitle": "この表示に一致する項目はまだありません。",
+      "emptyCollectionHint": "別のフィルターを試すか、検索取り込み、または手動追加を使ってみてください。",
       "noImage": "画像なし",
       "noImportedSummary": "取り込まれた概要はありません。",
       "noPersonalNotes": "個人メモはまだありません。",
       "noTags": "タグはまだありません。"
+    },
+    "routeState": {
+      "loadingLabel": "読み込み",
+      "loadingTitle": "この画面を準備しています",
+      "loadingDescription": "このルートに必要なライブラリ情報とアカウント情報を取得しています。",
+      "errorLabel": "ルートエラー",
+      "errorTitle": "このページを読み込めませんでした",
+      "errorDescription": "もう一度試すか、ダッシュボードに戻って別の操作を続けてください。"
     },
     "notFound": {
       "description": "指定したページは見つかりませんでした。",
@@ -356,8 +366,15 @@
     }
   },
   "settings": {
-    "description": "設定画面はマイルストーン 7 で拡張します。今はこのプレースホルダーでローカライズ済みルート構成を維持します。",
-    "title": "設定機能は準備中です"
+    "eyebrow": "設定",
+    "title": "アカウントとアプリの状態",
+    "description": "このルートは v1 では意図的に小さく保っています。非公開セッション、ローカライズ済みナビゲーション、保護ルートはすでにありますが、より細かなユーザー設定は今後の作業です。",
+    "currentStateTitle": "現在の動作",
+    "currentStateDescription": "認証はセッションクッキー方式で、アプリは既定で非公開です。言語切り替えはグローバルヘッダーから利用できます。",
+    "roadmapTitle": "自然な次の拡張",
+    "roadmapDescription": "プロフィール編集、インポート/エクスポート設定、コレクション表示設定は、この画面に追加しやすい今後の候補です。",
+    "navigationTitle": "今すぐ使えるルート",
+    "navigationDescription": "検索で新しいメタデータを取り込み、スキャンでバーコードのフォールバック挙動を確認するか、ダッシュボードに戻って最近の追加を確認できます。"
   },
   "errors": {
     "apiUnavailable": "現在 API に接続できません。",

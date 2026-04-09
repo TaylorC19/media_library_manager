@@ -1,133 +1,210 @@
 # Media Library Manager
 
-A self-hostable full-stack TypeScript app for managing personal collections across movies, TV, music, books, and games.
+A self-hosted media library app for tracking movies, TV, albums, books, and games in one private collection.
 
-## Why I Built It
+`Media Library Manager` is built for people who want to keep their own catalog instead of spreading it across spreadsheets, notes, and closed third-party services. It combines a clean web UI with a backend that handles auth, metadata lookups, normalization, and barcode-assisted workflows.
 
-This project is meant to showcase:
+In v1, every item lives in one of two buckets:
 
-- full-stack TypeScript architecture
-- a clean Next.js and NestJS separation
-- MongoDB-backed persistence
-- provider-based metadata ingestion
-- normalization and shared type contracts
-- Docker-friendly local development
+- `catalog` for things you already own
+- `wishlist` for things you want to track without mixing them into the main collection
 
-## Current Status
+## Why Use It
 
-The repo is currently at the initial monorepo bootstrap stage.
+- Keep your media library in a self-hosted app you control
+- Track multiple media types in one place
+- Separate your personal notes and ownership data from imported metadata
+- Use provider-backed search instead of entering every item by hand
+- Use barcode scanning as a fast lookup tool for physical media
+- Run it locally with Docker or deploy it as a small private web app
 
-Implemented so far:
+## Features
 
-- `pnpm` workspace + Turborepo
-- `apps/web` with Next.js, TypeScript, and Tailwind
-- `apps/api` with NestJS, Mongo wiring, and `GET /health`
-- `packages/types` for shared domain types
-- `packages/provider-sdk` for provider contracts and mapping helpers
-- `packages/config` for shared TypeScript and env utilities
-- `docker-compose.yml` for `web`, `api`, and `mongo`
-- root `.env.example`
+- Private, login-first application
+- Username/password auth with HTTP-only session cookies
+- Catalog and wishlist workflows
+- Movies, TV, albums, books, and games
+- Manual entry creation when provider data is missing or incomplete
+- Provider-backed search with normalized results
+- Barcode-assisted lookup with confirmation-first matching
+- English and Japanese UI support
+- Docker Compose for development and production-style deployment
+- `GET /health` endpoint for readiness and container health checks
 
-## Architecture
+## Philosophy
 
-- Frontend: Next.js (`apps/web`)
-- Backend: NestJS (`apps/api`)
-- Database: MongoDB
-- Shared domain contracts: `packages/types`
-- Provider abstraction layer: `packages/provider-sdk`
-- Shared config/helpers: `packages/config`
+This project is meant to feel like a practical self-hosted app:
 
-The frontend must not call third-party metadata providers directly. All provider work, auth, sessions, normalization, and barcode lookup orchestration belong in the API.
+- the frontend never talks to third-party metadata providers directly
+- the API owns auth, provider access, normalization, caching, and barcode lookup
+- user-owned collection data is stored separately from imported metadata
+- barcode scanning is treated as candidate matching, not silent automation
 
-## Repo Layout
+That makes the app easier to reason about, easier to extend, and safer to run as a private personal service.
 
-```txt
-apps/
-  web/            Next.js frontend
-  api/            NestJS backend
-packages/
-  types/          Shared domain and API types
-  provider-sdk/   Provider contracts and normalization helpers
-  config/         Shared TypeScript config and env helpers
-docs/
-  product-spec.md
-```
+## Quick Start
 
-## Getting Started
+### Docker
 
-### 1. Create your env file
+The easiest way to run the app locally is with Docker Compose.
+
+1. Create a local env file:
 
 ```bash
 cp .env.example .env
 ```
 
-You can keep the default values for local development.
-
-### 2. Start with Docker Compose
-
-This is the easiest way to run the current scaffold because the containers install dependencies and start the web app, API, and MongoDB together.
+2. Start the development stack:
 
 ```bash
-docker compose up
+pnpm docker:dev:up
 ```
 
-Once the services are up:
+3. Open:
 
-- Web: [http://localhost:3000](http://localhost:3000)
+- web: [http://localhost:3000](http://localhost:3000)
 - API health: [http://localhost:4000/health](http://localhost:4000/health)
-- MongoDB: `mongodb://localhost:27017`
 
-Docker Compose overrides the API container to use `mongo` internally, so the root `.env` can stay host-friendly with `localhost`.
+This starts:
 
-### 3. Run locally with pnpm instead
+- `web`
+- `api`
+- `mongo`
 
-If you already have Node 22+ and `pnpm` available:
+The Compose file wires container-to-container networking automatically, so the web app talks to `api` and the API talks to `mongo`.
+
+### Without Docker
+
+If you want to run the services directly on your machine:
 
 ```bash
+cp .env.example .env
 corepack enable
 pnpm install
 pnpm dev
 ```
 
-Useful scripts:
+You will need a running MongoDB instance at the `MONGODB_URL` from `.env`.
 
-- `pnpm dev`
-- `pnpm dev:web`
-- `pnpm dev:api`
-- `pnpm build`
-- `pnpm lint`
-- `pnpm typecheck`
+## Configuration
 
-## Environment Variables
+Important env vars:
 
-The root `.env.example` includes:
+- `NEXT_PUBLIC_API_BASE_URL`
+- `INTERNAL_API_BASE_URL`
+- `API_PORT`
+- `WEB_PORT`
+- `MONGODB_URL`
+- `SESSION_COOKIE_NAME`
+- `SESSION_SECRET`
+- `CORS_ORIGIN`
 
-- app runtime: `NODE_ENV`
-- web config: `WEB_PORT`, `NEXT_PUBLIC_API_BASE_URL`
-- api config: `API_PORT`, `APP_BASE_URL`, `SESSION_COOKIE_NAME`, `SESSION_SECRET`, `CORS_ORIGIN`
-- mongo config: `MONGODB_URL`
-- provider config: TMDB, MusicBrainz, Discogs, Open Library, and RAWG settings
+Provider integrations also use env vars for API keys, base URLs, and cache behavior.
 
-Provider keys are included now so future milestones can add integrations without reshaping the env contract.
+Templates:
 
-Use `mongodb://localhost:27017/media_library` when connecting from your Mac or Mongo Compass. The Docker-only hostname `mongo` is only valid from other Compose containers.
+- `.env.example` for local development
+- `.env.prod.example` for production-style deployment
 
-## Verification
+## Providers
 
-The current scaffold has been verified with:
+The current provider setup is:
+
+- `TMDB` for movies and TV
+- `MusicBrainz` for albums
+- `Discogs` for music enrichment and some barcode support
+- `Open Library` for books
+- `RAWG` for games
+
+These are treated as backend adapters, not frontend dependencies. The app stores normalized records and provider references rather than mirroring raw external payloads.
+
+More notes are in [`docs/provider-notes.md`](docs/provider-notes.md).
+
+## Screenshots
+
+Suggested screenshots for this project:
+
+- login screen
+- dashboard
+- catalog or wishlist view
+- provider search results
+- barcode scan flow
+- library detail page
+
+If you want to add screenshots to the repo, place them in `docs/screenshots/` and link them here.
+
+## Deployment
+
+For a production-style deployment:
 
 ```bash
-pnpm build
-pnpm typecheck
+cp .env.prod.example .env.prod
+pnpm docker:prod:up
+```
+
+If you want to run the bundled Mongo container instead of Atlas or another external Mongo instance:
+
+```bash
+pnpm docker:prod:up:mongo
+```
+
+Notes:
+
+- the web image uses Next.js standalone output
+- the API image runs compiled NestJS output
+- the API health route is used by Docker health checks
+- auth cookies are `Secure` in production, so browser access should be behind HTTPS
+
+See [`docs/deployment.md`](docs/deployment.md) for the full deployment guide, Mongo switching options, and Raspberry Pi notes.
+
+## Health Checks
+
+The API exposes:
+
+- `GET /health`
+
+It returns API status and Mongo connection state and is used by the Compose health checks.
+
+## Architecture
+
+This repo uses a split web/API architecture:
+
+- `apps/web` is the Next.js frontend
+- `apps/api` is the NestJS backend
+- `packages/types` contains shared contracts
+- `packages/provider-sdk` contains provider-facing contracts and helpers
+
+That structure keeps provider access, normalization, auth, and persistence logic on the server where they belong.
+
+If you want the deeper system breakdown, see:
+
+- [`docs/architecture.md`](docs/architecture.md)
+- [`docs/api.md`](docs/api.md)
+- [`docs/data-model.md`](docs/data-model.md)
+
+## Project Structure
+
+```txt
+apps/
+  api/            NestJS API
+  web/            Next.js frontend
+packages/
+  config/         Shared config helpers
+  provider-sdk/   Provider contracts and normalization helpers
+  types/          Shared domain and API types
+docs/
+  architecture.md
+  api.md
+  data-model.md
+  deployment.md
+  provider-notes.md
 ```
 
 ## Roadmap
 
-Next milestones from the product spec:
-
-- authentication with session cookies
-- protected app routes
-- library and media collections
-- provider-backed search and import
-- barcode-assisted lookup
-- portfolio-ready docs and deployment polish
+- richer settings and account management
+- import and export flows
+- saved filters and collection views
+- deeper edition and release modeling for physical media
+- background metadata refresh
+- screenshot assets and more deployment examples

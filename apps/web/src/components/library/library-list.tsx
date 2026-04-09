@@ -27,8 +27,14 @@ export function LibraryList({
 
   if (items.length === 0) {
     return (
-      <section className="rounded-3xl border border-dashed border-slate-700 bg-slate-950/40 p-8 text-center text-slate-300">
-        {emptyMessage}
+      <section className="rounded-3xl border border-dashed border-slate-700 bg-slate-950/40 p-8 text-center">
+        <h2 className="text-xl font-semibold text-white">
+          {tCommon("states.emptyCollectionTitle")}
+        </h2>
+        <p className="mt-3 text-sm text-slate-300">{emptyMessage}</p>
+        <p className="mt-2 text-sm text-slate-400">
+          {tCommon("states.emptyCollectionHint")}
+        </p>
       </section>
     );
   }

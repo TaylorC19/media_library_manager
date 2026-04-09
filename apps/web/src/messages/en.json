@@ -31,10 +31,20 @@
     },
     "states": {
       "loading": "Loading...",
+      "emptyCollectionTitle": "Nothing matches this view yet.",
+      "emptyCollectionHint": "Try a different filter, run a search import, or add an item manually.",
       "noImage": "No image",
       "noImportedSummary": "No imported summary available.",
       "noPersonalNotes": "No personal notes yet.",
       "noTags": "No tags yet."
+    },
+    "routeState": {
+      "loadingLabel": "Loading",
+      "loadingTitle": "Preparing this view",
+      "loadingDescription": "Fetching the latest library and account data for this route.",
+      "errorLabel": "Route error",
+      "errorTitle": "This page could not be loaded",
+      "errorDescription": "Try the request again, or return to the dashboard and continue from there."
     },
     "notFound": {
       "description": "The page you requested could not be found.",
@@ -356,8 +366,15 @@
     }
   },
   "settings": {
-    "description": "Settings will be expanded in milestone 7. This placeholder keeps the localized route structure in place.",
-    "title": "Settings are coming soon"
+    "eyebrow": "Settings",
+    "title": "Account and app context",
+    "description": "This route is intentionally small in v1. The product already has private sessions, localized navigation, and protected routes, but richer user preferences are still future work.",
+    "currentStateTitle": "Current behavior",
+    "currentStateDescription": "Authentication is session-cookie based, the app is private by default, and language switching is available from the global header.",
+    "roadmapTitle": "Reasonable next additions",
+    "roadmapDescription": "Profile editing, import and export controls, and collection presentation preferences would fit naturally here without changing the core architecture.",
+    "navigationTitle": "Useful routes right now",
+    "navigationDescription": "Use search to import new metadata, scan to test barcode fallback behavior, or return to the dashboard to review recent additions."
   },
   "errors": {
     "apiUnavailable": "Unable to reach the API right now.",

@@ -3,6 +3,7 @@ import type {
   ListLibraryEntriesQuery,
   ListLibraryEntriesResponse
 } from "@media-library/types";
+import { getApiErrorMessage } from "./api-error";
 import { serverApiFetch } from "./server-api-client";
 
 export async function getLibraryEntries(
@@ -11,7 +12,7 @@ export async function getLibraryEntries(
   const response = await serverApiFetch(`/library${toQueryString(query)}`);
 
   if (!response.ok) {
-    throw new Error(await getErrorMessage(response, "Failed to load library entries."));
+    throw new Error(await getApiErrorMessage(response, "Failed to load library entries."));
   }
 
   return (await response.json()) as ListLibraryEntriesResponse;
@@ -27,7 +28,7 @@ export async function getLibraryEntry(
   }
 
   if (!response.ok) {
-    throw new Error(await getErrorMessage(response, "Failed to load library entry."));
+    throw new Error(await getApiErrorMessage(response, "Failed to load library entry."));
   }
 
   return (await response.json()) as LibraryEntryResponse;
@@ -46,23 +47,4 @@ function toQueryString(query: ListLibraryEntriesQuery): string {
 
   const serialized = searchParams.toString();
   return serialized.length > 0 ? `?${serialized}` : "";
-}
-
-async function getErrorMessage(
-  response: Response,
-  fallback: string
-): Promise<string> {
-  const payload = (await response.json().catch(() => null)) as
-    | { message?: string | string[] }
-    | null;
-
-  if (typeof payload?.message === "string") {
-    return payload.message;
-  }
-
-  if (Array.isArray(payload?.message)) {
-    return payload.message.join(", ");
-  }
-
-  return fallback;
 }
