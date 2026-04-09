@@ -1,0 +1,11 @@
+{{ define "partials/render_content" }}
+{{ if eq .ContentTemplate "pages/home.content" }}
+  {{ template "pages/home.content" . }}
+{{ else if eq .ContentTemplate "pages/login.content" }}
+  {{ template "pages/login.content" . }}
+{{ else if eq .ContentTemplate "pages/register.content" }}
+  {{ template "pages/register.content" . }}
+{{ else if eq .ContentTemplate "pages/dashboard.content" }}
+  {{ template "pages/dashboard.content" . }}
+{{ end }}
+{{ end }}

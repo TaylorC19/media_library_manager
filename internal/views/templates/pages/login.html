@@ -1,0 +1,22 @@
+{{ define "pages/login.content" }}
+<h2>{{ if eq .Locale "ja" }}ログイン{{ else }}Login{{ end }}</h2>
+{{ template "partials/form_errors" . }}
+<form method="post" action="/{{ .Locale }}/login">
+  <label for="username">{{ if eq .Locale "ja" }}ユーザー名{{ else }}Username{{ end }}</label>
+  <input id="username" name="username" required value="{{ index .Values "username" }}" />
+
+  <label for="password">{{ if eq .Locale "ja" }}パスワード{{ else }}Password{{ end }}</label>
+  <input id="password" name="password" type="password" required />
+
+  <button type="submit">{{ if eq .Locale "ja" }}ログイン{{ else }}Login{{ end }}</button>
+</form>
+
+<p>
+  {{ if eq .Locale "ja" }}アカウントを作成しますか？{{ else }}Need an account?{{ end }}
+  <a href="/{{ .Locale }}/register">{{ if eq .Locale "ja" }}登録{{ else }}Register{{ end }}</a>
+</p>
+{{ end }}
+
+{{ define "pages/login.html" }}
+{{ template "layout/auth_shell" . }}
+{{ end }}

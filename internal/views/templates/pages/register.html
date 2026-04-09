@@ -1,0 +1,22 @@
+{{ define "pages/register.content" }}
+<h2>{{ if eq .Locale "ja" }}登録{{ else }}Register{{ end }}</h2>
+{{ template "partials/form_errors" . }}
+<form method="post" action="/{{ .Locale }}/register">
+  <label for="username">{{ if eq .Locale "ja" }}ユーザー名{{ else }}Username{{ end }}</label>
+  <input id="username" name="username" required value="{{ index .Values "username" }}" />
+
+  <label for="password">{{ if eq .Locale "ja" }}パスワード（8文字以上）{{ else }}Password (8+ chars){{ end }}</label>
+  <input id="password" name="password" type="password" required minlength="8" />
+
+  <button type="submit">{{ if eq .Locale "ja" }}登録{{ else }}Register{{ end }}</button>
+</form>
+
+<p>
+  {{ if eq .Locale "ja" }}既にアカウントがありますか？{{ else }}Already have an account?{{ end }}
+  <a href="/{{ .Locale }}/login">{{ if eq .Locale "ja" }}ログイン{{ else }}Login{{ end }}</a>
+</p>
+{{ end }}
+
+{{ define "pages/register.html" }}
+{{ template "layout/auth_shell" . }}
+{{ end }}

@@ -12,7 +12,10 @@ import (
 
 	"media_library_manager/internal/config"
 	"media_library_manager/internal/db"
+	"media_library_manager/internal/http/handlers"
 	"media_library_manager/internal/http/middleware"
+	"media_library_manager/internal/repository"
+	authsvc "media_library_manager/internal/service/auth"
 	"media_library_manager/internal/static"
 	"media_library_manager/internal/views"
 )
@@ -23,6 +26,7 @@ type App struct {
 	Mongo    *mongo.Client
 	Database *mongo.Database
 	Renderer *views.Renderer
+	Auth     *authsvc.Service
 }
 
 func New(cfg config.Config) (*App, error) {
@@ -50,6 +54,16 @@ func New(cfg config.Config) (*App, error) {
 		Database: mongoClient.Database(cfg.MongoDatabase),
 		Renderer: renderer,
 	}
+
+	usersRepo := repository.NewUsersRepository(instance.Database)
+	sessionsRepo := repository.NewSessionsRepository(instance.Database)
+	if err := usersRepo.EnsureIndexes(ctx); err != nil {
+		return nil, err
+	}
+	if err := sessionsRepo.EnsureIndexes(ctx); err != nil {
+		return nil, err
+	}
+	instance.Auth = authsvc.NewService(usersRepo, sessionsRepo, cfg.SessionTTL())
 	instance.Router = instance.newRouter(staticFS)
 
 	return instance, nil
@@ -68,6 +82,7 @@ func (a *App) newRouter(staticFS fs.FS) http.Handler {
 	r.Use(middleware.Recovery)
 	r.Use(middleware.Logging)
 	r.Use(middleware.Locale(a.Config.DefaultLocale))
+	r.Use(middleware.WithAuthSession(a.Auth, a.Config.SessionCookieName))
 
 	r.Get("/health", a.health)
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
@@ -76,7 +91,16 @@ func (a *App) newRouter(staticFS fs.FS) http.Handler {
 		http.Redirect(w, r, "/"+a.Config.DefaultLocale+"/", http.StatusFound)
 	})
 
-	r.Get("/{locale}/", a.home)
+	authHandler := handlers.NewAuthHandler(a.Config, a.Renderer, a.Auth)
+	protectedHandler := handlers.NewProtectedHandler(a.Renderer)
+
+	r.Get("/{locale}/login", authHandler.LoginPage)
+	r.Post("/{locale}/login", authHandler.LoginSubmit)
+	r.Get("/{locale}/register", authHandler.RegisterPage)
+	r.Post("/{locale}/register", authHandler.RegisterSubmit)
+	r.Post("/{locale}/logout", authHandler.LogoutSubmit)
+
+	r.With(middleware.RequireAuth).Get("/{locale}/", protectedHandler.Dashboard)
 
 	return r
 }
@@ -91,16 +115,5 @@ func (a *App) health(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(status); err != nil {
 		http.Error(w, "failed to encode response", http.StatusInternalServerError)
-	}
-}
-
-func (a *App) home(w http.ResponseWriter, r *http.Request) {
-	data := map[string]any{
-		"Title":  "Media Library Manager",
-		"Locale": middleware.LocaleFromContext(r.Context()),
-	}
-
-	if err := a.Renderer.Render(w, "pages/home.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
