@@ -60,7 +60,7 @@ func (h *AuthHandler) LoginSubmit(w http.ResponseWriter, r *http.Request) {
 
 	_, token, err := h.service.Login(r.Context(), username, password, r.UserAgent(), clientIP(r))
 	if err != nil {
-		data := h.baseAuthData(r, "Login", map[string]string{"username": username}, []string{"Invalid username or password."})
+		data := h.baseAuthData(r, "Login", map[string]string{"username": username}, []string{"auth.errors.invalidCredentials"})
 		data["ContentTemplate"] = "pages/login.content"
 		h.renderTemplate(w, "pages/login.html", data)
 		return
@@ -82,8 +82,7 @@ func (h *AuthHandler) RegisterSubmit(w http.ResponseWriter, r *http.Request) {
 
 	_, token, err := h.service.Register(r.Context(), username, password)
 	if err != nil {
-		message := "Registration failed. Use at least 8 characters and a unique username."
-		data := h.baseAuthData(r, "Register", map[string]string{"username": username}, []string{message})
+		data := h.baseAuthData(r, "Register", map[string]string{"username": username}, []string{"auth.errors.registerFailed"})
 		data["ContentTemplate"] = "pages/register.content"
 		h.renderTemplate(w, "pages/register.html", data)
 		return
@@ -103,7 +102,7 @@ func (h *AuthHandler) LogoutSubmit(w http.ResponseWriter, r *http.Request) {
 	h.clearSessionCookie(w)
 	http.SetCookie(w, &http.Cookie{
 		Name:     "flash",
-		Value:    middleware.EncodeFlash("info", "Logged out."),
+		Value:    middleware.EncodeFlash("common.flash.info", "auth.flash.loggedOut"),
 		Path:     "/",
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,

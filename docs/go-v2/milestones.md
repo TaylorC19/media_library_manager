@@ -136,7 +136,6 @@ These are out of scope for the initial Go rewrite:
 - `html/template`
 - server-rendered HTML
 - optional htmx for partial updates
-- small vanilla JS only where necessary
 
 ### Persistence
 - MongoDB

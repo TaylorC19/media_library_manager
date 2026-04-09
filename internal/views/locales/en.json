@@ -1,0 +1,43 @@
+{
+  "common": {
+    "appName": "Media Library Manager",
+    "actions": {
+      "logout": "Logout",
+      "signIn": "Sign in",
+      "createAccount": "Create account"
+    },
+    "status": {
+      "signedIn": "Signed in"
+    },
+    "flash": {
+      "info": "Info"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "altLabel": "Need an account?"
+    },
+    "register": {
+      "title": "Register",
+      "altLabel": "Already have an account?"
+    },
+    "fields": {
+      "username": "Username",
+      "password": "Password",
+      "passwordMin": "Password (8+ chars)"
+    },
+    "errors": {
+      "invalidCredentials": "Invalid username or password.",
+      "registerFailed": "Registration failed. Use at least 8 characters and a unique username."
+    },
+    "flash": {
+      "loggedOut": "Logged out."
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome,",
+    "authOwned": "Authentication is now owned by the Go app."
+  }
+}

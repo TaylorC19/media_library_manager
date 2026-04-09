@@ -136,7 +136,6 @@ These are out of scope for the initial Go rewrite:
 - `html/template`
 - server-rendered HTML
 - optional htmx for partial updates
-- small vanilla JS only where necessary
 
 ### Persistence
 - MongoDB
@@ -177,12 +176,39 @@ Render full pages on the server.
 ### Progressive enhancement
 Use htmx where partial updates clearly improve UX.
 
-### Browser-side JS
-Use small vanilla JS only where the browser requires it, especially for:
+## Rendering Model
 
+### Default
+Render full pages on the server.
+
+### Progressive enhancement
+Use htmx where partial updates clearly improve UX.
+
+### JavaScript usage
+Use JavaScript where it meaningfully improves UX, including:
+- asynchronous form submission
+- inline validation
+- partial page updates
+- modal/dialog interactions
+- scan page behavior
 - camera access
-- barcode scanning lifecycle
+- barcode decoding
+- other browser-only capabilities
 
+JavaScript is allowed for form submission when it fits the page and keeps the app simpler or more responsive.
+
+### Architectural rule
+The application must remain HTML-first and server-owned.
+
+This means:
+- the server remains the source of truth
+- business logic remains backend-owned
+- canonical data ownership remains backend-owned
+- JavaScript should enhance the app, not replace the architecture
+
+### Anti-goals
+Do not recreate a React/Vue-style SPA inside templates.
+Do not move canonical state or business rules into browser code.
 ### Anti-goals
 Do not reproduce SPA-style client state architecture in templates.
 
@@ -365,9 +391,12 @@ Rules:
 - HTML-first
 - mobile-first
 - functional over flashy
-- form-first flows
+- server-rendered by default
+- JS-enhanced where it improves UX
 - explicit save actions
-- clean separation of user-owned and canonical metadata
+- clear separation of user-owned and canonical metadata
+
+JavaScript, htmx, or fetch-based flows are acceptable when they improve usability and remain consistent with the HTML-first architecture.
 
 Important detail-page split:
 - **My copy**

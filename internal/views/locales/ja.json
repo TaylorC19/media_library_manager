@@ -1,0 +1,43 @@
+{
+  "common": {
+    "appName": "メディアライブラリーマネージャー",
+    "actions": {
+      "logout": "ログアウト",
+      "signIn": "ログイン",
+      "createAccount": "登録"
+    },
+    "status": {
+      "signedIn": "ログイン中"
+    },
+    "flash": {
+      "info": "お知らせ"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "ログイン",
+      "altLabel": "アカウントを作成しますか？"
+    },
+    "register": {
+      "title": "登録",
+      "altLabel": "既にアカウントがありますか？"
+    },
+    "fields": {
+      "username": "ユーザー名",
+      "password": "パスワード",
+      "passwordMin": "パスワード（8文字以上）"
+    },
+    "errors": {
+      "invalidCredentials": "ユーザー名またはパスワードが正しくありません。",
+      "registerFailed": "登録に失敗しました。8文字以上のパスワードと一意のユーザー名を入力してください。"
+    },
+    "flash": {
+      "loggedOut": "ログアウトしました。"
+    }
+  },
+  "dashboard": {
+    "title": "ダッシュボード",
+    "welcome": "ようこそ、",
+    "authOwned": "Goアプリが認証を管理しています。"
+  }
+}

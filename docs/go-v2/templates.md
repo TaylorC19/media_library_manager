@@ -216,8 +216,68 @@ The template layer should be built for the final Go app, not for long-term coexi
 - templates receive structured view models
 - templates should remain readable and explicit
 - templates should support localization cleanly
-- templates should work with and without htmx
+- templates should support both full-page and enhanced interactions
 - templates should feel native to a Go/HTML-first app
+
+## Interaction Principles
+
+The app is not restricted to plain form posts only.
+
+Templates may support:
+- normal HTML form submission
+- htmx-enhanced submission
+- JS-enhanced submission using fetch or similar browser APIs
+
+Choose the interaction style that best fits the page, while keeping these rules:
+
+- the backend remains the source of truth
+- templates do not become a client-side app runtime
+- business logic does not move into browser code
+- interactions should stay readable and maintainable
+
+## HTML-first Rules
+
+- normal links and forms should remain easy to support
+- htmx is enhancement, not the core architecture
+- JavaScript is allowed where it meaningfully improves UX
+- templates must not assume SPA-style global client state
+- scanner behavior is the clearest case for browser-managed JS
+
+## htmx Guidelines
+
+Use htmx selectively when server-rendered partial HTML improves UX.
+
+### Good use cases
+- search result refresh
+- library list updates
+- pagination
+- inline notices
+- add/remove feedback
+- create/edit flows when partial HTML responses are cleaner than full-page redirects
+
+### Vanilla JS use cases
+- camera lifecycle
+- barcode scanning
+- async form submission where that is clearer than htmx
+- richer UI interactions that remain page-scoped
+
+### Avoid
+- complex SPA-style state orchestration
+- moving canonical data ownership into the client
+- rebuilding React-style component behavior in ad hoc JS
+
+## Form Rules
+
+- semantic form controls
+- field-level validation display
+- preserve submitted values on validation failure where appropriate
+- localized labels/buttons
+- explicit submit actions
+- forms may be:
+  - normal HTML
+  - htmx-enhanced
+  - JS-enhanced
+- choose the simplest interaction model that gives a good user experience
 
 ---
 
@@ -618,3 +678,4 @@ The data model migration is successful when:
 - canonical metadata and user-owned state remain separate
 - imports remain safe and dedupe-aware
 - the old app is no longer needed to reason about data behavior
+

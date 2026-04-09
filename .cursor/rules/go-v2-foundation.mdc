@@ -35,7 +35,6 @@ Do not design this as a permanent parallel multi-app repository.
 
 - Prefer full-page server rendering by default
 - Use htmx only where partial HTML updates clearly improve UX
-- Use vanilla JS only where browser-only behavior is required, especially barcode scanning
 - Do not build a React-style SPA inside templates
 - Do not split the final app into separate frontend/backend services
 - Keep handlers thin
@@ -113,3 +112,14 @@ Do not:
 - Keep packages, templates, handlers, services, and repositories explicit
 - After major changes, run relevant checks
 - Avoid unnecessary abstractions
+
+# Rendering and interaction rules
+
+- Prefer full-page server rendering by default
+- Use htmx where partial HTML updates clearly improve UX
+- Use vanilla JS where it meaningfully improves UX, including form submission, inline interactions, and browser-only behavior
+- Do not build a React-style SPA inside templates
+- Do not move business logic or canonical state ownership into the browser
+- Keep the app HTML-first even when using JS-enhanced interactions
+- Form submission may be plain HTML, htmx-driven, or JS-driven depending on what best fits the page
+- The backend remains the source of truth in all cases

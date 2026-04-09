@@ -9,10 +9,10 @@
   </head>
   <body>
     <header class="container">
-      <h1>Media Library Manager</h1>
-      <p>{{ if eq .Locale "ja" }}ログイン中{{ else }}Signed in{{ end }}: {{ .User.Username }}</p>
+      <h1>{{ t . "common.appName" }}</h1>
+      <p>{{ t . "common.status.signedIn" }}: {{ .User.Username }}</p>
       <form method="post" action="/{{ .Locale }}/logout">
-        <button type="submit">{{ if eq .Locale "ja" }}ログアウト{{ else }}Logout{{ end }}</button>
+        <button type="submit">{{ t . "common.actions.logout" }}</button>
       </form>
     </header>
     <main class="container">

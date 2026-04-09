@@ -1,10 +1,10 @@
 {{ define "pages/dashboard.content" }}
-<h2>{{ if eq .Locale "ja" }}ダッシュボード{{ else }}Dashboard{{ end }}</h2>
+<h2>{{ t . "dashboard.title" }}</h2>
 <p>
-  {{ if eq .Locale "ja" }}ようこそ、{{ else }}Welcome, {{ end }}{{ .User.DisplayName }}.
+  {{ t . "dashboard.welcome" }} {{ .User.DisplayName }}.
 </p>
 <p>
-  {{ if eq .Locale "ja" }}Goアプリが認証を管理しています。{{ else }}Authentication is now owned by the Go app.{{ end }}
+  {{ t . "dashboard.authOwned" }}
 </p>
 {{ end }}
 

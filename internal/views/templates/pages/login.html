@@ -1,19 +1,19 @@
 {{ define "pages/login.content" }}
-<h2>{{ if eq .Locale "ja" }}ログイン{{ else }}Login{{ end }}</h2>
+<h2>{{ t . "auth.login.title" }}</h2>
 {{ template "partials/form_errors" . }}
-<form method="post" action="/{{ .Locale }}/login">
-  <label for="username">{{ if eq .Locale "ja" }}ユーザー名{{ else }}Username{{ end }}</label>
+<form method="post" action="/{{ .Locale }}/login" data-js-auth-form>
+  <label for="username">{{ t . "auth.fields.username" }}</label>
   <input id="username" name="username" required value="{{ index .Values "username" }}" />
 
-  <label for="password">{{ if eq .Locale "ja" }}パスワード{{ else }}Password{{ end }}</label>
+  <label for="password">{{ t . "auth.fields.password" }}</label>
   <input id="password" name="password" type="password" required />
 
-  <button type="submit">{{ if eq .Locale "ja" }}ログイン{{ else }}Login{{ end }}</button>
+  <button type="submit" data-js-auth-submit>{{ t . "common.actions.signIn" }}</button>
 </form>
 
 <p>
-  {{ if eq .Locale "ja" }}アカウントを作成しますか？{{ else }}Need an account?{{ end }}
-  <a href="/{{ .Locale }}/register">{{ if eq .Locale "ja" }}登録{{ else }}Register{{ end }}</a>
+  {{ t . "auth.login.altLabel" }}
+  <a href="/{{ .Locale }}/register">{{ t . "auth.register.title" }}</a>
 </p>
 {{ end }}
 

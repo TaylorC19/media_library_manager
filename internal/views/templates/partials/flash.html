@@ -1,7 +1,7 @@
 {{ define "partials/flash" }}
 {{ if .Flash }}
 <section>
-  <p><strong>{{ .Flash.Level }}</strong>: {{ .Flash.Message }}</p>
+  <p><strong>{{ t . .Flash.Level }}</strong>: {{ t . .Flash.Message }}</p>
 </section>
 {{ end }}
 {{ end }}
