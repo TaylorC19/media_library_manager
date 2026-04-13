@@ -44,6 +44,26 @@ That makes the app easier to reason about, easier to extend, and safer to run as
 
 ## Quick Start
 
+### Go App (fast local dev)
+
+For the current root-level Go app, the fastest feedback loop is:
+
+1. Start Mongo only in Docker:
+
+```bash
+make dev-db-up
+```
+
+2. Run the Go web app on your host machine:
+
+```bash
+make dev-web
+```
+
+3. Open [http://localhost:8080](http://localhost:8080)
+
+This avoids rebuilding the web container on every code change.
+
 ### Docker
 
 The easiest way to run the app locally is with Docker Compose.

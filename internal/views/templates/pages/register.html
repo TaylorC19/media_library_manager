@@ -1,14 +1,14 @@
 {{ define "pages/register.content" }}
 <h2>{{ t . "auth.register.title" }}</h2>
 {{ template "partials/form_errors" . }}
-<form method="post" action="/{{ .Locale }}/register" data-js-auth-form>
+<form method="post" action="/{{ .Locale }}/register">
   <label for="username">{{ t . "auth.fields.username" }}</label>
   <input id="username" name="username" required value="{{ index .Values "username" }}" />
 
   <label for="password">{{ t . "auth.fields.passwordMin" }}</label>
   <input id="password" name="password" type="password" required minlength="8" />
 
-  <button type="submit" data-js-auth-submit>{{ t . "common.actions.createAccount" }}</button>
+  <button type="submit">{{ t . "common.actions.createAccount" }}</button>
 </form>
 
 <p>
