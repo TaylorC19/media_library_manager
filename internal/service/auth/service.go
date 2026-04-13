@@ -49,10 +49,11 @@ func (s *Service) Register(ctx context.Context, username, password string) (*dom
 		return nil, "", fmt.Errorf("hash password: %w", err)
 	}
 
+	dn := username
 	user := &domainauth.User{
 		Username:     username,
 		PasswordHash: string(hash),
-		DisplayName:  username,
+		DisplayName:  &dn,
 	}
 	if err := s.usersRepo.Create(ctx, user); err != nil {
 		if errors.Is(err, repository.ErrUsernameTaken) {

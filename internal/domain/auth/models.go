@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -10,9 +11,23 @@ type User struct {
 	ID           primitive.ObjectID `bson:"_id,omitempty"`
 	Username     string             `bson:"username"`
 	PasswordHash string             `bson:"passwordHash"`
-	DisplayName  string             `bson:"displayName"`
-	CreatedAt    time.Time          `bson:"createdAt"`
-	UpdatedAt    time.Time          `bson:"updatedAt"`
+	// Pointer so BSON null (NestJS default) decodes; omitempty keeps inserts clean.
+	DisplayName *string `bson:"displayName,omitempty"`
+	CreatedAt   time.Time `bson:"createdAt"`
+	UpdatedAt   time.Time `bson:"updatedAt"`
+}
+
+// ShowName returns a non-empty label for UI (falls back to username).
+func (u *User) ShowName() string {
+	if u == nil {
+		return ""
+	}
+	if u.DisplayName != nil {
+		if s := strings.TrimSpace(*u.DisplayName); s != "" {
+			return s
+		}
+	}
+	return u.Username
 }
 
 type Session struct {

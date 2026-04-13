@@ -33,7 +33,28 @@ func NewRenderer(useEmbedded bool) (*Renderer, error) {
 		return nil, err
 	}
 
+	formatKey := func(v string) string {
+		v = strings.TrimSpace(v)
+		if v == "" {
+			return ""
+		}
+		return "library.format." + v
+	}
+
 	funcs := template.FuncMap{
+		"libraryFormatKey": func(v any) string {
+			switch x := v.(type) {
+			case *string:
+				if x == nil {
+					return ""
+				}
+				return formatKey(*x)
+			case string:
+				return formatKey(x)
+			default:
+				return ""
+			}
+		},
 		"t": func(data any, key string) string {
 			locale := "en"
 			if m, ok := data.(map[string]any); ok {

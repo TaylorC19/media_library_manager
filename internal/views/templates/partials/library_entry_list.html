@@ -1,0 +1,17 @@
+{{ define "partials/library_entry_list" }}
+{{ if not .List }}
+<p class="empty-state">{{ t . "library.list.empty" }}</p>
+{{ else }}
+<ul class="entry-list">
+  {{ range .List }}
+  <li class="entry-list__item">
+    <a href="/{{ $.Locale }}/library/{{ .Entry.ID.Hex }}">{{ if .Media }}{{ .Media.Title }}{{ else }}—{{ end }}</a>
+    <span class="muted entry-list__meta">
+      {{ t $ (printf "library.mediatype.%s" .Entry.MediaType) }}
+      {{ if and .Media .Media.Year }} · {{ .Media.Year }}{{ end }}
+    </span>
+  </li>
+  {{ end }}
+</ul>
+{{ end }}
+{{ end }}

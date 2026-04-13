@@ -4,7 +4,10 @@
     "actions": {
       "logout": "ログアウト",
       "signIn": "ログイン",
-      "createAccount": "登録"
+      "createAccount": "登録",
+      "save": "保存",
+      "edit": "編集",
+      "delete": "削除"
     },
     "status": {
       "signedIn": "ログイン中"
@@ -29,15 +32,105 @@
     },
     "errors": {
       "invalidCredentials": "ユーザー名またはパスワードが正しくありません。",
-      "registerFailed": "登録に失敗しました。8文字以上のパスワードと一意のユーザー名を入力してください。"
+      "registerFailed": "登録に失敗しました。8文字以上のパスワードと一意のユーザー名を入力してください。",
+      "invalidRegisterInput": "パスワードは8文字以上、ユーザー名は空にしないでください。",
+      "usernameTaken": "このユーザー名は既に登録されています。",
+      "serverError": "エラーが発生しました。しばらくしてから再度お試しください。"
     },
     "flash": {
-      "loggedOut": "ログアウトしました。"
+      "loggedOut": "ログアウトしました。",
+      "registered": "アカウントを作成しました。ようこそ！"
     }
   },
   "dashboard": {
     "title": "ダッシュボード",
     "welcome": "ようこそ、",
-    "authOwned": "Goアプリが認証を管理しています。"
+    "authOwned": "Goアプリが認証を管理しています。",
+    "openCatalog": "カタログを開く",
+    "openWishlist": "ウィッシュリストを開く"
+  },
+  "library": {
+    "nav": {
+      "aria": "メイン",
+      "dashboard": "ホーム",
+      "catalog": "カタログ",
+      "wishlist": "ウィッシュリスト",
+      "add": "追加"
+    },
+    "catalog": {
+      "title": "カタログ"
+    },
+    "wishlist": {
+      "title": "ウィッシュリスト"
+    },
+    "list": {
+      "empty": "まだありません。",
+      "addToCatalog": "カタログに追加",
+      "addToWishlist": "ウィッシュリストに追加"
+    },
+    "detail": {
+      "myCopy": "マイコピー",
+      "mediaDetails": "作品情報",
+      "missingMedia": "関連するメディアレコードがありません。"
+    },
+    "fields": {
+      "bucket": "バケット",
+      "mediaType": "メディア種別",
+      "format": "フォーマット",
+      "barcode": "バーコード",
+      "purchaseDate": "購入日",
+      "notes": "メモ",
+      "tags": "タグ",
+      "tagsHint": "カンマ区切り",
+      "title": "タイトル",
+      "year": "年",
+      "source": "ソース"
+    },
+    "form": {
+      "newTitle": "アイテムを追加",
+      "editTitle": "アイテムを編集",
+      "mediaReadOnly": "このアイテムはプロバイダー由来のメタデータに紐づいています。ここでは所有情報のみ編集できます。",
+      "cancelToDetail": "詳細に戻る",
+      "cancelToCatalog": "キャンセル"
+    },
+    "errors": {
+      "titleRequired": "タイトルは必須です。",
+      "invalidMediaType": "有効なメディア種別を選んでください。",
+      "invalidBucket": "カタログかウィッシュリストを選んでください。",
+      "invalidFormat": "有効なフォーマットを選んでください。",
+      "duplicateEntry": "同じバケット・フォーマットの組み合わせで既に登録されています。"
+    },
+    "flash": {
+      "created": "保存しました。",
+      "updated": "更新しました。",
+      "deleted": "ライブラリから削除しました。"
+    },
+    "bucket": {
+      "catalog": "カタログ",
+      "wishlist": "ウィッシュリスト"
+    },
+    "mediatype": {
+      "movie": "映画",
+      "tv": "TV",
+      "album": "アルバム",
+      "book": "本",
+      "game": "ゲーム"
+    },
+    "format": {
+      "unset": "未設定",
+      "blu_ray": "Blu-ray",
+      "dvd": "DVD",
+      "vhs": "VHS",
+      "cd": "CD",
+      "vinyl": "レコード",
+      "cassette": "カセット",
+      "hardcover": "ハードカバー",
+      "paperback": "ペーパーバック",
+      "switch": "Nintendo Switch",
+      "ps5": "PlayStation 5",
+      "xbox": "Xbox",
+      "digital": "デジタル",
+      "other": "その他"
+    }
   }
 }

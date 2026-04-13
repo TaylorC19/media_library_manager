@@ -16,6 +16,7 @@ import (
 	"media_library_manager/internal/http/middleware"
 	"media_library_manager/internal/repository"
 	authsvc "media_library_manager/internal/service/auth"
+	libsvc "media_library_manager/internal/service/library"
 	"media_library_manager/internal/static"
 	"media_library_manager/internal/views"
 )
@@ -63,8 +64,16 @@ func New(cfg config.Config) (*App, error) {
 	if err := sessionsRepo.EnsureIndexes(ctx); err != nil {
 		return nil, err
 	}
+	mediaRepo := repository.NewMediaRecordsRepository(instance.Database)
+	libEntriesRepo := repository.NewLibraryEntriesRepository(instance.Database)
+	if err := mediaRepo.EnsureIndexes(ctx); err != nil {
+		return nil, err
+	}
+	if err := libEntriesRepo.EnsureIndexes(ctx); err != nil {
+		return nil, err
+	}
 	instance.Auth = authsvc.NewService(usersRepo, sessionsRepo, cfg.SessionTTL())
-	instance.Router = instance.newRouter(staticFS)
+	instance.Router = instance.newRouter(staticFS, libsvc.NewService(mediaRepo, libEntriesRepo))
 
 	return instance, nil
 }
@@ -76,7 +85,7 @@ func (a *App) Close(ctx context.Context) error {
 	return a.Mongo.Disconnect(ctx)
 }
 
-func (a *App) newRouter(staticFS fs.FS) http.Handler {
+func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Recovery)
@@ -92,7 +101,7 @@ func (a *App) newRouter(staticFS fs.FS) http.Handler {
 	})
 
 	authHandler := handlers.NewAuthHandler(a.Config, a.Renderer, a.Auth)
-	protectedHandler := handlers.NewProtectedHandler(a.Renderer)
+	libraryHandler := handlers.NewLibraryHandler(a.Renderer, library)
 
 	r.Get("/{locale}/login", authHandler.LoginPage)
 	r.Post("/{locale}/login", authHandler.LoginSubmit)
@@ -100,7 +109,18 @@ func (a *App) newRouter(staticFS fs.FS) http.Handler {
 	r.Post("/{locale}/register", authHandler.RegisterSubmit)
 	r.Post("/{locale}/logout", authHandler.LogoutSubmit)
 
-	r.With(middleware.RequireAuth).Get("/{locale}/", protectedHandler.Dashboard)
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.RequireAuth)
+		r.Get("/{locale}/", libraryHandler.Dashboard)
+		r.Get("/{locale}/catalog", libraryHandler.Catalog)
+		r.Get("/{locale}/wishlist", libraryHandler.Wishlist)
+		r.Get("/{locale}/library/new", libraryHandler.NewForm)
+		r.Get("/{locale}/library/{entryId}/edit", libraryHandler.EditForm)
+		r.Get("/{locale}/library/{entryId}", libraryHandler.Detail)
+		r.Post("/library", libraryHandler.CreateSubmit)
+		r.Post("/library/{entryId}/update", libraryHandler.UpdateSubmit)
+		r.Post("/library/{entryId}/delete", libraryHandler.DeleteSubmit)
+	})
 
 	return r
 }

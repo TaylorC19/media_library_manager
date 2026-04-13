@@ -7,5 +7,13 @@
   {{ template "pages/register.content" . }}
 {{ else if eq .ContentTemplate "pages/dashboard.content" }}
   {{ template "pages/dashboard.content" . }}
+{{ else if eq .ContentTemplate "pages/catalog.content" }}
+  {{ template "pages/catalog.content" . }}
+{{ else if eq .ContentTemplate "pages/wishlist.content" }}
+  {{ template "pages/wishlist.content" . }}
+{{ else if eq .ContentTemplate "pages/library_detail.content" }}
+  {{ template "pages/library_detail.content" . }}
+{{ else if eq .ContentTemplate "pages/library_form.content" }}
+  {{ template "pages/library_form.content" . }}
 {{ end }}
 {{ end }}

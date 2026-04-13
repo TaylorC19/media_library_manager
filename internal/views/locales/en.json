@@ -4,7 +4,10 @@
     "actions": {
       "logout": "Logout",
       "signIn": "Sign in",
-      "createAccount": "Create account"
+      "createAccount": "Create account",
+      "save": "Save",
+      "edit": "Edit",
+      "delete": "Delete"
     },
     "status": {
       "signedIn": "Signed in"
@@ -29,15 +32,105 @@
     },
     "errors": {
       "invalidCredentials": "Invalid username or password.",
-      "registerFailed": "Registration failed. Use at least 8 characters and a unique username."
+      "registerFailed": "Registration failed. Use at least 8 characters and a unique username.",
+      "invalidRegisterInput": "Use at least 8 characters for the password and a non-empty username.",
+      "usernameTaken": "That username is already registered.",
+      "serverError": "Something went wrong. Please try again."
     },
     "flash": {
-      "loggedOut": "Logged out."
+      "loggedOut": "Logged out.",
+      "registered": "Account created. Welcome!"
     }
   },
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Welcome,",
-    "authOwned": "Authentication is now owned by the Go app."
+    "authOwned": "Authentication is now owned by the Go app.",
+    "openCatalog": "Open catalog",
+    "openWishlist": "Open wishlist"
+  },
+  "library": {
+    "nav": {
+      "aria": "Main",
+      "dashboard": "Home",
+      "catalog": "Catalog",
+      "wishlist": "Wishlist",
+      "add": "Add item"
+    },
+    "catalog": {
+      "title": "Catalog"
+    },
+    "wishlist": {
+      "title": "Wishlist"
+    },
+    "list": {
+      "empty": "Nothing here yet.",
+      "addToCatalog": "Add to catalog",
+      "addToWishlist": "Add to wishlist"
+    },
+    "detail": {
+      "myCopy": "My copy",
+      "mediaDetails": "Media details",
+      "missingMedia": "Linked media record is missing."
+    },
+    "fields": {
+      "bucket": "Bucket",
+      "mediaType": "Media type",
+      "format": "Format",
+      "barcode": "Barcode",
+      "purchaseDate": "Purchase date",
+      "notes": "Notes",
+      "tags": "Tags",
+      "tagsHint": "Comma-separated",
+      "title": "Title",
+      "year": "Year",
+      "source": "Source"
+    },
+    "form": {
+      "newTitle": "Add item",
+      "editTitle": "Edit item",
+      "mediaReadOnly": "This item is linked to provider metadata. Only your copy fields are editable here.",
+      "cancelToDetail": "Back to detail",
+      "cancelToCatalog": "Cancel"
+    },
+    "errors": {
+      "titleRequired": "Title is required.",
+      "invalidMediaType": "Choose a valid media type.",
+      "invalidBucket": "Choose catalog or wishlist.",
+      "invalidFormat": "Choose a valid format.",
+      "duplicateEntry": "You already have this title in that bucket with the same format."
+    },
+    "flash": {
+      "created": "Item saved.",
+      "updated": "Changes saved.",
+      "deleted": "Item removed from your library."
+    },
+    "bucket": {
+      "catalog": "Catalog",
+      "wishlist": "Wishlist"
+    },
+    "mediatype": {
+      "movie": "Movie",
+      "tv": "TV",
+      "album": "Album",
+      "book": "Book",
+      "game": "Game"
+    },
+    "format": {
+      "unset": "Not set",
+      "blu_ray": "Blu-ray",
+      "dvd": "DVD",
+      "vhs": "VHS",
+      "cd": "CD",
+      "vinyl": "Vinyl",
+      "cassette": "Cassette",
+      "hardcover": "Hardcover",
+      "paperback": "Paperback",
+      "switch": "Nintendo Switch",
+      "ps5": "PlayStation 5",
+      "xbox": "Xbox",
+      "digital": "Digital",
+      "other": "Other"
+    }
   }
 }

@@ -8,12 +8,15 @@
     <link rel="stylesheet" href="/static/css/base.css" />
   </head>
   <body>
-    <header class="container">
-      <h1>{{ t . "common.appName" }}</h1>
-      <p>{{ t . "common.status.signedIn" }}: {{ .User.Username }}</p>
-      <form method="post" action="/{{ .Locale }}/logout">
-        <button type="submit">{{ t . "common.actions.logout" }}</button>
-      </form>
+    <header class="container header-bar">
+      <div class="header-top">
+        <h1>{{ t . "common.appName" }}</h1>
+        <form method="post" action="/{{ .Locale }}/logout" class="logout-form">
+          <button type="submit">{{ t . "common.actions.logout" }}</button>
+        </form>
+      </div>
+      <p class="muted">{{ t . "common.status.signedIn" }}: {{ .User.Username }}</p>
+      {{ template "partials/nav" . }}
     </header>
     <main class="container">
       {{ template "partials/flash" . }}

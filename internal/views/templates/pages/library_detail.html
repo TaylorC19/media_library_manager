@@ -1,0 +1,56 @@
+{{ define "pages/library_detail.content" }}
+<h2>{{ if .Detail.Media }}{{ .Detail.Media.Title }}{{ else }}—{{ end }}</h2>
+
+<section class="detail-section card">
+  <h3>{{ t . "library.detail.myCopy" }}</h3>
+  <dl class="detail-dl">
+    <dt>{{ t . "library.fields.bucket" }}</dt>
+    <dd>{{ .Detail.Entry.Bucket }}</dd>
+    <dt>{{ t . "library.fields.mediaType" }}</dt>
+    <dd>{{ .Detail.Entry.MediaType }}</dd>
+    <dt>{{ t . "library.fields.format" }}</dt>
+    <dd>{{ $fk := libraryFormatKey .Detail.Entry.Format }}{{ if $fk }}{{ t . $fk }}{{ else }}—{{ end }}</dd>
+    <dt>{{ t . "library.fields.barcode" }}</dt>
+    <dd>{{ if .Detail.Entry.Barcode }}{{ .Detail.Entry.Barcode }}{{ else }}—{{ end }}</dd>
+    <dt>{{ t . "library.fields.purchaseDate" }}</dt>
+    <dd>{{ if .Detail.Entry.PurchaseDate }}{{ .Detail.Entry.PurchaseDate }}{{ else }}—{{ end }}</dd>
+    <dt>{{ t . "library.fields.notes" }}</dt>
+    <dd>{{ if .Detail.Entry.Notes }}{{ .Detail.Entry.Notes }}{{ else }}—{{ end }}</dd>
+    <dt>{{ t . "library.fields.tags" }}</dt>
+    <dd>{{ if .Detail.Entry.Tags }}{{ range $i, $t := .Detail.Entry.Tags }}{{ if $i }}, {{ end }}{{ $t }}{{ end }}{{ else }}—{{ end }}</dd>
+  </dl>
+</section>
+
+<section class="detail-section card">
+  <h3>{{ t . "library.detail.mediaDetails" }}</h3>
+  {{ if .Detail.Media }}
+  <dl class="detail-dl">
+    <dt>{{ t . "library.fields.mediaType" }}</dt>
+    <dd>{{ .Detail.Media.MediaType }}</dd>
+    <dt>{{ t . "library.fields.title" }}</dt>
+    <dd>{{ .Detail.Media.Title }}</dd>
+    <dt>{{ t . "library.fields.year" }}</dt>
+    <dd>{{ if .Detail.Media.Year }}{{ .Detail.Media.Year }}{{ else }}—{{ end }}</dd>
+    <dt>{{ t . "library.fields.source" }}</dt>
+    <dd>{{ .Detail.Media.Source }}</dd>
+  </dl>
+  {{ else }}
+  <p class="muted">{{ t . "library.detail.missingMedia" }}</p>
+  {{ end }}
+</section>
+
+<p class="actions detail-actions">
+  <a class="button-link" href="/{{ .Locale }}/catalog">{{ t . "library.nav.catalog" }}</a>
+  <a class="button-link" href="/{{ .Locale }}/wishlist">{{ t . "library.nav.wishlist" }}</a>
+  <a class="button-link primary" href="/{{ .Locale }}/library/{{ .Detail.Entry.ID.Hex }}/edit">{{ t . "common.actions.edit" }}</a>
+</p>
+
+<form method="post" action="/library/{{ .Detail.Entry.ID.Hex }}/delete" class="danger-zone">
+  <input type="hidden" name="locale" value="{{ .Locale }}" />
+  <button type="submit" class="button-danger">{{ t . "common.actions.delete" }}</button>
+</form>
+{{ end }}
+
+{{ define "pages/library_detail.html" }}
+{{ template "layout/app_shell" . }}
+{{ end }}

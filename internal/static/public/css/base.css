@@ -5,10 +5,249 @@
 body {
   margin: 0;
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
 }
 
 .container {
   max-width: 900px;
   margin: 2rem auto;
   padding: 0 1rem;
+}
+
+main.container form:not(.logout-form):not(.danger-zone) {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 28rem;
+}
+
+main.container label {
+  display: block;
+  font-weight: 600;
+}
+
+main.container input,
+main.container button,
+main.container select,
+main.container textarea {
+  font: inherit;
+}
+
+main.container input,
+main.container select,
+main.container textarea {
+  width: 100%;
+  margin-top: 0.3rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+main.container button {
+  width: fit-content;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid #666;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+section ul {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+}
+
+.header-bar {
+  margin-bottom: 1.5rem;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.header-top h1 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.logout-form {
+  margin: 0;
+}
+
+.muted {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #ccc;
+}
+
+.nav a {
+  color: inherit;
+}
+
+.stats {
+  margin: 1rem 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.button-link {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #888;
+  border-radius: 6px;
+  text-decoration: none;
+  color: inherit;
+  font-size: 0.95rem;
+}
+
+.button-link.primary {
+  border-color: #246;
+  background: #246;
+  color: #fff;
+}
+
+.button-primary {
+  padding: 0.45rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #246;
+  background: #246;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.button-danger {
+  padding: 0.45rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #922;
+  background: #922;
+  color: #fff;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.empty-state {
+  color: #666;
+}
+
+.entry-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+}
+
+.entry-list__item {
+  padding: 0.65rem 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.entry-list__item a {
+  font-weight: 600;
+  color: inherit;
+}
+
+.entry-list__meta {
+  display: block;
+  font-size: 0.9rem;
+  margin-top: 0.15rem;
+}
+
+.card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+}
+
+.detail-section h3 {
+  margin-top: 0;
+}
+
+.detail-dl {
+  display: grid;
+  grid-template-columns: minmax(7rem, 10rem) 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0;
+}
+
+.detail-dl dt {
+  margin: 0;
+  font-weight: 600;
+  color: #555;
+}
+
+.detail-dl dd {
+  margin: 0;
+}
+
+.detail-actions {
+  margin-top: 1.5rem;
+}
+
+.danger-zone {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #999;
+}
+
+.stack-form {
+  max-width: 36rem;
+}
+
+.form-fieldset {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.field span {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.field input,
+.field select,
+.field textarea {
+  font: inherit;
+  padding: 0.4rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #aaa;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.field textarea {
+  resize: vertical;
 }
