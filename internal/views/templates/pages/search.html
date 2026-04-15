@@ -1,0 +1,47 @@
+{{ define "pages/search.content" }}
+<section class="search-page">
+  <h2>{{ t . "search.title" }}</h2>
+
+  <form class="search-form" method="get" action="/{{ .Locale }}/search">
+    <div class="field">
+      <label for="q">{{ t . "search.fields.query" }}</label>
+      <input id="q" name="q" type="search" value="{{ .Values.q }}" autocomplete="off" />
+    </div>
+    <div class="field">
+      <label for="media_type">{{ t . "search.fields.mediaType" }}</label>
+      <select id="media_type" name="media_type" required>
+        <option value="" {{ if eq .Values.media_type "" }}selected{{ end }}>{{ t . "search.fields.mediaTypePlaceholder" }}</option>
+        {{ range .MediaTypes }}
+        <option value="{{ . }}" {{ if eq $.Values.media_type . }}selected{{ end }}>{{ t $ (printf "library.mediatype.%s" .) }}</option>
+        {{ end }}
+      </select>
+    </div>
+    <button class="button-primary" type="submit">{{ t . "search.actions.submit" }}</button>
+  </form>
+
+  {{ if ne .SearchError "" }}
+    <p class="form-error" role="alert">{{ t . .SearchError }}</p>
+  {{ end }}
+
+  {{ range .SearchWarnings }}
+    <p class="search-warning muted" role="status">{{ t $ . }}</p>
+  {{ end }}
+
+  {{ if and .Query (eq .SearchError "") }}
+    {{ if .Hits }}
+      <h3 class="search-results-heading">{{ t . "search.results.heading" }}</h3>
+      <div class="search-results">
+        {{ range .Hits }}
+          {{ template "partials/search_result_card" (dict "Page" $ "Hit" .) }}
+        {{ end }}
+      </div>
+    {{ else if .Values.media_type }}
+      <p class="empty-state">{{ t . "search.results.empty" }}</p>
+    {{ end }}
+  {{ end }}
+</section>
+{{ end }}
+
+{{ define "pages/search.html" }}
+{{ template "layout/app_shell" . }}
+{{ end }}

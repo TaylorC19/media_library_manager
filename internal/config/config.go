@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -17,18 +19,32 @@ type Config struct {
 	SessionCookieName   string
 	SessionTTLHours     int
 	SessionCookieSecure bool
+
+	// Provider API keys (optional; search degrades gracefully when unset).
+	TMDBAPIKey     string
+	RAWGAPIKey     string
+	DiscogsToken   string
+	MusicBrainzUA  string
 }
 
 func Load() (Config, error) {
+	// Best-effort .env loading for local development.
+	// Existing OS environment values still win.
+	_ = godotenv.Load(".env")
+
 	cfg := Config{
 		Env:                 getEnv("APP_ENV", "development"),
 		Port:                getEnvInt("PORT", 8080),
-		MongoURI:            getEnv("MONGODB_URI", "mongodb://localhost:27017"),
+		MongoURI:            getEnvWithAliases([]string{"MONGODB_URI", "MONGODB_URL"}, "mongodb://localhost:27017"),
 		MongoDatabase:       getEnv("MONGODB_DATABASE", "media_library"),
 		DefaultLocale:       getEnv("DEFAULT_LOCALE", "en"),
 		SessionCookieName:   getEnv("SESSION_COOKIE_NAME", "mlm_session"),
 		SessionTTLHours:     getEnvInt("SESSION_TTL_HOURS", 24*14),
 		SessionCookieSecure: getEnvBool("SESSION_COOKIE_SECURE", false),
+		TMDBAPIKey:          getEnv("TMDB_API_KEY", ""),
+		RAWGAPIKey:          getEnv("RAWG_API_KEY", ""),
+		DiscogsToken:        getEnv("DISCOGS_TOKEN", ""),
+		MusicBrainzUA:       getEnv("MUSICBRAINZ_USER_AGENT", "MediaLibraryManager/1.0 (https://example.invalid/contact)"),
 	}
 
 	if cfg.MongoDatabase == "" {
@@ -68,6 +84,15 @@ func (c Config) SessionTTL() time.Duration {
 func getEnv(key, fallback string) string {
 	if value, ok := os.LookupEnv(key); ok {
 		return strings.TrimSpace(value)
+	}
+	return fallback
+}
+
+func getEnvWithAliases(keys []string, fallback string) string {
+	for _, key := range keys {
+		if value, ok := os.LookupEnv(key); ok {
+			return strings.TrimSpace(value)
+		}
 	}
 	return fallback
 }

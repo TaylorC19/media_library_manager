@@ -55,6 +55,7 @@
       "dashboard": "ホーム",
       "catalog": "カタログ",
       "wishlist": "ウィッシュリスト",
+      "search": "検索",
       "add": "追加"
     },
     "catalog": {
@@ -131,6 +132,47 @@
       "xbox": "Xbox",
       "digital": "デジタル",
       "other": "その他"
+    }
+  },
+  "search": {
+    "title": "検索",
+    "fields": {
+      "query": "検索キーワード",
+      "mediaType": "メディア種別",
+      "mediaTypePlaceholder": "種別を選ぶ…"
+    },
+    "actions": {
+      "submit": "検索",
+      "addCatalog": "カタログに追加",
+      "addWishlist": "ウィッシュリストに追加"
+    },
+    "results": {
+      "heading": "結果",
+      "empty": "該当する結果がありません。"
+    },
+    "warnings": {
+      "tmdbKeyMissing": "TMDB の API キーが未設定です。映画/TV を検索するには TMDB_API_KEY を設定してください。",
+      "rawgKeyMissing": "RAWG の API キーが未設定です。ゲームを検索するには RAWG_API_KEY を設定してください。"
+    },
+    "errors": {
+      "mediaTypeRequired": "検索する前にメディア種別を選んでください。",
+      "invalidMediaType": "そのメディア種別には対応していません。"
+    },
+    "provider": {
+      "tmdb": "TMDB",
+      "musicbrainz": "MusicBrainz",
+      "open_library": "Open Library",
+      "rawg": "RAWG"
+    },
+    "import": {
+      "externalIdRequired": "プロバイダー ID が必要です。",
+      "invalidProvider": "そのプロバイダーには対応していません。",
+      "invalidTMDBKind": "TMDB の種別が不正です。",
+      "mediaTypeMismatch": "メディア種別がプロバイダーと一致しません。",
+      "invalidImageURL": "画像 URL は HTTPS である必要があります。"
+    },
+    "flash": {
+      "imported": "ライブラリに追加しました。"
     }
   }
 }

@@ -55,6 +55,7 @@
       "dashboard": "Home",
       "catalog": "Catalog",
       "wishlist": "Wishlist",
+      "search": "Search",
       "add": "Add item"
     },
     "catalog": {
@@ -131,6 +132,47 @@
       "xbox": "Xbox",
       "digital": "Digital",
       "other": "Other"
+    }
+  },
+  "search": {
+    "title": "Search",
+    "fields": {
+      "query": "Search",
+      "mediaType": "Media type",
+      "mediaTypePlaceholder": "Choose a type…"
+    },
+    "actions": {
+      "submit": "Search",
+      "addCatalog": "Add to catalog",
+      "addWishlist": "Add to wishlist"
+    },
+    "results": {
+      "heading": "Results",
+      "empty": "No matches found."
+    },
+    "warnings": {
+      "tmdbKeyMissing": "TMDB API key is not configured. Add TMDB_API_KEY to search movies and TV.",
+      "rawgKeyMissing": "RAWG API key is not configured. Add RAWG_API_KEY to search games."
+    },
+    "errors": {
+      "mediaTypeRequired": "Choose a media type before searching.",
+      "invalidMediaType": "That media type is not supported."
+    },
+    "provider": {
+      "tmdb": "TMDB",
+      "musicbrainz": "MusicBrainz",
+      "open_library": "Open Library",
+      "rawg": "RAWG"
+    },
+    "import": {
+      "externalIdRequired": "Provider id is required.",
+      "invalidProvider": "That provider is not supported.",
+      "invalidTMDBKind": "TMDB kind is invalid.",
+      "mediaTypeMismatch": "Media type does not match the selected provider.",
+      "invalidImageURL": "Image URL must use HTTPS."
+    },
+    "flash": {
+      "imported": "Added to your library."
     }
   }
 }

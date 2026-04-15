@@ -15,5 +15,7 @@
   {{ template "pages/library_detail.content" . }}
 {{ else if eq .ContentTemplate "pages/library_form.content" }}
   {{ template "pages/library_form.content" . }}
+{{ else if eq .ContentTemplate "pages/search.content" }}
+  {{ template "pages/search.content" . }}
 {{ end }}
 {{ end }}
