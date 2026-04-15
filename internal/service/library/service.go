@@ -5,12 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	domainlib "media_library_manager/internal/domain/library"
 	"media_library_manager/internal/repository"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -56,22 +54,6 @@ type ManualUpdateForm struct {
 	PurchaseDate string
 	Notes        string
 	Tags         string
-}
-
-// ProviderImportForm imports a normalized provider search hit into canonical storage.
-// It must not carry raw provider payloads—only normalized fields.
-type ProviderImportForm struct {
-	Bucket     string
-	MediaType  string
-	Provider   string
-	ExternalID string
-	TMDBKind   string // movie|tv when Provider is tmdb
-
-	Title    string
-	Subtitle string
-	Year     *int
-	ImageURL string
-	Summary  string
 }
 
 func parseTags(raw string) []string {
@@ -176,147 +158,6 @@ func (s *Service) GetEntryDetail(ctx context.Context, userID, entryID primitive.
 		return nil, ErrNotFound
 	}
 	return &EntryWithMedia{Entry: entry, Media: media}, nil
-}
-
-func (s *Service) CreateFromProviderImport(ctx context.Context, userID primitive.ObjectID, f ProviderImportForm) (primitive.ObjectID, []string, error) {
-	var errs []string
-	if strings.TrimSpace(f.Title) == "" {
-		errs = append(errs, "library.errors.titleRequired")
-	}
-	if strings.TrimSpace(f.ExternalID) == "" {
-		errs = append(errs, "search.import.externalIdRequired")
-	}
-	if !isAllowedSearchProvider(f.Provider) {
-		errs = append(errs, "search.import.invalidProvider")
-	}
-	if f.Provider == "tmdb" {
-		if f.TMDBKind != "movie" && f.TMDBKind != "tv" {
-			errs = append(errs, "search.import.invalidTMDBKind")
-		}
-		if f.MediaType != "movie" && f.MediaType != "tv" {
-			errs = append(errs, "search.import.mediaTypeMismatch")
-		}
-		if f.MediaType == "movie" && f.TMDBKind != "movie" {
-			errs = append(errs, "search.import.mediaTypeMismatch")
-		}
-		if f.MediaType == "tv" && f.TMDBKind != "tv" {
-			errs = append(errs, "search.import.mediaTypeMismatch")
-		}
-	} else if f.Provider == "musicbrainz" && f.MediaType != "album" {
-		errs = append(errs, "search.import.mediaTypeMismatch")
-	} else if f.Provider == "open_library" && f.MediaType != "book" {
-		errs = append(errs, "search.import.mediaTypeMismatch")
-	} else if f.Provider == "rawg" && f.MediaType != "game" {
-		errs = append(errs, "search.import.mediaTypeMismatch")
-	}
-
-	errs = append(errs, validateCore(f.MediaType, f.Bucket, "")...)
-	if len(errs) > 0 {
-		return primitive.NilObjectID, errs, ErrValidation
-	}
-
-	title := strings.TrimSpace(f.Title)
-	sortTitle := strings.ToLower(title)
-	var year *int32
-	if f.Year != nil {
-		y := int32(*f.Year)
-		year = &y
-	}
-
-	var imagePtr *string
-	if u := strings.TrimSpace(f.ImageURL); u != "" {
-		if !strings.HasPrefix(u, "https://") {
-			return primitive.NilObjectID, []string{"search.import.invalidImageURL"}, ErrValidation
-		}
-		imagePtr = &u
-	}
-
-	summary := strings.TrimSpace(f.Summary)
-	var summaryPtr *string
-	if summary != "" {
-		summaryPtr = &summary
-	}
-
-	details := bson.M{}
-	if sub := strings.TrimSpace(f.Subtitle); sub != "" {
-		details["subtitle"] = sub
-	}
-
-	now := time.Now().UTC()
-	mediaRec := &domainlib.MediaRecord{
-		Source:            domainlib.SourceProvider,
-		MediaType:         f.MediaType,
-		Title:             title,
-		SortTitle:         &sortTitle,
-		Year:              year,
-		ImageURL:          imagePtr,
-		Summary:           summaryPtr,
-		ProviderRefs:      providerRefsBSON(f),
-		BarcodeCandidates: []string{},
-		Details:           details,
-		LastSyncedAt:      &now,
-	}
-	if err := s.media.Insert(ctx, mediaRec); err != nil {
-		return primitive.NilObjectID, nil, err
-	}
-
-	libEntry := &domainlib.LibraryEntry{
-		UserID:        userID,
-		MediaRecordID: mediaRec.ID,
-		Bucket:        f.Bucket,
-		MediaType:     f.MediaType,
-	}
-
-	if err := s.entries.Insert(ctx, libEntry); err != nil {
-		_ = s.media.DeleteByID(ctx, mediaRec.ID)
-		if mongo.IsDuplicateKeyError(err) {
-			return primitive.NilObjectID, []string{"library.errors.duplicateEntry"}, ErrValidation
-		}
-		return primitive.NilObjectID, nil, err
-	}
-
-	return libEntry.ID, nil, nil
-}
-
-func isAllowedSearchProvider(p string) bool {
-	switch strings.TrimSpace(p) {
-	case "tmdb", "musicbrainz", "open_library", "rawg":
-		return true
-	default:
-		return false
-	}
-}
-
-func providerRefsBSON(f ProviderImportForm) bson.M {
-	switch f.Provider {
-	case "tmdb":
-		return bson.M{
-			"tmdb": bson.M{
-				"kind": f.TMDBKind,
-				"id":   strings.TrimSpace(f.ExternalID),
-			},
-		}
-	case "musicbrainz":
-		return bson.M{
-			"musicbrainz": bson.M{
-				"releaseId": strings.TrimSpace(f.ExternalID),
-			},
-		}
-	case "open_library":
-		return bson.M{
-			"openLibrary": bson.M{
-				"workKey": strings.TrimSpace(f.ExternalID),
-			},
-		}
-	case "rawg":
-		return bson.M{
-			"rawg": bson.M{
-				"id": strings.TrimSpace(f.ExternalID),
-			},
-		}
-	default:
-		return bson.M{}
-	}
 }
 
 func (s *Service) CreateManual(ctx context.Context, userID primitive.ObjectID, f ManualCreateForm) (primitive.ObjectID, []string, error) {

@@ -39,6 +39,18 @@ type ReleaseHit struct {
 	Disambiguation string
 }
 
+type ReleaseDetails struct {
+	ID            string
+	Title         string
+	Date          string
+	Country       string
+	Barcode       string
+	Artists       []string
+	Label         string
+	CatalogNumber string
+	TrackCount    *int
+}
+
 type releaseSearchResponse struct {
 	Releases []releaseDoc `json:"releases"`
 }
@@ -114,6 +126,107 @@ func (c *Client) SearchReleases(ctx context.Context, query string) ([]ReleaseHit
 	return out, nil
 }
 
+func (c *Client) GetReleaseDetails(ctx context.Context, releaseID string) (*ReleaseDetails, error) {
+	releaseID = strings.TrimSpace(releaseID)
+	if releaseID == "" {
+		return nil, nil
+	}
+	c.throttle()
+
+	u := "https://musicbrainz.org/ws/2/release/" + url.PathEscape(releaseID) + "?fmt=json&inc=artists+labels+recordings"
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+	if err != nil {
+		return nil, err
+	}
+	ua := strings.TrimSpace(c.UserAgent)
+	if ua == "" {
+		ua = "MediaLibraryManager/1.0"
+	}
+	req.Header.Set("User-Agent", ua)
+	req.Header.Set("Accept", "application/json")
+
+	hc := c.HTTP
+	if hc == nil {
+		hc = http.DefaultClient
+	}
+	res, err := hc.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	if res.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		return nil, fmt.Errorf("musicbrainz: unexpected status %d", res.StatusCode)
+	}
+
+	var payload struct {
+		ID           string `json:"id"`
+		Title        string `json:"title"`
+		Date         string `json:"date"`
+		Country      string `json:"country"`
+		Barcode      string `json:"barcode"`
+		ArtistCredit []struct {
+			Name   string `json:"name"`
+			Artist struct {
+				Name string `json:"name"`
+			} `json:"artist"`
+		} `json:"artist-credit"`
+		LabelInfo []struct {
+			CatalogNumber string `json:"catalog-number"`
+			Label         *struct {
+				Name string `json:"name"`
+			} `json:"label"`
+		} `json:"label-info"`
+		Media []struct {
+			TrackCount int `json:"track-count"`
+		} `json:"media"`
+	}
+	if err := json.NewDecoder(res.Body).Decode(&payload); err != nil {
+		return nil, err
+	}
+
+	title := strings.TrimSpace(payload.Title)
+	if strings.TrimSpace(payload.ID) == "" || title == "" {
+		return nil, nil
+	}
+
+	var trackCount *int
+	totalTracks := 0
+	for _, medium := range payload.Media {
+		if medium.TrackCount > 0 {
+			totalTracks += medium.TrackCount
+		}
+	}
+	if totalTracks > 0 {
+		trackCount = &totalTracks
+	}
+
+	label := ""
+	catalogNumber := ""
+	for _, info := range payload.LabelInfo {
+		if label == "" && info.Label != nil {
+			label = strings.TrimSpace(info.Label.Name)
+		}
+		if catalogNumber == "" {
+			catalogNumber = strings.TrimSpace(info.CatalogNumber)
+		}
+	}
+
+	return &ReleaseDetails{
+		ID:            strings.TrimSpace(payload.ID),
+		Title:         title,
+		Date:          strings.TrimSpace(payload.Date),
+		Country:       strings.TrimSpace(payload.Country),
+		Barcode:       strings.TrimSpace(payload.Barcode),
+		Artists:       uniqueArtistNames(payload.ArtistCredit),
+		Label:         label,
+		CatalogNumber: catalogNumber,
+		TrackCount:    trackCount,
+	}, nil
+}
+
 func YearFromPartialDate(s string) *int {
 	s = strings.TrimSpace(s)
 	if len(s) < 4 {
@@ -128,4 +241,30 @@ func YearFromPartialDate(s string) *int {
 
 func DefaultHTTPClient() *http.Client {
 	return &http.Client{Timeout: 20 * time.Second}
+}
+
+func uniqueArtistNames(credits []struct {
+	Name   string `json:"name"`
+	Artist struct {
+		Name string `json:"name"`
+	} `json:"artist"`
+}) []string {
+	seen := map[string]struct{}{}
+	var out []string
+	for _, credit := range credits {
+		name := strings.TrimSpace(credit.Artist.Name)
+		if name == "" {
+			name = strings.TrimSpace(credit.Name)
+		}
+		if name == "" {
+			continue
+		}
+		key := strings.ToLower(name)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		out = append(out, name)
+	}
+	return out
 }

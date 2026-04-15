@@ -17,6 +17,7 @@ import (
 	"media_library_manager/internal/repository"
 	authsvc "media_library_manager/internal/service/auth"
 	libsvc "media_library_manager/internal/service/library"
+	mediasvc "media_library_manager/internal/service/media"
 	searchsvc "media_library_manager/internal/service/search"
 	"media_library_manager/internal/static"
 	"media_library_manager/internal/views"
@@ -75,8 +76,9 @@ func New(cfg config.Config) (*App, error) {
 	}
 	instance.Auth = authsvc.NewService(usersRepo, sessionsRepo, cfg.SessionTTL())
 	librarySvc := libsvc.NewService(mediaRepo, libEntriesRepo)
+	mediaSvc := mediasvc.NewService(cfg, mediaRepo, libEntriesRepo)
 	searchSvc := searchsvc.NewService(cfg)
-	instance.Router = instance.newRouter(staticFS, librarySvc, searchSvc)
+	instance.Router = instance.newRouter(staticFS, librarySvc, mediaSvc, searchSvc)
 
 	return instance, nil
 }
@@ -88,7 +90,7 @@ func (a *App) Close(ctx context.Context) error {
 	return a.Mongo.Disconnect(ctx)
 }
 
-func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, search *searchsvc.Service) http.Handler {
+func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc.Service, search *searchsvc.Service) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Recovery)
@@ -105,7 +107,8 @@ func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, search *searchs
 
 	authHandler := handlers.NewAuthHandler(a.Config, a.Renderer, a.Auth)
 	libraryHandler := handlers.NewLibraryHandler(a.Renderer, library)
-	searchHandler := handlers.NewSearchHandler(a.Renderer, search, library)
+	searchHandler := handlers.NewSearchHandler(a.Renderer, search)
+	mediaHandler := handlers.NewMediaHandler(media)
 
 	r.Get("/{locale}/login", authHandler.LoginPage)
 	r.Post("/{locale}/login", authHandler.LoginSubmit)
@@ -119,7 +122,8 @@ func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, search *searchs
 		r.Get("/{locale}/catalog", libraryHandler.Catalog)
 		r.Get("/{locale}/wishlist", libraryHandler.Wishlist)
 		r.Get("/{locale}/search", searchHandler.Page)
-		r.Post("/media/import", searchHandler.ImportSubmit)
+		r.Post("/media/import", mediaHandler.ImportSubmit)
+		r.Post("/media/refresh/{mediaRecordId}", mediaHandler.RefreshSubmit)
 		r.Get("/{locale}/library/new", libraryHandler.NewForm)
 		r.Get("/{locale}/library/{entryId}/edit", libraryHandler.EditForm)
 		r.Get("/{locale}/library/{entryId}", libraryHandler.Detail)

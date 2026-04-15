@@ -25,11 +25,6 @@
         <input type="hidden" name="provider" value="{{ $hit.Provider }}" />
         <input type="hidden" name="external_id" value="{{ $hit.ExternalID }}" />
         <input type="hidden" name="tmdb_kind" value="{{ $hit.TMDBKind }}" />
-        <input type="hidden" name="title" value="{{ $hit.Title }}" />
-        <input type="hidden" name="subtitle" value="{{ $hit.Subtitle }}" />
-        <input type="hidden" name="summary" value="{{ $hit.Summary }}" />
-        {{ with $hit.Year }}<input type="hidden" name="year" value="{{ . }}" />{{ end }}
-        {{ if $hit.ImageURL }}<input type="hidden" name="image_url" value="{{ $hit.ImageURL }}" />{{ end }}
         <button type="submit">{{ t $page "search.actions.addCatalog" }}</button>
       </form>
       <form method="post" action="/media/import" class="inline-form">
@@ -39,11 +34,6 @@
         <input type="hidden" name="provider" value="{{ $hit.Provider }}" />
         <input type="hidden" name="external_id" value="{{ $hit.ExternalID }}" />
         <input type="hidden" name="tmdb_kind" value="{{ $hit.TMDBKind }}" />
-        <input type="hidden" name="title" value="{{ $hit.Title }}" />
-        <input type="hidden" name="subtitle" value="{{ $hit.Subtitle }}" />
-        <input type="hidden" name="summary" value="{{ $hit.Summary }}" />
-        {{ with $hit.Year }}<input type="hidden" name="year" value="{{ . }}" />{{ end }}
-        {{ if $hit.ImageURL }}<input type="hidden" name="image_url" value="{{ $hit.ImageURL }}" />{{ end }}
         <button type="submit">{{ t $page "search.actions.addWishlist" }}</button>
       </form>
     </div>

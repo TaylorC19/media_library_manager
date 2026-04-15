@@ -172,7 +172,12 @@
       "invalidImageURL": "画像 URL は HTTPS である必要があります。"
     },
     "flash": {
-      "imported": "ライブラリに追加しました。"
+      "imported": "ライブラリに追加しました。",
+      "existingEntry": "このアイテムは既にライブラリにあります。"
+    },
+    "refresh": {
+      "providerRefUnavailable": "このメディアレコードには更新可能なプロバイダー参照がまだありません。",
+      "notImplemented": "更新の土台は追加しましたが、プロバイダーからの更新処理はまだ未実装です。"
     }
   }
 }

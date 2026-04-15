@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
+	"strings"
 	"time"
 
 	domainlib "media_library_manager/internal/domain/library"
@@ -25,8 +27,13 @@ func NewMediaRecordsRepository(db *mongo.Database) *MediaRecordsRepository {
 func (r *MediaRecordsRepository) EnsureIndexes(ctx context.Context) error {
 	_, err := r.coll.Indexes().CreateMany(ctx, []mongo.IndexModel{
 		{Keys: bson.D{{Key: "mediaType", Value: 1}, {Key: "title", Value: 1}, {Key: "year", Value: 1}}},
+		{Keys: bson.D{{Key: "mediaType", Value: 1}, {Key: "sortTitle", Value: 1}, {Key: "year", Value: 1}}},
 		{Keys: bson.D{{Key: "barcodeCandidates", Value: 1}}},
 		{Keys: bson.D{{Key: "source", Value: 1}}},
+		{Keys: bson.D{{Key: "providerRefs.tmdb.id", Value: 1}, {Key: "providerRefs.tmdb.kind", Value: 1}}},
+		{Keys: bson.D{{Key: "providerRefs.musicbrainz.releaseId", Value: 1}}},
+		{Keys: bson.D{{Key: "providerRefs.openLibrary.workKey", Value: 1}}},
+		{Keys: bson.D{{Key: "providerRefs.rawg.id", Value: 1}}},
 	})
 	if err != nil {
 		return fmt.Errorf("create media_records indexes: %w", err)
@@ -67,6 +74,103 @@ func (r *MediaRecordsRepository) FindByID(ctx context.Context, id primitive.Obje
 	return &rec, nil
 }
 
+func (r *MediaRecordsRepository) FindByProviderImportRef(ctx context.Context, provider, externalID, tmdbKind string) (*domainlib.MediaRecord, error) {
+	externalID = strings.TrimSpace(externalID)
+	if externalID == "" {
+		return nil, nil
+	}
+
+	query := bson.M{}
+	switch strings.TrimSpace(provider) {
+	case "tmdb":
+		query["providerRefs.tmdb.id"] = externalID
+		query["providerRefs.tmdb.kind"] = strings.TrimSpace(tmdbKind)
+	case "musicbrainz":
+		query["providerRefs.musicbrainz.releaseId"] = externalID
+	case "open_library":
+		query["providerRefs.openLibrary.workKey"] = externalID
+	case "rawg":
+		query["providerRefs.rawg.id"] = externalID
+	default:
+		return nil, nil
+	}
+
+	var rec domainlib.MediaRecord
+	err := r.coll.FindOne(ctx, query).Decode(&rec)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("find media record by provider ref: %w", err)
+	}
+	return &rec, nil
+}
+
+func (r *MediaRecordsRepository) FindByAnyBarcodeCandidates(ctx context.Context, mediaType string, barcodes []string) ([]domainlib.MediaRecord, error) {
+	if len(barcodes) == 0 {
+		return nil, nil
+	}
+
+	cur, err := r.coll.Find(ctx, bson.M{
+		"mediaType":         mediaType,
+		"barcodeCandidates": bson.M{"$in": barcodes},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("find media records by barcode candidates: %w", err)
+	}
+	defer cur.Close(ctx)
+
+	var out []domainlib.MediaRecord
+	for cur.Next(ctx) {
+		var rec domainlib.MediaRecord
+		if err := cur.Decode(&rec); err != nil {
+			return nil, fmt.Errorf("decode media record: %w", err)
+		}
+		out = append(out, rec)
+	}
+	if err := cur.Err(); err != nil {
+		return nil, fmt.Errorf("iterate media records by barcode candidates: %w", err)
+	}
+	return out, nil
+}
+
+func (r *MediaRecordsRepository) FindLooseTitleYear(ctx context.Context, mediaType, title string, year *int32) ([]domainlib.MediaRecord, error) {
+	title = strings.TrimSpace(title)
+	if title == "" {
+		return nil, nil
+	}
+
+	query := bson.M{
+		"mediaType": mediaType,
+		"title": bson.M{
+			"$regex":   "^" + regexp.QuoteMeta(title) + "$",
+			"$options": "i",
+		},
+	}
+	if year != nil {
+		query["year"] = *year
+	}
+
+	cur, err := r.coll.Find(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("find media records by title/year: %w", err)
+	}
+	defer cur.Close(ctx)
+
+	var out []domainlib.MediaRecord
+	for cur.Next(ctx) {
+		var rec domainlib.MediaRecord
+		if err := cur.Decode(&rec); err != nil {
+			return nil, fmt.Errorf("decode media record: %w", err)
+		}
+		out = append(out, rec)
+	}
+	if err := cur.Err(); err != nil {
+		return nil, fmt.Errorf("iterate media records by title/year: %w", err)
+	}
+	return out, nil
+}
+
 func (r *MediaRecordsRepository) UpdateManualCore(ctx context.Context, id primitive.ObjectID, title string, sortTitle *string, mediaType string, year *int32) error {
 	set := bson.M{
 		"title":     title,
@@ -87,6 +191,40 @@ func (r *MediaRecordsRepository) UpdateManualCore(ctx context.Context, id primit
 	res, err := r.coll.UpdateOne(ctx, bson.M{"_id": id, "source": domainlib.SourceManual}, bson.M{"$set": set})
 	if err != nil {
 		return fmt.Errorf("update media record: %w", err)
+	}
+	if res.MatchedCount == 0 {
+		return mongo.ErrNoDocuments
+	}
+	return nil
+}
+
+func (r *MediaRecordsRepository) UpdateProviderData(ctx context.Context, rec *domainlib.MediaRecord) error {
+	if rec == nil {
+		return mongo.ErrNilDocument
+	}
+
+	now := time.Now().UTC()
+	rec.UpdatedAt = now
+	set := bson.M{
+		"source":            rec.Source,
+		"mediaType":         rec.MediaType,
+		"title":             rec.Title,
+		"sortTitle":         rec.SortTitle,
+		"releaseDate":       rec.ReleaseDate,
+		"year":              rec.Year,
+		"imageUrl":          rec.ImageURL,
+		"summary":           rec.Summary,
+		"providerRefs":      rec.ProviderRefs,
+		"externalRatings":   rec.ExternalRatings,
+		"barcodeCandidates": rec.BarcodeCandidates,
+		"details":           rec.Details,
+		"lastSyncedAt":      rec.LastSyncedAt,
+		"updatedAt":         now,
+	}
+
+	res, err := r.coll.UpdateOne(ctx, bson.M{"_id": rec.ID}, bson.M{"$set": set})
+	if err != nil {
+		return fmt.Errorf("update provider media record: %w", err)
 	}
 	if res.MatchedCount == 0 {
 		return mongo.ErrNoDocuments

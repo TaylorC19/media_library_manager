@@ -172,7 +172,12 @@
       "invalidImageURL": "Image URL must use HTTPS."
     },
     "flash": {
-      "imported": "Added to your library."
+      "imported": "Added to your library.",
+      "existingEntry": "That item is already in your library."
+    },
+    "refresh": {
+      "providerRefUnavailable": "This media record does not have a refreshable provider reference yet.",
+      "notImplemented": "Refresh scaffolding is in place, but provider refresh updates are not implemented yet."
     }
   }
 }

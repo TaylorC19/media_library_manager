@@ -71,6 +71,29 @@ func (r *LibraryEntriesRepository) FindByIDAndUser(ctx context.Context, id, user
 	return &entry, nil
 }
 
+func (r *LibraryEntriesRepository) FindByUserMediaBucketAndFormat(ctx context.Context, userID, mediaRecordID primitive.ObjectID, bucket string, format *string) (*domainlib.LibraryEntry, error) {
+	query := bson.M{
+		"userId":        userID,
+		"mediaRecordId": mediaRecordID,
+		"bucket":        bucket,
+	}
+	if format == nil || *format == "" {
+		query["format"] = bson.M{"$in": []any{nil, ""}}
+	} else {
+		query["format"] = *format
+	}
+
+	var entry domainlib.LibraryEntry
+	err := r.coll.FindOne(ctx, query).Decode(&entry)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("find library entry by media record: %w", err)
+	}
+	return &entry, nil
+}
+
 func (r *LibraryEntriesRepository) ListByUserAndBucket(ctx context.Context, userID primitive.ObjectID, bucket string) ([]domainlib.LibraryEntry, error) {
 	opts := options.Find().SetSort(bson.D{{Key: "createdAt", Value: -1}})
 	cur, err := r.coll.Find(ctx, bson.M{"userId": userID, "bucket": bucket}, opts)

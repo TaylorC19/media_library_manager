@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -10,19 +8,17 @@ import (
 	domainlib "media_library_manager/internal/domain/library"
 	domainsearch "media_library_manager/internal/domain/search"
 	"media_library_manager/internal/http/middleware"
-	libsvc "media_library_manager/internal/service/library"
 	searchsvc "media_library_manager/internal/service/search"
 	"media_library_manager/internal/views"
 )
 
 type SearchHandler struct {
-	render  *views.Renderer
-	search  *searchsvc.Service
-	library *libsvc.Service
+	render *views.Renderer
+	search *searchsvc.Service
 }
 
-func NewSearchHandler(render *views.Renderer, search *searchsvc.Service, library *libsvc.Service) *SearchHandler {
-	return &SearchHandler{render: render, search: search, library: library}
+func NewSearchHandler(render *views.Renderer, search *searchsvc.Service) *SearchHandler {
+	return &SearchHandler{render: render, search: search}
 }
 
 func (h *SearchHandler) baseAppData(r *http.Request, title, pageTitle string) map[string]any {
@@ -138,47 +134,4 @@ func (h *SearchHandler) Page(w http.ResponseWriter, r *http.Request) {
 
 	h.consumeFlash(w, r, data)
 	h.renderPage(w, "pages/search.html", data)
-}
-
-func (h *SearchHandler) ImportSubmit(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
-		return
-	}
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form", http.StatusBadRequest)
-		return
-	}
-
-	locale := strings.TrimSpace(r.FormValue("locale"))
-	if locale == "" {
-		locale = middleware.LocaleFromContext(r.Context())
-	}
-
-	year := parseYearField(r.FormValue("year"))
-	form := libsvc.ProviderImportForm{
-		Bucket:     r.FormValue("bucket"),
-		MediaType:  r.FormValue("media_type"),
-		Provider:   r.FormValue("provider"),
-		ExternalID: r.FormValue("external_id"),
-		TMDBKind:   r.FormValue("tmdb_kind"),
-		Title:      r.FormValue("title"),
-		Subtitle:   r.FormValue("subtitle"),
-		Year:       year,
-		ImageURL:   r.FormValue("image_url"),
-		Summary:    r.FormValue("summary"),
-	}
-
-	entryID, formErrs, err := h.library.CreateFromProviderImport(r.Context(), user.ID, form)
-	if err != nil {
-		if errors.Is(err, libsvc.ErrValidation) {
-			http.Error(w, strings.Join(formErrs, ", "), http.StatusBadRequest)
-			return
-		}
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	target := fmt.Sprintf("/%s/library/%s", locale, entryID.Hex())
-	h.setFlashRedirect(w, r, target, "common.flash.info", "search.flash.imported")
 }
