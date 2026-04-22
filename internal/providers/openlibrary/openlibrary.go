@@ -53,6 +53,23 @@ func (c *Client) SearchWorks(ctx context.Context, query string) ([]WorkHit, erro
 		return nil, nil
 	}
 	u := "https://openlibrary.org/search.json?limit=50&q=" + url.QueryEscape(query)
+	return c.searchJSON(ctx, u)
+}
+
+// SearchByISBN uses Open Library ISBN index (search.json?isbn=...).
+func (c *Client) SearchByISBN(ctx context.Context, isbn string, limit int) ([]WorkHit, error) {
+	isbn = strings.TrimSpace(isbn)
+	if isbn == "" {
+		return nil, nil
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+	u := fmt.Sprintf("https://openlibrary.org/search.json?limit=%d&isbn=%s", limit, url.QueryEscape(isbn))
+	return c.searchJSON(ctx, u)
+}
+
+func (c *Client) searchJSON(ctx context.Context, u string) ([]WorkHit, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return nil, err

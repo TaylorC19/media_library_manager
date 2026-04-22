@@ -167,6 +167,34 @@ func (r *LibraryEntriesRepository) Update(ctx context.Context, entry *domainlib.
 	return nil
 }
 
+// FindByUserAndMediaRecordIDs returns all library entries for the user tied to any of the given media records.
+func (r *LibraryEntriesRepository) FindByUserAndMediaRecordIDs(ctx context.Context, userID primitive.ObjectID, mediaRecordIDs []primitive.ObjectID) ([]domainlib.LibraryEntry, error) {
+	if len(mediaRecordIDs) == 0 {
+		return nil, nil
+	}
+	cur, err := r.coll.Find(ctx, bson.M{
+		"userId":        userID,
+		"mediaRecordId": bson.M{"$in": mediaRecordIDs},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("find library entries by media records: %w", err)
+	}
+	defer cur.Close(ctx)
+
+	var out []domainlib.LibraryEntry
+	for cur.Next(ctx) {
+		var e domainlib.LibraryEntry
+		if err := cur.Decode(&e); err != nil {
+			return nil, fmt.Errorf("decode library entry: %w", err)
+		}
+		out = append(out, e)
+	}
+	if err := cur.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (r *LibraryEntriesRepository) DeleteByIDAndUser(ctx context.Context, id, userID primitive.ObjectID) error {
 	res, err := r.coll.DeleteOne(ctx, bson.M{"_id": id, "userId": userID})
 	if err != nil {

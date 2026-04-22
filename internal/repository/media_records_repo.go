@@ -106,6 +106,37 @@ func (r *MediaRecordsRepository) FindByProviderImportRef(ctx context.Context, pr
 	return &rec, nil
 }
 
+// FindByBarcodeCandidate finds media records whose barcodeCandidates contain the given normalized barcode.
+// If mediaType is non-nil and non-empty, results are restricted to that media type.
+func (r *MediaRecordsRepository) FindByBarcodeCandidate(ctx context.Context, barcode string, mediaType *string) ([]domainlib.MediaRecord, error) {
+	barcode = strings.TrimSpace(barcode)
+	if barcode == "" {
+		return nil, nil
+	}
+	q := bson.M{"barcodeCandidates": barcode}
+	if mediaType != nil && strings.TrimSpace(*mediaType) != "" {
+		q["mediaType"] = strings.TrimSpace(*mediaType)
+	}
+	cur, err := r.coll.Find(ctx, q)
+	if err != nil {
+		return nil, fmt.Errorf("find media records by barcode candidate: %w", err)
+	}
+	defer cur.Close(ctx)
+
+	var out []domainlib.MediaRecord
+	for cur.Next(ctx) {
+		var rec domainlib.MediaRecord
+		if err := cur.Decode(&rec); err != nil {
+			return nil, fmt.Errorf("decode media record: %w", err)
+		}
+		out = append(out, rec)
+	}
+	if err := cur.Err(); err != nil {
+		return nil, fmt.Errorf("iterate media records by barcode: %w", err)
+	}
+	return out, nil
+}
+
 func (r *MediaRecordsRepository) FindByAnyBarcodeCandidates(ctx context.Context, mediaType string, barcodes []string) ([]domainlib.MediaRecord, error) {
 	if len(barcodes) == 0 {
 		return nil, nil

@@ -46,7 +46,10 @@ func NewService(cfg config.Config) *Service {
 			APIKey: cfg.RAWGAPIKey,
 			HTTP:   httpRAWG,
 		},
-		discogs: &discogs.Client{Token: cfg.DiscogsToken},
+		discogs: &discogs.Client{
+			Token: cfg.DiscogsToken,
+			HTTP:  discogs.DefaultHTTPClient(),
+		},
 	}
 }
 

@@ -35,6 +35,7 @@ type ReleaseHit struct {
 	ID             string
 	Title          string
 	Date           string
+	Barcode        string
 	ArtistName     string
 	Disambiguation string
 }
@@ -59,12 +60,22 @@ type releaseDoc struct {
 	ID             string `json:"id"`
 	Title          string `json:"title"`
 	Date           string `json:"date"`
+	Barcode        string `json:"barcode"`
 	Disambiguation string `json:"disambiguation"`
 	ArtistCredit   []struct {
 		Artist struct {
 			Name string `json:"name"`
 		} `json:"artist"`
 	} `json:"artist-credit"`
+}
+
+// SearchByBarcode queries MusicBrainz for releases whose barcode field matches the given code.
+func (c *Client) SearchByBarcode(ctx context.Context, barcode string) ([]ReleaseHit, error) {
+	barcode = strings.TrimSpace(barcode)
+	if barcode == "" {
+		return nil, nil
+	}
+	return c.SearchReleases(ctx, "barcode:"+barcode)
 }
 
 func (c *Client) SearchReleases(ctx context.Context, query string) ([]ReleaseHit, error) {
@@ -119,6 +130,7 @@ func (c *Client) SearchReleases(ctx context.Context, query string) ([]ReleaseHit
 			ID:             id,
 			Title:          title,
 			Date:           strings.TrimSpace(r.Date),
+			Barcode:        strings.TrimSpace(r.Barcode),
 			ArtistName:     artist,
 			Disambiguation: strings.TrimSpace(r.Disambiguation),
 		})

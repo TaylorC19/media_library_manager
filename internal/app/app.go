@@ -18,6 +18,7 @@ import (
 	authsvc "media_library_manager/internal/service/auth"
 	libsvc "media_library_manager/internal/service/library"
 	mediasvc "media_library_manager/internal/service/media"
+	barcodesvc "media_library_manager/internal/service/barcode"
 	searchsvc "media_library_manager/internal/service/search"
 	"media_library_manager/internal/static"
 	"media_library_manager/internal/views"
@@ -74,11 +75,16 @@ func New(cfg config.Config) (*App, error) {
 	if err := libEntriesRepo.EnsureIndexes(ctx); err != nil {
 		return nil, err
 	}
+	scanLogsRepo := repository.NewScanLogsRepository(instance.Database)
+	if err := scanLogsRepo.EnsureIndexes(ctx); err != nil {
+		return nil, err
+	}
 	instance.Auth = authsvc.NewService(usersRepo, sessionsRepo, cfg.SessionTTL())
 	librarySvc := libsvc.NewService(mediaRepo, libEntriesRepo)
 	mediaSvc := mediasvc.NewService(cfg, mediaRepo, libEntriesRepo)
 	searchSvc := searchsvc.NewService(cfg)
-	instance.Router = instance.newRouter(staticFS, librarySvc, mediaSvc, searchSvc)
+	barcodeSvc := barcodesvc.NewService(cfg, mediaRepo, libEntriesRepo, scanLogsRepo)
+	instance.Router = instance.newRouter(staticFS, librarySvc, mediaSvc, searchSvc, barcodeSvc)
 
 	return instance, nil
 }
@@ -90,7 +96,7 @@ func (a *App) Close(ctx context.Context) error {
 	return a.Mongo.Disconnect(ctx)
 }
 
-func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc.Service, search *searchsvc.Service) http.Handler {
+func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc.Service, search *searchsvc.Service, barcode *barcodesvc.Service) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Recovery)
@@ -109,6 +115,7 @@ func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc
 	libraryHandler := handlers.NewLibraryHandler(a.Renderer, library)
 	searchHandler := handlers.NewSearchHandler(a.Renderer, search)
 	mediaHandler := handlers.NewMediaHandler(a.Renderer, media)
+	barcodeHandler := handlers.NewBarcodeHandler(barcode)
 
 	r.Get("/{locale}/login", authHandler.LoginPage)
 	r.Post("/{locale}/login", authHandler.LoginSubmit)
@@ -130,6 +137,7 @@ func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc
 		r.Post("/library", libraryHandler.CreateSubmit)
 		r.Post("/library/{entryId}/update", libraryHandler.UpdateSubmit)
 		r.Post("/library/{entryId}/delete", libraryHandler.DeleteSubmit)
+		r.Post("/barcode/lookup", barcodeHandler.Lookup)
 	})
 
 	return r
