@@ -1,0 +1,38 @@
+{{ define "partials/pagination" }}
+{{ if gt .Pagination.TotalItems .Pagination.PageSize }}
+<nav class="pagination" aria-label="{{ t .Page "common.pagination.aria" }}">
+  {{ if .Pagination.PrevURL }}
+    <a
+      class="button-link"
+      href="{{ .Pagination.PrevURL }}"
+      hx-get="{{ .Pagination.PrevURL }}"
+      hx-target="#{{ if .Page.ListPath }}library-list-section{{ else }}search-results{{ end }}"
+      hx-push-url="true"
+    >{{ t .Page "common.pagination.previous" }}</a>
+  {{ end }}
+
+  <div class="pagination__pages">
+    {{ range .Pagination.Links }}
+      <a
+        class="button-link {{ if .Current }}is-current{{ end }}"
+        href="{{ .URL }}"
+        hx-get="{{ .URL }}"
+        hx-target="#{{ if $.Page.ListPath }}library-list-section{{ else }}search-results{{ end }}"
+        hx-push-url="true"
+        {{ if .Current }}aria-current="page"{{ end }}
+      >{{ .Label }}</a>
+    {{ end }}
+  </div>
+
+  {{ if .Pagination.NextURL }}
+    <a
+      class="button-link"
+      href="{{ .Pagination.NextURL }}"
+      hx-get="{{ .Pagination.NextURL }}"
+      hx-target="#{{ if .Page.ListPath }}library-list-section{{ else }}search-results{{ end }}"
+      hx-push-url="true"
+    >{{ t .Page "common.pagination.next" }}</a>
+  {{ end }}
+</nav>
+{{ end }}
+{{ end }}

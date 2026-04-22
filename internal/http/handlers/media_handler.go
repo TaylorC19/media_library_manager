@@ -10,17 +10,19 @@ import (
 	domainauth "media_library_manager/internal/domain/auth"
 	"media_library_manager/internal/http/middleware"
 	mediasvc "media_library_manager/internal/service/media"
+	"media_library_manager/internal/views"
 
 	"github.com/go-chi/chi/v5"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type MediaHandler struct {
-	media *mediasvc.Service
+	render *views.Renderer
+	media  *mediasvc.Service
 }
 
-func NewMediaHandler(media *mediasvc.Service) *MediaHandler {
-	return &MediaHandler{media: media}
+func NewMediaHandler(render *views.Renderer, media *mediasvc.Service) *MediaHandler {
+	return &MediaHandler{render: render, media: media}
 }
 
 func (h *MediaHandler) requireUser(w http.ResponseWriter, r *http.Request) *domainauth.User {
@@ -71,10 +73,31 @@ func (h *MediaHandler) ImportSubmit(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, mediasvc.ErrValidation):
+			if isHTMX(r) {
+				h.renderInlineNotice(w, locale, InlineNotice{
+					Level:   "common.flash.error",
+					Message: firstNoticeKey(formErrs, "search.import.externalIdRequired"),
+				}, http.StatusBadRequest)
+				return
+			}
 			http.Error(w, strings.Join(formErrs, ", "), http.StatusBadRequest)
 		case errors.Is(err, mediasvc.ErrNotFound):
+			if isHTMX(r) {
+				h.renderInlineNotice(w, locale, InlineNotice{
+					Level:   "common.flash.error",
+					Message: "search.import.notFound",
+				}, http.StatusNotFound)
+				return
+			}
 			http.Error(w, "provider record not found", http.StatusNotFound)
 		default:
+			if isHTMX(r) {
+				h.renderInlineNotice(w, locale, InlineNotice{
+					Level:   "common.flash.error",
+					Message: "common.flash.serverError",
+				}, http.StatusInternalServerError)
+				return
+			}
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 		return
@@ -86,7 +109,24 @@ func (h *MediaHandler) ImportSubmit(w http.ResponseWriter, r *http.Request) {
 		if outcome.WasExistingLibraryEntry {
 			flashKey = "search.flash.existingEntry"
 		}
+		if isHTMX(r) {
+			h.renderInlineNotice(w, locale, InlineNotice{
+				Level:     "common.flash.info",
+				Message:   flashKey,
+				DetailURL: target,
+				DetailKey: "common.actions.view",
+			}, http.StatusOK)
+			return
+		}
 		h.setFlashRedirect(w, r, target, "common.flash.info", flashKey)
+		return
+	}
+
+	if isHTMX(r) {
+		h.renderInlineNotice(w, locale, InlineNotice{
+			Level:   "common.flash.info",
+			Message: "search.flash.imported",
+		}, http.StatusOK)
 		return
 	}
 
@@ -103,6 +143,16 @@ func (h *MediaHandler) RefreshSubmit(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		return
 	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form", http.StatusBadRequest)
+		return
+	}
+
+	locale := strings.TrimSpace(r.FormValue("locale"))
+	if locale == "" {
+		locale = middleware.LocaleFromContext(r.Context())
+	}
+	entryID := strings.TrimSpace(r.FormValue("entry_id"))
 
 	mediaRecordID, ok := parseMediaRecordIDParam(w, r, chi.URLParam(r, "mediaRecordId"))
 	if !ok {
@@ -119,8 +169,50 @@ func (h *MediaHandler) RefreshSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	messageKey := refreshNoticeKey(outcome)
+	if isHTMX(r) {
+		h.renderInlineNotice(w, locale, InlineNotice{
+			Level:   "common.flash.info",
+			Message: messageKey,
+		}, http.StatusOK)
+		return
+	}
+	if entryID != "" {
+		target := fmt.Sprintf("/%s/library/%s", locale, entryID)
+		h.setFlashRedirect(w, r, target, "common.flash.info", messageKey)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(outcome)
+}
+
+func (h *MediaHandler) renderInlineNotice(w http.ResponseWriter, locale string, notice InlineNotice, status int) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(status)
+	_ = h.render.Render(w, "partials/inline_notice", map[string]any{
+		"Locale": locale,
+		"Notice": notice,
+	})
+}
+
+func firstNoticeKey(keys []string, fallback string) string {
+	if len(keys) == 0 {
+		return fallback
+	}
+	return keys[0]
+}
+
+func refreshNoticeKey(outcome *mediasvc.RefreshOutcome) string {
+	if outcome == nil {
+		return "common.flash.serverError"
+	}
+	switch outcome.UnavailableReason {
+	case "provider_ref_unavailable":
+		return "search.refresh.providerRefUnavailable"
+	default:
+		return "search.refresh.notImplemented"
+	}
 }
 
 func parseMediaRecordIDParam(w http.ResponseWriter, r *http.Request, raw string) (primitive.ObjectID, bool) {

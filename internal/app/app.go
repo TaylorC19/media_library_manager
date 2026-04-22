@@ -108,7 +108,7 @@ func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc
 	authHandler := handlers.NewAuthHandler(a.Config, a.Renderer, a.Auth)
 	libraryHandler := handlers.NewLibraryHandler(a.Renderer, library)
 	searchHandler := handlers.NewSearchHandler(a.Renderer, search)
-	mediaHandler := handlers.NewMediaHandler(media)
+	mediaHandler := handlers.NewMediaHandler(a.Renderer, media)
 
 	r.Get("/{locale}/login", authHandler.LoginPage)
 	r.Post("/{locale}/login", authHandler.LoginSubmit)

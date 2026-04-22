@@ -34,6 +34,23 @@
     <dt>{{ t . "library.fields.source" }}</dt>
     <dd>{{ .Detail.Media.Source }}</dd>
   </dl>
+  {{ if eq .Detail.Media.Source "provider" }}
+  <div class="detail-refresh">
+    <form
+      method="post"
+      action="/media/refresh/{{ .Detail.Media.ID.Hex }}"
+      class="inline-form"
+      hx-post="/media/refresh/{{ .Detail.Media.ID.Hex }}"
+      hx-target="find .inline-notice-host"
+      hx-swap="outerHTML"
+    >
+      <input type="hidden" name="locale" value="{{ .Locale }}" />
+      <input type="hidden" name="entry_id" value="{{ .Detail.Entry.ID.Hex }}" />
+      <button type="submit">{{ t . "library.actions.refreshMedia" }}</button>
+      <div class="inline-notice-host"></div>
+    </form>
+  </div>
+  {{ end }}
   {{ else }}
   <p class="muted">{{ t . "library.detail.missingMedia" }}</p>
   {{ end }}

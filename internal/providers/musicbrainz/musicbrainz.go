@@ -74,7 +74,7 @@ func (c *Client) SearchReleases(ctx context.Context, query string) ([]ReleaseHit
 	}
 	c.throttle()
 
-	u := "https://musicbrainz.org/ws/2/release?fmt=json&limit=15&query=" + url.QueryEscape(query)
+	u := "https://musicbrainz.org/ws/2/release?fmt=json&limit=50&query=" + url.QueryEscape(query)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return nil, err

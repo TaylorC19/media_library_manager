@@ -99,7 +99,7 @@ func (c *Client) decodeSearch(ctx context.Context, rawURL, kind string) ([]Resul
 
 	var out []Result
 	for _, raw := range envelope.Results {
-		if len(out) >= 15 {
+		if len(out) >= 50 {
 			break
 		}
 		parsed, ok := decodeResultItem(raw, kind)

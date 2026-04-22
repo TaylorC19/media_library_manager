@@ -51,18 +51,24 @@ For the current root-level Go app, the fastest feedback loop is:
 1. Start Mongo only in Docker:
 
 ```bash
-make dev-db-up
+./scripts/dev-db-up.sh
 ```
 
-2. Run the Go web app on your host machine:
+2. Run the Go web app on your host machine with live reload:
 
 ```bash
-make dev-web
+./scripts/dev-web.sh
 ```
 
 3. Open [http://localhost:8080](http://localhost:8080)
 
-This avoids rebuilding the web container on every code change.
+`./scripts/dev-web.sh` runs the Go app through `air`, so backend, template, locale, and static asset changes restart the server automatically. If you want the old one-shot behavior, use:
+
+```bash
+./scripts/dev-web-run.sh
+```
+
+This still avoids rebuilding the web container on every code change.
 
 ### Docker
 

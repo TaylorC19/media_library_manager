@@ -1,20 +1,20 @@
 services:
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    environment:
-      APP_ENV: production
-      PORT: 8080
-      DEFAULT_LOCALE: en
-      MONGODB_URI: mongodb://mongo:27017
-      MONGODB_DATABASE: media_library
-    ports:
-      - "8080:8080"
-    depends_on:
-      - mongo
+  # web:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     APP_ENV: production
+  #     PORT: 8080
+  #     DEFAULT_LOCALE: en
+  #     MONGODB_URI: mongodb://mongo:27017
+  #     MONGODB_DATABASE: media_library
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     - mongo
 
   mongo:
     image: mongo:7

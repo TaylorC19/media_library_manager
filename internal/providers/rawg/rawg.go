@@ -55,7 +55,7 @@ func (c *Client) SearchGames(ctx context.Context, query string) ([]GameHit, erro
 		return nil, nil
 	}
 	u := fmt.Sprintf(
-		"https://api.rawg.io/api/games?key=%s&search=%s&page_size=15",
+		"https://api.rawg.io/api/games?key=%s&search=%s&page_size=50",
 		url.QueryEscape(c.APIKey),
 		url.QueryEscape(query),
 	)

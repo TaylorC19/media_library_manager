@@ -18,6 +18,11 @@ type LibraryEntriesRepository struct {
 	coll *mongo.Collection
 }
 
+type LibraryListFilter struct {
+	MediaType string
+	Format    string
+}
+
 func NewLibraryEntriesRepository(db *mongo.Database) *LibraryEntriesRepository {
 	return &LibraryEntriesRepository{coll: db.Collection("library_entries")}
 }
@@ -94,9 +99,20 @@ func (r *LibraryEntriesRepository) FindByUserMediaBucketAndFormat(ctx context.Co
 	return &entry, nil
 }
 
-func (r *LibraryEntriesRepository) ListByUserAndBucket(ctx context.Context, userID primitive.ObjectID, bucket string) ([]domainlib.LibraryEntry, error) {
+func (r *LibraryEntriesRepository) ListByUserAndBucket(ctx context.Context, userID primitive.ObjectID, bucket string, filter LibraryListFilter) ([]domainlib.LibraryEntry, error) {
+	query := bson.M{
+		"userId": userID,
+		"bucket": bucket,
+	}
+	if filter.MediaType != "" {
+		query["mediaType"] = filter.MediaType
+	}
+	if filter.Format != "" {
+		query["format"] = filter.Format
+	}
+
 	opts := options.Find().SetSort(bson.D{{Key: "createdAt", Value: -1}})
-	cur, err := r.coll.Find(ctx, bson.M{"userId": userID, "bucket": bucket}, opts)
+	cur, err := r.coll.Find(ctx, query, opts)
 	if err != nil {
 		return nil, fmt.Errorf("list library entries: %w", err)
 	}

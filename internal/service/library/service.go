@@ -32,6 +32,17 @@ type EntryWithMedia struct {
 	Media *domainlib.MediaRecord
 }
 
+type ListBucketFilters struct {
+	MediaType string
+	Format    string
+	Query     string
+}
+
+type ListBucketResult struct {
+	Items      []EntryWithMedia
+	TotalItems int
+}
+
 type ManualCreateForm struct {
 	Bucket       string
 	MediaType    string
@@ -109,15 +120,42 @@ func (s *Service) DashboardStats(ctx context.Context, userID primitive.ObjectID)
 	return catalogCount, wishlistCount, nil
 }
 
-func (s *Service) ListBucket(ctx context.Context, userID primitive.ObjectID, bucket string) ([]EntryWithMedia, error) {
+func (s *Service) ListBucket(ctx context.Context, userID primitive.ObjectID, bucket string, filters ListBucketFilters, page, pageSize int) (*ListBucketResult, error) {
 	if !domainlib.IsBucket(bucket) {
 		return nil, fmt.Errorf("bucket: %w", ErrValidation)
 	}
-	entries, err := s.entries.ListByUserAndBucket(ctx, userID, bucket)
+	if filters.MediaType != "" && !domainlib.IsMediaType(filters.MediaType) {
+		return nil, fmt.Errorf("media type: %w", ErrValidation)
+	}
+	if filters.Format != "" && !domainlib.IsFormat(filters.Format) {
+		return nil, fmt.Errorf("format: %w", ErrValidation)
+	}
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+
+	entries, err := s.entries.ListByUserAndBucket(ctx, userID, bucket, repository.LibraryListFilter{
+		MediaType: filters.MediaType,
+		Format:    filters.Format,
+	})
 	if err != nil {
 		return nil, err
 	}
-	return s.attachMedia(ctx, entries)
+	rows, err := s.attachMedia(ctx, entries)
+	if err != nil {
+		return nil, err
+	}
+
+	rows = filterRows(rows, filters.Query)
+	totalItems := len(rows)
+	start, end := pageBounds(totalItems, page, pageSize)
+	return &ListBucketResult{
+		Items:      rows[start:end],
+		TotalItems: totalItems,
+	}, nil
 }
 
 func (s *Service) attachMedia(ctx context.Context, entries []domainlib.LibraryEntry) ([]EntryWithMedia, error) {
@@ -140,6 +178,58 @@ func (s *Service) attachMedia(ctx context.Context, entries []domainlib.LibraryEn
 		out = append(out, EntryWithMedia{Entry: &entries[i], Media: m})
 	}
 	return out, nil
+}
+
+func filterRows(rows []EntryWithMedia, query string) []EntryWithMedia {
+	query = strings.ToLower(strings.TrimSpace(query))
+	if query == "" {
+		return rows
+	}
+
+	filtered := make([]EntryWithMedia, 0, len(rows))
+	for _, row := range rows {
+		title := ""
+		summary := ""
+		if row.Media != nil {
+			title = strings.ToLower(strings.TrimSpace(row.Media.Title))
+			if row.Media.Summary != nil {
+				summary = strings.ToLower(strings.TrimSpace(*row.Media.Summary))
+			}
+		}
+		notes := strings.ToLower(strings.TrimSpace(stringValue(row.Entry.Notes)))
+		if strings.Contains(title, query) || strings.Contains(summary, query) || strings.Contains(notes, query) {
+			filtered = append(filtered, row)
+		}
+	}
+	return filtered
+}
+
+func pageBounds(totalItems, page, pageSize int) (int, int) {
+	if totalItems <= 0 {
+		return 0, 0
+	}
+	if page <= 0 {
+		page = 1
+	}
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+	start := (page - 1) * pageSize
+	if start >= totalItems {
+		return totalItems, totalItems
+	}
+	end := start + pageSize
+	if end > totalItems {
+		end = totalItems
+	}
+	return start, end
+}
+
+func stringValue(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
 }
 
 func (s *Service) GetEntryDetail(ctx context.Context, userID, entryID primitive.ObjectID) (*EntryWithMedia, error) {

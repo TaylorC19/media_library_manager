@@ -7,13 +7,21 @@
       "createAccount": "Create account",
       "save": "Save",
       "edit": "Edit",
-      "delete": "Delete"
+      "delete": "Delete",
+      "view": "View item"
     },
     "status": {
       "signedIn": "Signed in"
     },
     "flash": {
-      "info": "Info"
+      "info": "Info",
+      "error": "Error",
+      "serverError": "Something went wrong. Please try again."
+    },
+    "pagination": {
+      "aria": "Pagination",
+      "previous": "Previous",
+      "next": "Next"
     }
   },
   "auth": {
@@ -67,7 +75,8 @@
     "list": {
       "empty": "Nothing here yet.",
       "addToCatalog": "Add to catalog",
-      "addToWishlist": "Add to wishlist"
+      "addToWishlist": "Add to wishlist",
+      "summary": "Showing"
     },
     "detail": {
       "myCopy": "My copy",
@@ -93,6 +102,16 @@
       "mediaReadOnly": "This item is linked to provider metadata. Only your copy fields are editable here.",
       "cancelToDetail": "Back to detail",
       "cancelToCatalog": "Cancel"
+    },
+    "filters": {
+      "query": "Filter titles",
+      "anyMediaType": "Any media type",
+      "anyFormat": "Any format",
+      "apply": "Apply filters",
+      "clear": "Clear"
+    },
+    "actions": {
+      "refreshMedia": "Refresh media details"
     },
     "errors": {
       "titleRequired": "Title is required.",
@@ -148,7 +167,8 @@
     },
     "results": {
       "heading": "Results",
-      "empty": "No matches found."
+      "empty": "No matches found.",
+      "summary": "Showing"
     },
     "warnings": {
       "tmdbKeyMissing": "TMDB API key is not configured. Add TMDB_API_KEY to search movies and TV.",
@@ -169,7 +189,8 @@
       "invalidProvider": "That provider is not supported.",
       "invalidTMDBKind": "TMDB kind is invalid.",
       "mediaTypeMismatch": "Media type does not match the selected provider.",
-      "invalidImageURL": "Image URL must use HTTPS."
+      "invalidImageURL": "Image URL must use HTTPS.",
+      "notFound": "The provider record could not be found."
     },
     "flash": {
       "imported": "Added to your library.",

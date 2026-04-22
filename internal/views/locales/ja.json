@@ -7,13 +7,21 @@
       "createAccount": "登録",
       "save": "保存",
       "edit": "編集",
-      "delete": "削除"
+      "delete": "削除",
+      "view": "詳細を見る"
     },
     "status": {
       "signedIn": "ログイン中"
     },
     "flash": {
-      "info": "お知らせ"
+      "info": "お知らせ",
+      "error": "エラー",
+      "serverError": "エラーが発生しました。しばらくしてから再度お試しください。"
+    },
+    "pagination": {
+      "aria": "ページ送り",
+      "previous": "前へ",
+      "next": "次へ"
     }
   },
   "auth": {
@@ -67,7 +75,8 @@
     "list": {
       "empty": "まだありません。",
       "addToCatalog": "カタログに追加",
-      "addToWishlist": "ウィッシュリストに追加"
+      "addToWishlist": "ウィッシュリストに追加",
+      "summary": "表示中"
     },
     "detail": {
       "myCopy": "マイコピー",
@@ -93,6 +102,16 @@
       "mediaReadOnly": "このアイテムはプロバイダー由来のメタデータに紐づいています。ここでは所有情報のみ編集できます。",
       "cancelToDetail": "詳細に戻る",
       "cancelToCatalog": "キャンセル"
+    },
+    "filters": {
+      "query": "タイトルで絞り込む",
+      "anyMediaType": "すべてのメディア種別",
+      "anyFormat": "すべてのフォーマット",
+      "apply": "絞り込む",
+      "clear": "クリア"
+    },
+    "actions": {
+      "refreshMedia": "作品情報を更新"
     },
     "errors": {
       "titleRequired": "タイトルは必須です。",
@@ -148,7 +167,8 @@
     },
     "results": {
       "heading": "結果",
-      "empty": "該当する結果がありません。"
+      "empty": "該当する結果がありません。",
+      "summary": "表示中"
     },
     "warnings": {
       "tmdbKeyMissing": "TMDB の API キーが未設定です。映画/TV を検索するには TMDB_API_KEY を設定してください。",
@@ -169,7 +189,8 @@
       "invalidProvider": "そのプロバイダーには対応していません。",
       "invalidTMDBKind": "TMDB の種別が不正です。",
       "mediaTypeMismatch": "メディア種別がプロバイダーと一致しません。",
-      "invalidImageURL": "画像 URL は HTTPS である必要があります。"
+      "invalidImageURL": "画像 URL は HTTPS である必要があります。",
+      "notFound": "プロバイダーのレコードが見つかりませんでした。"
     },
     "flash": {
       "imported": "ライブラリに追加しました。",

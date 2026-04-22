@@ -52,7 +52,7 @@ func (c *Client) SearchWorks(ctx context.Context, query string) ([]WorkHit, erro
 	if query == "" {
 		return nil, nil
 	}
-	u := "https://openlibrary.org/search.json?limit=15&q=" + url.QueryEscape(query)
+	u := "https://openlibrary.org/search.json?limit=50&q=" + url.QueryEscape(query)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return nil, err

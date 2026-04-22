@@ -2,7 +2,14 @@
 <section class="search-page">
   <h2>{{ t . "search.title" }}</h2>
 
-  <form class="search-form" method="get" action="/{{ .Locale }}/search">
+  <form
+    class="search-form"
+    method="get"
+    action="/{{ .Locale }}/search"
+    hx-get="/{{ .Locale }}/search"
+    hx-target="#search-results"
+    hx-push-url="true"
+  >
     <div class="field">
       <label for="q">{{ t . "search.fields.query" }}</label>
       <input id="q" name="q" type="search" value="{{ .Values.q }}" autocomplete="off" />
@@ -16,29 +23,13 @@
         {{ end }}
       </select>
     </div>
+    <input type="hidden" name="page_size" value="{{ if .Values.page_size }}{{ .Values.page_size }}{{ else }}10{{ end }}" />
     <button class="button-primary" type="submit">{{ t . "search.actions.submit" }}</button>
   </form>
 
-  {{ if ne .SearchError "" }}
-    <p class="form-error" role="alert">{{ t . .SearchError }}</p>
-  {{ end }}
-
-  {{ range .SearchWarnings }}
-    <p class="search-warning muted" role="status">{{ t $ . }}</p>
-  {{ end }}
-
-  {{ if and .Query (eq .SearchError "") }}
-    {{ if .Hits }}
-      <h3 class="search-results-heading">{{ t . "search.results.heading" }}</h3>
-      <div class="search-results">
-        {{ range .Hits }}
-          {{ template "partials/search_result_card" (dict "Page" $ "Hit" .) }}
-        {{ end }}
-      </div>
-    {{ else if .Values.media_type }}
-      <p class="empty-state">{{ t . "search.results.empty" }}</p>
-    {{ end }}
-  {{ end }}
+  <div id="search-results" class="results-region" aria-live="polite">
+    {{ template "partials/search_results" . }}
+  </div>
 </section>
 {{ end }}
 

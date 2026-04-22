@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"net/url"
 	"strings"
 
 	domainauth "media_library_manager/internal/domain/auth"
@@ -92,6 +93,10 @@ func (h *SearchHandler) Page(w http.ResponseWriter, r *http.Request) {
 
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	mediaType := strings.TrimSpace(r.URL.Query().Get("media_type"))
+	page := parsePage(r.URL.Query().Get("page"))
+	pageSize := parsePageSize(r.URL.Query().Get("page_size"))
+	locale := middleware.LocaleFromContext(r.Context())
+	basePath := "/" + locale + "/search"
 
 	data := h.baseAppData(r, "Search", "")
 	data["ContentTemplate"] = "pages/search.content"
@@ -102,25 +107,25 @@ func (h *SearchHandler) Page(w http.ResponseWriter, r *http.Request) {
 	data["Values"] = map[string]string{
 		"q":          q,
 		"media_type": mediaType,
+		"page_size":  r.URL.Query().Get("page_size"),
 	}
+	data["Pagination"] = buildPagination(basePath, searchValues(q, mediaType), page, pageSize, 0)
+	data["SearchPath"] = basePath
 
 	if q != "" && mediaType == "" {
 		data["SearchError"] = "search.errors.mediaTypeRequired"
 	}
 	if q == "" {
-		h.consumeFlash(w, r, data)
-		h.renderPage(w, "pages/search.html", data)
+		h.renderSearchResponse(w, r, data)
 		return
 	}
 	if mediaType == "" {
-		h.consumeFlash(w, r, data)
-		h.renderPage(w, "pages/search.html", data)
+		h.renderSearchResponse(w, r, data)
 		return
 	}
 	if !domainlib.IsMediaType(mediaType) {
 		data["SearchError"] = "search.errors.invalidMediaType"
-		h.consumeFlash(w, r, data)
-		h.renderPage(w, "pages/search.html", data)
+		h.renderSearchResponse(w, r, data)
 		return
 	}
 
@@ -129,9 +134,31 @@ func (h *SearchHandler) Page(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
-	data["Hits"] = out.Hits
+	totalItems := len(out.Hits)
+	start, end := pageBounds(totalItems, page, pageSize)
+	data["Hits"] = out.Hits[start:end]
 	data["SearchWarnings"] = out.Warnings
+	data["Pagination"] = buildPagination(basePath, searchValues(q, mediaType), page, pageSize, totalItems)
 
+	h.renderSearchResponse(w, r, data)
+}
+
+func (h *SearchHandler) renderSearchResponse(w http.ResponseWriter, r *http.Request, data map[string]any) {
+	if isHTMX(r) {
+		h.renderPage(w, "partials/search_results", data)
+		return
+	}
 	h.consumeFlash(w, r, data)
 	h.renderPage(w, "pages/search.html", data)
+}
+
+func searchValues(query, mediaType string) url.Values {
+	values := url.Values{}
+	if query != "" {
+		values.Set("q", query)
+	}
+	if mediaType != "" {
+		values.Set("media_type", mediaType)
+	}
+	return values
 }

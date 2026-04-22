@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -122,17 +123,35 @@ func (h *LibraryHandler) listBucket(w http.ResponseWriter, r *http.Request, buck
 	if user == nil {
 		return
 	}
-	rows, err := h.library.ListBucket(r.Context(), user.ID, bucket)
+	locale := middleware.LocaleFromContext(r.Context())
+	page := parsePage(r.URL.Query().Get("page"))
+	pageSize := parsePageSize(r.URL.Query().Get("page_size"))
+	filters := libsvc.ListBucketFilters{
+		MediaType: strings.TrimSpace(r.URL.Query().Get("media_type")),
+		Format:    strings.TrimSpace(r.URL.Query().Get("format")),
+		Query:     strings.TrimSpace(r.URL.Query().Get("q")),
+	}
+	result, err := h.library.ListBucket(r.Context(), user.ID, bucket, filters, page, pageSize)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	listPath := "/" + locale + "/" + bucket
 	data := h.baseAppData(r, title, "")
 	data["ContentTemplate"] = contentTpl
-	data["List"] = rows
+	data["List"] = result.Items
+	data["ListTotal"] = result.TotalItems
 	data["Bucket"] = bucket
-	h.consumeFlash(w, r, data)
-	h.renderPage(w, "pages/library_list.html", data)
+	data["ListPath"] = listPath
+	data["Pagination"] = buildPagination(listPath, bucketValues(filters), page, pageSize, result.TotalItems)
+	data["Values"] = map[string]string{
+		"q":          filters.Query,
+		"media_type": filters.MediaType,
+		"format":     filters.Format,
+		"page_size":  strconv.Itoa(pageSize),
+	}
+	h.renderBucketResponse(w, r, data)
 }
 
 func (h *LibraryHandler) Detail(w http.ResponseWriter, r *http.Request) {
@@ -370,6 +389,29 @@ func (h *LibraryHandler) renderFormErrors(w http.ResponseWriter, r *http.Request
 	}
 	data["CanEditMedia"] = canEditMedia
 	h.renderPage(w, "pages/library_form.html", data)
+}
+
+func (h *LibraryHandler) renderBucketResponse(w http.ResponseWriter, r *http.Request, data map[string]any) {
+	if isHTMX(r) {
+		h.renderPage(w, "partials/library_list_section", data)
+		return
+	}
+	h.consumeFlash(w, r, data)
+	h.renderPage(w, "pages/library_list.html", data)
+}
+
+func bucketValues(filters libsvc.ListBucketFilters) url.Values {
+	values := url.Values{}
+	if filters.Query != "" {
+		values.Set("q", filters.Query)
+	}
+	if filters.MediaType != "" {
+		values.Set("media_type", filters.MediaType)
+	}
+	if filters.Format != "" {
+		values.Set("format", filters.Format)
+	}
+	return values
 }
 
 func formValuesFromCreate(f libsvc.ManualCreateForm) map[string]string {
