@@ -8,7 +8,8 @@ export default tseslint.config(
       "**/.next/**",
       "**/dist/**",
       "**/coverage/**",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "internal/static/public/js/vendor/**"
     ]
   },
   js.configs.recommended,
@@ -32,6 +33,17 @@ export default tseslint.config(
           "prefer": "type-imports"
         }
       ]
+    }
+  },
+  {
+    files: ["internal/static/public/js/**/*.js"],
+    languageOptions: {
+      globals: {
+        ...globals.browser
+      }
+    },
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off"
     }
   }
 );

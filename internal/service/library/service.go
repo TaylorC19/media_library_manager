@@ -309,6 +309,56 @@ func (s *Service) CreateManual(ctx context.Context, userID primitive.ObjectID, f
 	return libEntry.ID, nil, nil
 }
 
+// AttachFromMediaRecord creates a library entry for an existing media record (e.g. local barcode match), or
+// returns the existing entry id for the same user, media, and bucket. Optional barcode is stored on a newly inserted entry.
+// wasExisting is true when a row for that user, media, and bucket was already present.
+func (s *Service) AttachFromMediaRecord(ctx context.Context, userID, mediaRecordID primitive.ObjectID, bucket, barcode string) (entryID primitive.ObjectID, wasExisting bool, formErrs []string, err error) {
+	bucket = strings.TrimSpace(bucket)
+	mediaRec, err := s.media.FindByID(ctx, mediaRecordID)
+	if err != nil {
+		return primitive.NilObjectID, false, nil, err
+	}
+	if mediaRec == nil {
+		return primitive.NilObjectID, false, []string{"library.errors.mediaNotFound"}, ErrValidation
+	}
+
+	var errs []string
+	errs = append(errs, validateCore(mediaRec.MediaType, bucket, "")...)
+	if len(errs) > 0 {
+		return primitive.NilObjectID, false, errs, ErrValidation
+	}
+
+	entry, err := s.entries.FindByUserMediaBucketAndFormat(ctx, userID, mediaRecordID, bucket, nil)
+	if err != nil {
+		return primitive.NilObjectID, false, nil, err
+	}
+	if entry != nil {
+		return entry.ID, true, nil, nil
+	}
+
+	libEntry := &domainlib.LibraryEntry{
+		UserID:        userID,
+		MediaRecordID: mediaRecordID,
+		Bucket:        bucket,
+		MediaType:     mediaRec.MediaType,
+		Barcode:       optionalString(barcode),
+	}
+	if err := s.entries.Insert(ctx, libEntry); err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			existing, lookupErr := s.entries.FindByUserMediaBucketAndFormat(ctx, userID, mediaRecordID, bucket, nil)
+			if lookupErr != nil {
+				return primitive.NilObjectID, false, nil, lookupErr
+			}
+			if existing != nil {
+				return existing.ID, true, nil, nil
+			}
+			return primitive.NilObjectID, false, []string{"library.errors.duplicateEntry"}, ErrValidation
+		}
+		return primitive.NilObjectID, false, nil, err
+	}
+	return libEntry.ID, false, nil, nil
+}
+
 func (s *Service) UpdateEntry(ctx context.Context, userID, entryID primitive.ObjectID, f ManualUpdateForm) ([]string, error) {
 	entry, err := s.entries.FindByIDAndUser(ctx, entryID, userID)
 	if err != nil {

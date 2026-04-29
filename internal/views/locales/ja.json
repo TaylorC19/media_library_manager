@@ -64,6 +64,7 @@
       "catalog": "カタログ",
       "wishlist": "ウィッシュリスト",
       "search": "検索",
+      "scan": "スキャン",
       "add": "追加"
     },
     "catalog": {
@@ -118,12 +119,15 @@
       "invalidMediaType": "有効なメディア種別を選んでください。",
       "invalidBucket": "カタログかウィッシュリストを選んでください。",
       "invalidFormat": "有効なフォーマットを選んでください。",
-      "duplicateEntry": "同じバケット・フォーマットの組み合わせで既に登録されています。"
+      "duplicateEntry": "同じバケット・フォーマットの組み合わせで既に登録されています。",
+      "mediaNotFound": "該当するメディアレコードが見つかりませんでした。",
+      "invalidMediaRecordId": "メディアIDの形式が正しくありません。"
     },
     "flash": {
       "created": "保存しました。",
       "updated": "更新しました。",
-      "deleted": "ライブラリから削除しました。"
+      "deleted": "ライブラリから削除しました。",
+      "addedToLibrary": "ライブラリに追加しました。"
     },
     "bucket": {
       "catalog": "カタログ",
@@ -151,6 +155,34 @@
       "xbox": "Xbox",
       "digital": "デジタル",
       "other": "その他"
+    }
+  },
+  "scan": {
+    "title": "バーコードスキャン",
+    "intro": "カメラを向けるか、数字を入力して検索します。保存するのは手動で「追加」したときだけです。",
+    "preferredType": "優先する種別（任意）",
+    "preferredAny": "指定なし",
+    "barcode": "バーコード",
+    "lookup": "検索",
+    "startCamera": "カメラを開始",
+    "stopCamera": "カメラを停止",
+    "scanAgain": "もう一度スキャン",
+    "cameraDenied": "カメラへのアクセスが拒否されました。下に手入力できます。",
+    "cameraUnsupported": "このブラウザではカメラを利用できません。",
+    "noDecoder": "このブラウザでは自動スキャンに未対応です。手で入力してください。",
+    "resultsHeading": "候補",
+    "failuresHeading": "照会メモ",
+    "fallbackIntro": "手動で検索する",
+    "viewEntry": "ライブラリで表示",
+    "viewEntryShort": "表示",
+    "sourceLocal": "手元のデータ",
+    "sourceProvider": "プロバイダー",
+    "barcodeLabel": "バーコード",
+    "noResults": "候補が見つかりません。",
+    "noZxing": "スキャナ用ライブラリを読み込めませんでした。ページを再読み込みしてください。",
+    "errors": {
+      "lookupFailed": "照会に失敗しました。",
+      "httpError": "サーバーがエラーを返しました。"
     }
   },
   "search": {
@@ -182,6 +214,8 @@
       "tmdb": "TMDB",
       "musicbrainz": "MusicBrainz",
       "open_library": "Open Library",
+      "openlibrary": "Open Library",
+      "discogs": "Discogs",
       "rawg": "RAWG"
     },
     "import": {

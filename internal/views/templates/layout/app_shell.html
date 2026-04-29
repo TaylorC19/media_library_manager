@@ -23,6 +23,11 @@
       {{ template "partials/flash" . }}
       {{ template "partials/render_content" . }}
     </main>
+    {{ if .PageScripts }}
+      {{ range .PageScripts }}
+        <script src="{{ . }}" defer></script>
+      {{ end }}
+    {{ end }}
   </body>
 </html>
 {{ end }}

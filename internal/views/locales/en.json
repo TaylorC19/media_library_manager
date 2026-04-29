@@ -64,6 +64,7 @@
       "catalog": "Catalog",
       "wishlist": "Wishlist",
       "search": "Search",
+      "scan": "Scan",
       "add": "Add item"
     },
     "catalog": {
@@ -118,12 +119,15 @@
       "invalidMediaType": "Choose a valid media type.",
       "invalidBucket": "Choose catalog or wishlist.",
       "invalidFormat": "Choose a valid format.",
-      "duplicateEntry": "You already have this title in that bucket with the same format."
+      "duplicateEntry": "You already have this title in that bucket with the same format.",
+      "mediaNotFound": "That media record could not be found.",
+      "invalidMediaRecordId": "That media id is not valid."
     },
     "flash": {
       "created": "Item saved.",
       "updated": "Changes saved.",
-      "deleted": "Item removed from your library."
+      "deleted": "Item removed from your library.",
+      "addedToLibrary": "Added to your library."
     },
     "bucket": {
       "catalog": "Catalog",
@@ -151,6 +155,34 @@
       "xbox": "Xbox",
       "digital": "Digital",
       "other": "Other"
+    }
+  },
+  "scan": {
+    "title": "Scan barcode",
+    "intro": "Start the camera and point it at a barcode, or type the digits and look them up. Nothing is saved until you add an item.",
+    "preferredType": "Preferred type (optional)",
+    "preferredAny": "Any",
+    "barcode": "Barcode",
+    "lookup": "Look up",
+    "startCamera": "Start camera",
+    "stopCamera": "Stop camera",
+    "scanAgain": "Scan again",
+    "cameraDenied": "Camera access was denied. You can still type a barcode below.",
+    "cameraUnsupported": "Camera is not available in this browser.",
+    "noDecoder": "This browser does not support automatic scanning. Type the barcode manually.",
+    "resultsHeading": "Matches",
+    "failuresHeading": "Lookup notes",
+    "fallbackIntro": "Try a manual search",
+    "viewEntry": "View in library",
+    "viewEntryShort": "View",
+    "sourceLocal": "In your library",
+    "sourceProvider": "Provider",
+    "barcodeLabel": "Barcode",
+    "noResults": "No matches found.",
+    "noZxing": "Scanner library could not be loaded. Reload the page.",
+    "errors": {
+      "lookupFailed": "Lookup failed.",
+      "httpError": "Server returned an error."
     }
   },
   "search": {
@@ -182,6 +214,8 @@
       "tmdb": "TMDB",
       "musicbrainz": "MusicBrainz",
       "open_library": "Open Library",
+      "openlibrary": "Open Library",
+      "discogs": "Discogs",
       "rawg": "RAWG"
     },
     "import": {

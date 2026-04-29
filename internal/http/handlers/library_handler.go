@@ -286,6 +286,53 @@ func (h *LibraryHandler) CreateSubmit(w http.ResponseWriter, r *http.Request) {
 	h.setFlashRedirect(w, r, target, "common.flash.info", "library.flash.created")
 }
 
+func (h *LibraryHandler) AttachSubmit(w http.ResponseWriter, r *http.Request) {
+	user := h.requireUser(w, r)
+	if user == nil {
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "invalid form", http.StatusBadRequest)
+		return
+	}
+	locale := strings.TrimSpace(r.FormValue("locale"))
+	if locale == "" {
+		locale = middleware.LocaleFromContext(r.Context())
+	}
+	raw := strings.TrimSpace(r.FormValue("media_record_id"))
+	if len(raw) != 24 {
+		h.setFlashRedirect(w, r, "/"+locale+"/scan", "common.flash.error", "library.errors.invalidMediaRecordId")
+		return
+	}
+	mediaRecordID, err := primitive.ObjectIDFromHex(raw)
+	if err != nil {
+		h.setFlashRedirect(w, r, "/"+locale+"/scan", "common.flash.error", "library.errors.invalidMediaRecordId")
+		return
+	}
+	bucket := strings.TrimSpace(r.FormValue("bucket"))
+	barcode := strings.TrimSpace(r.FormValue("barcode"))
+
+	entryID, wasExisting, formErrs, err := h.library.AttachFromMediaRecord(r.Context(), user.ID, mediaRecordID, bucket, barcode)
+	if err != nil {
+		if errors.Is(err, libsvc.ErrValidation) {
+			msgKey := "common.flash.serverError"
+			if len(formErrs) > 0 {
+				msgKey = formErrs[0]
+			}
+			h.setFlashRedirect(w, r, "/"+locale+"/scan", "common.flash.error", msgKey)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	flashKey := "library.flash.addedToLibrary"
+	if wasExisting {
+		flashKey = "search.flash.existingEntry"
+	}
+	target := fmt.Sprintf("/%s/library/%s", locale, entryID.Hex())
+	h.setFlashRedirect(w, r, target, "common.flash.info", flashKey)
+}
+
 func (h *LibraryHandler) UpdateSubmit(w http.ResponseWriter, r *http.Request) {
 	user := h.requireUser(w, r)
 	if user == nil {
