@@ -5,9 +5,9 @@
   <h3>{{ t . "library.detail.myCopy" }}</h3>
   <dl class="detail-dl">
     <dt>{{ t . "library.fields.bucket" }}</dt>
-    <dd>{{ .Detail.Entry.Bucket }}</dd>
+    <dd>{{ t . (printf "library.bucket.%s" .Detail.Entry.Bucket) }}</dd>
     <dt>{{ t . "library.fields.mediaType" }}</dt>
-    <dd>{{ .Detail.Entry.MediaType }}</dd>
+    <dd>{{ t . (printf "library.mediatype.%s" .Detail.Entry.MediaType) }}</dd>
     <dt>{{ t . "library.fields.format" }}</dt>
     <dd>{{ $fk := libraryFormatKey .Detail.Entry.Format }}{{ if $fk }}{{ t . $fk }}{{ else }}—{{ end }}</dd>
     <dt>{{ t . "library.fields.barcode" }}</dt>
@@ -26,13 +26,13 @@
   {{ if .Detail.Media }}
   <dl class="detail-dl">
     <dt>{{ t . "library.fields.mediaType" }}</dt>
-    <dd>{{ .Detail.Media.MediaType }}</dd>
+    <dd>{{ t . (printf "library.mediatype.%s" .Detail.Media.MediaType) }}</dd>
     <dt>{{ t . "library.fields.title" }}</dt>
     <dd>{{ .Detail.Media.Title }}</dd>
     <dt>{{ t . "library.fields.year" }}</dt>
     <dd>{{ if .Detail.Media.Year }}{{ .Detail.Media.Year }}{{ else }}—{{ end }}</dd>
     <dt>{{ t . "library.fields.source" }}</dt>
-    <dd>{{ .Detail.Media.Source }}</dd>
+    <dd>{{ t . (printf "library.source.%s" .Detail.Media.Source) }}</dd>
   </dl>
   {{ if eq .Detail.Media.Source "provider" }}
   <div class="detail-refresh">

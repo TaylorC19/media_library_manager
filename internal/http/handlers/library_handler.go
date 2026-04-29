@@ -27,13 +27,13 @@ func NewLibraryHandler(render *views.Renderer, library *libsvc.Service) *Library
 	return &LibraryHandler{render: render, library: library}
 }
 
-func (h *LibraryHandler) baseAppData(r *http.Request, title, pageTitle string) map[string]any {
+func (h *LibraryHandler) baseAppData(r *http.Request, titleKey string) map[string]any {
 	user := middleware.CurrentUser(r.Context())
 	locale := middleware.LocaleFromContext(r.Context())
 	return map[string]any{
-		"Title":           title + " - Media Library Manager",
-		"PageTitle":       pageTitle,
+		"TitleKey":        titleKey,
 		"Locale":          locale,
+		"Path":            r.URL.Path,
 		"User":            user,
 		"MediaTypes":      domainlib.MediaTypes,
 		"Buckets":         domainlib.Buckets,
@@ -102,7 +102,7 @@ func (h *LibraryHandler) Dashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := h.baseAppData(r, "Dashboard", "")
+	data := h.baseAppData(r, "dashboard.title")
 	data["ContentTemplate"] = "pages/dashboard.content"
 	data["CatalogCount"] = catalogCount
 	data["WishlistCount"] = wishlistCount
@@ -111,14 +111,14 @@ func (h *LibraryHandler) Dashboard(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *LibraryHandler) Catalog(w http.ResponseWriter, r *http.Request) {
-	h.listBucket(w, r, domainlib.BucketCatalog, "Catalog", "pages/catalog.content")
+	h.listBucket(w, r, domainlib.BucketCatalog, "library.catalog.title", "pages/catalog.content")
 }
 
 func (h *LibraryHandler) Wishlist(w http.ResponseWriter, r *http.Request) {
-	h.listBucket(w, r, domainlib.BucketWishlist, "Wishlist", "pages/wishlist.content")
+	h.listBucket(w, r, domainlib.BucketWishlist, "library.wishlist.title", "pages/wishlist.content")
 }
 
-func (h *LibraryHandler) listBucket(w http.ResponseWriter, r *http.Request, bucket, title, contentTpl string) {
+func (h *LibraryHandler) listBucket(w http.ResponseWriter, r *http.Request, bucket, titleKey, contentTpl string) {
 	user := h.requireUser(w, r)
 	if user == nil {
 		return
@@ -138,7 +138,7 @@ func (h *LibraryHandler) listBucket(w http.ResponseWriter, r *http.Request, buck
 	}
 
 	listPath := "/" + locale + "/" + bucket
-	data := h.baseAppData(r, title, "")
+	data := h.baseAppData(r, titleKey)
 	data["ContentTemplate"] = contentTpl
 	data["List"] = result.Items
 	data["ListTotal"] = result.TotalItems
@@ -172,7 +172,10 @@ func (h *LibraryHandler) Detail(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	data := h.baseAppData(r, detail.Media.Title, "")
+	data := h.baseAppData(r, "library.detail.mediaDetails")
+	if detail.Media != nil && strings.TrimSpace(detail.Media.Title) != "" {
+		data["Title"] = detail.Media.Title
+	}
 	data["ContentTemplate"] = "pages/library_detail.content"
 	data["Detail"] = detail
 	data["CanEditMedia"] = detail.Media.Source == domainlib.SourceManual
@@ -185,7 +188,7 @@ func (h *LibraryHandler) NewForm(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		return
 	}
-	data := h.baseAppData(r, "Add item", "")
+	data := h.baseAppData(r, "library.form.newTitle")
 	data["ContentTemplate"] = "pages/library_form.content"
 	data["FormAction"] = "/library"
 	data["IsEdit"] = false
@@ -235,7 +238,7 @@ func (h *LibraryHandler) EditForm(w http.ResponseWriter, r *http.Request) {
 		values["year"] = strconv.Itoa(int(*detail.Media.Year))
 	}
 
-	data := h.baseAppData(r, "Edit item", "")
+	data := h.baseAppData(r, "library.form.editTitle")
 	data["ContentTemplate"] = "pages/library_form.content"
 	data["FormAction"] = "/library/" + detail.Entry.ID.Hex() + "/update"
 	data["IsEdit"] = true
@@ -412,10 +415,9 @@ func (h *LibraryHandler) DeleteSubmit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *LibraryHandler) renderFormErrors(w http.ResponseWriter, r *http.Request, formAction string, isEdit bool, entryID string, values map[string]string, formErrs []string) {
-	data := h.baseAppData(r, "Add item", "")
+	data := h.baseAppData(r, "library.form.newTitle")
 	if isEdit {
-		data["Title"] = "Edit item - Media Library Manager"
-		data["PageTitle"] = "Edit item"
+		data["TitleKey"] = "library.form.editTitle"
 	}
 	data["ContentTemplate"] = "pages/library_form.content"
 	data["FormAction"] = formAction

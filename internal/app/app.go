@@ -117,6 +117,7 @@ func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc
 	mediaHandler := handlers.NewMediaHandler(a.Renderer, media)
 	barcodeHandler := handlers.NewBarcodeHandler(barcode)
 	scanHandler := handlers.NewScanHandler(a.Renderer)
+	settingsHandler := handlers.NewSettingsHandler(a.Renderer)
 
 	r.Get("/{locale}/login", authHandler.LoginPage)
 	r.Post("/{locale}/login", authHandler.LoginSubmit)
@@ -131,6 +132,7 @@ func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc
 		r.Get("/{locale}/wishlist", libraryHandler.Wishlist)
 		r.Get("/{locale}/search", searchHandler.Page)
 		r.Get("/{locale}/scan", scanHandler.ScanPage)
+		r.Get("/{locale}/settings", settingsHandler.Page)
 		r.Post("/media/import", mediaHandler.ImportSubmit)
 		r.Post("/media/refresh/{mediaRecordId}", mediaHandler.RefreshSubmit)
 		r.Get("/{locale}/library/new", libraryHandler.NewForm)

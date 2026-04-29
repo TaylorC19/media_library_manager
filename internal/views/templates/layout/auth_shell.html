@@ -2,13 +2,16 @@
 <!doctype html>
 <html lang="{{ .Locale }}">
   <head>
+    {{ $pageTitle := t . "common.appName" }}
+    {{ if .TitleKey }}{{ $pageTitle = t . .TitleKey }}{{ else if .Title }}{{ $pageTitle = .Title }}{{ end }}
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{{ .Title }}</title>
+    <title>{{ $pageTitle }} · {{ t . "common.appName" }}</title>
     <link rel="stylesheet" href="/static/css/base.css" />
   </head>
   <body>
     <main class="container">
+      {{ template "partials/language_switcher" . }}
       {{ template "partials/flash" . }}
       {{ template "partials/render_content" . }}
     </main>

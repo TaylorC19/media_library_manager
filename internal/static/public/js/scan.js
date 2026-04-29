@@ -323,7 +323,7 @@
       const fh = el("h4", "scan-failures-heading", str("str-failures-heading"));
       const ul = el("ul", "scan-failure-list", "");
       data.failures.forEach(function (f) {
-        const li = el("li", "muted", (f.provider || "?") + ": " + (f.code || ""));
+        const li = el("li", "muted", (providerLabel(f.provider) || "?") + ": " + (f.code || ""));
         ul.appendChild(li);
       });
       resultsEl.appendChild(fh);

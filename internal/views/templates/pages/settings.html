@@ -1,0 +1,29 @@
+{{ define "pages/settings.content" }}
+<section class="settings-page">
+  <h2>{{ t . "settings.title" }}</h2>
+  <p class="muted">{{ t . "settings.intro" }}</p>
+
+  <section class="card detail-section">
+    <h3>{{ t . "settings.account.heading" }}</h3>
+    <dl class="detail-dl">
+      <dt>{{ t . "settings.account.username" }}</dt>
+      <dd>{{ .User.Username }}</dd>
+      <dt>{{ t . "settings.account.displayName" }}</dt>
+      <dd>{{ if .User.DisplayName }}{{ .User.ShowName }}{{ else }}—{{ end }}</dd>
+    </dl>
+  </section>
+
+  <section class="card detail-section">
+    <h3>{{ t . "settings.language.heading" }}</h3>
+    <p><strong>{{ t . "settings.language.current" }}</strong>: {{ t . .CurrentLanguageKey }}</p>
+    <div>
+      <span class="muted">{{ t . "settings.language.choose" }}</span>
+      {{ template "partials/language_switcher" . }}
+    </div>
+  </section>
+</section>
+{{ end }}
+
+{{ define "pages/settings.html" }}
+{{ template "layout/app_shell" . }}
+{{ end }}

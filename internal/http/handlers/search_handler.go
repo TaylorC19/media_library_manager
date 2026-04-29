@@ -22,13 +22,13 @@ func NewSearchHandler(render *views.Renderer, search *searchsvc.Service) *Search
 	return &SearchHandler{render: render, search: search}
 }
 
-func (h *SearchHandler) baseAppData(r *http.Request, title, pageTitle string) map[string]any {
+func (h *SearchHandler) baseAppData(r *http.Request, titleKey string) map[string]any {
 	user := middleware.CurrentUser(r.Context())
 	locale := middleware.LocaleFromContext(r.Context())
 	return map[string]any{
-		"Title":           title + " - Media Library Manager",
-		"PageTitle":       pageTitle,
+		"TitleKey":        titleKey,
 		"Locale":          locale,
+		"Path":            r.URL.Path,
 		"User":            user,
 		"MediaTypes":      domainlib.MediaTypes,
 		"Buckets":         domainlib.Buckets,
@@ -98,7 +98,7 @@ func (h *SearchHandler) Page(w http.ResponseWriter, r *http.Request) {
 	locale := middleware.LocaleFromContext(r.Context())
 	basePath := "/" + locale + "/search"
 
-	data := h.baseAppData(r, "Search", "")
+	data := h.baseAppData(r, "search.title")
 	data["ContentTemplate"] = "pages/search.content"
 	data["Query"] = q
 	data["Hits"] = []domainsearch.Hit{}

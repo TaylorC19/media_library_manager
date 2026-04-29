@@ -30,7 +30,7 @@ func (h *AuthHandler) LoginPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := h.baseAuthData(r, "Login", nil, nil)
+	data := h.baseAuthData(r, "auth.login.title", nil, nil)
 	data["ContentTemplate"] = "pages/login.content"
 	h.consumeFlash(w, r, data)
 	h.renderTemplate(w, "pages/login.html", data)
@@ -43,7 +43,7 @@ func (h *AuthHandler) RegisterPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := h.baseAuthData(r, "Register", nil, nil)
+	data := h.baseAuthData(r, "auth.register.title", nil, nil)
 	data["ContentTemplate"] = "pages/register.content"
 	h.consumeFlash(w, r, data)
 	h.renderTemplate(w, "pages/register.html", data)
@@ -65,7 +65,7 @@ func (h *AuthHandler) LoginSubmit(w http.ResponseWriter, r *http.Request) {
 		if !errors.Is(err, authsvc.ErrInvalidCredentials) {
 			msgKey = "auth.errors.serverError"
 		}
-		data := h.baseAuthData(r, "Login", map[string]string{"username": username}, []string{msgKey})
+		data := h.baseAuthData(r, "auth.login.title", map[string]string{"username": username}, []string{msgKey})
 		data["ContentTemplate"] = "pages/login.content"
 		h.renderTemplate(w, "pages/login.html", data)
 		return
@@ -93,7 +93,7 @@ func (h *AuthHandler) RegisterSubmit(w http.ResponseWriter, r *http.Request) {
 		} else if errors.Is(err, authsvc.ErrUsernameTaken) {
 			msgKey = "auth.errors.usernameTaken"
 		}
-		data := h.baseAuthData(r, "Register", map[string]string{"username": username}, []string{msgKey})
+		data := h.baseAuthData(r, "auth.register.title", map[string]string{"username": username}, []string{msgKey})
 		data["ContentTemplate"] = "pages/register.content"
 		h.renderTemplate(w, "pages/register.html", data)
 		return
@@ -131,7 +131,7 @@ func (h *AuthHandler) LogoutSubmit(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/"+locale+"/login", http.StatusFound)
 }
 
-func (h *AuthHandler) baseAuthData(r *http.Request, title string, values map[string]string, formErrors []string) map[string]any {
+func (h *AuthHandler) baseAuthData(r *http.Request, titleKey string, values map[string]string, formErrors []string) map[string]any {
 	locale := middleware.LocaleFromContext(r.Context())
 	if values == nil {
 		values = map[string]string{}
@@ -141,9 +141,9 @@ func (h *AuthHandler) baseAuthData(r *http.Request, title string, values map[str
 	}
 
 	return map[string]any{
-		"Title":      title + " - Media Library Manager",
-		"PageTitle":  title,
+		"TitleKey":   titleKey,
 		"Locale":     locale,
+		"Path":       r.URL.Path,
 		"Values":     values,
 		"FormErrors": formErrors,
 	}

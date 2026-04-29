@@ -9,15 +9,15 @@ import (
 	"media_library_manager/internal/views"
 )
 
-type ScanHandler struct {
+type SettingsHandler struct {
 	render *views.Renderer
 }
 
-func NewScanHandler(render *views.Renderer) *ScanHandler {
-	return &ScanHandler{render: render}
+func NewSettingsHandler(render *views.Renderer) *SettingsHandler {
+	return &SettingsHandler{render: render}
 }
 
-func (h *ScanHandler) baseAppData(r *http.Request, titleKey string) map[string]any {
+func (h *SettingsHandler) baseAppData(r *http.Request, titleKey string) map[string]any {
 	user := middleware.CurrentUser(r.Context())
 	locale := middleware.LocaleFromContext(r.Context())
 	return map[string]any{
@@ -34,13 +34,13 @@ func (h *ScanHandler) baseAppData(r *http.Request, titleKey string) map[string]a
 	}
 }
 
-func (h *ScanHandler) renderPage(w http.ResponseWriter, page string, data map[string]any) {
+func (h *SettingsHandler) renderPage(w http.ResponseWriter, page string, data map[string]any) {
 	if err := h.render.Render(w, page, data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
-func (h *ScanHandler) consumeFlash(w http.ResponseWriter, r *http.Request, data map[string]any) {
+func (h *SettingsHandler) consumeFlash(w http.ResponseWriter, r *http.Request, data map[string]any) {
 	c, err := r.Cookie("flash")
 	if err != nil {
 		return
@@ -59,7 +59,7 @@ func (h *ScanHandler) consumeFlash(w http.ResponseWriter, r *http.Request, data 
 	})
 }
 
-func (h *ScanHandler) requireUser(w http.ResponseWriter, r *http.Request) *domainauth.User {
+func (h *SettingsHandler) requireUser(w http.ResponseWriter, r *http.Request) *domainauth.User {
 	user := middleware.CurrentUser(r.Context())
 	if user == nil {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
@@ -68,14 +68,15 @@ func (h *ScanHandler) requireUser(w http.ResponseWriter, r *http.Request) *domai
 	return user
 }
 
-func (h *ScanHandler) ScanPage(w http.ResponseWriter, r *http.Request) {
+func (h *SettingsHandler) Page(w http.ResponseWriter, r *http.Request) {
 	user := h.requireUser(w, r)
 	if user == nil {
 		return
 	}
-	data := h.baseAppData(r, "scan.title")
-	data["ContentTemplate"] = "pages/scan.content"
-	data["PageScripts"] = []string{"/static/js/vendor/zxing-browser.min.js", "/static/js/scan.js"}
+
+	data := h.baseAppData(r, "settings.title")
+	data["ContentTemplate"] = "pages/settings.content"
+	data["CurrentLanguageKey"] = "common.languageSwitcher." + data["Locale"].(string)
 	h.consumeFlash(w, r, data)
-	h.renderPage(w, "pages/scan.html", data)
+	h.renderPage(w, "pages/settings.html", data)
 }

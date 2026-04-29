@@ -69,6 +69,13 @@ func NewRenderer(useEmbedded bool) (*Renderer, error) {
 				return ""
 			}
 		},
+		"swapLocale": func(path, target string) string {
+			target = strings.ToLower(strings.TrimSpace(target))
+			if target != "en" && target != "ja" {
+				target = "en"
+			}
+			return swapLocalePath(path, target)
+		},
 		"t": func(data any, key string) string {
 			locale := "en"
 			if m, ok := data.(map[string]any); ok {
@@ -179,4 +186,27 @@ func resolveTranslation(msgs map[string]any, key string) (string, bool) {
 		return "", false
 	}
 	return text, true
+}
+
+func swapLocalePath(path, target string) string {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return "/" + target + "/"
+	}
+
+	trimmed := strings.Trim(path, "/")
+	if trimmed == "" {
+		return "/" + target + "/"
+	}
+
+	parts := strings.Split(trimmed, "/")
+	if len(parts) > 0 && (parts[0] == "en" || parts[0] == "ja") {
+		if len(parts) == 1 {
+			return "/" + target + "/"
+		}
+		parts[0] = target
+		return "/" + strings.Join(parts, "/")
+	}
+
+	return "/" + target + "/" + trimmed
 }

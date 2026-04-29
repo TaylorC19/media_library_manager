@@ -76,7 +76,7 @@
     <input type="hidden" name="year" value="{{ index .Values "year" }}" />
     <dl class="detail-dl">
       <dt>{{ t . "library.fields.mediaType" }}</dt>
-      <dd>{{ index .Values "media_type" }}</dd>
+      <dd>{{ t . (printf "library.mediatype.%s" (index .Values "media_type")) }}</dd>
       <dt>{{ t . "library.fields.title" }}</dt>
       <dd>{{ index .Values "title" }}</dd>
       <dt>{{ t . "library.fields.year" }}</dt>

@@ -19,5 +19,7 @@
   {{ template "pages/search.content" . }}
 {{ else if eq .ContentTemplate "pages/scan.content" }}
   {{ template "pages/scan.content" . }}
+{{ else if eq .ContentTemplate "pages/settings.content" }}
+  {{ template "pages/settings.content" . }}
 {{ end }}
 {{ end }}

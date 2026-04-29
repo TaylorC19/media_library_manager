@@ -1,6 +1,12 @@
 {
   "common": {
     "appName": "メディアライブラリーマネージャー",
+    "languageSwitcher": {
+      "aria": "言語切り替え",
+      "label": "言語",
+      "en": "English",
+      "ja": "日本語"
+    },
     "actions": {
       "logout": "ログアウト",
       "signIn": "ログイン",
@@ -65,6 +71,7 @@
       "wishlist": "ウィッシュリスト",
       "search": "検索",
       "scan": "スキャン",
+      "settings": "設定",
       "add": "追加"
     },
     "catalog": {
@@ -133,6 +140,10 @@
       "catalog": "カタログ",
       "wishlist": "ウィッシュリスト"
     },
+    "source": {
+      "manual": "手動",
+      "provider": "プロバイダー"
+    },
     "mediatype": {
       "movie": "映画",
       "tv": "TV",
@@ -183,6 +194,20 @@
     "errors": {
       "lookupFailed": "照会に失敗しました。",
       "httpError": "サーバーがエラーを返しました。"
+    }
+  },
+  "settings": {
+    "title": "設定",
+    "intro": "アカウント情報を確認し、アプリの表示言語を切り替えます。",
+    "account": {
+      "heading": "アカウント",
+      "username": "ユーザー名",
+      "displayName": "表示名"
+    },
+    "language": {
+      "heading": "言語",
+      "current": "現在の言語",
+      "choose": "言語を選ぶ"
     }
   },
   "search": {

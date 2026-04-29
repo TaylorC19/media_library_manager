@@ -2,9 +2,11 @@
 <!doctype html>
 <html lang="{{ .Locale }}">
   <head>
+    {{ $pageTitle := t . "common.appName" }}
+    {{ if .TitleKey }}{{ $pageTitle = t . .TitleKey }}{{ else if .Title }}{{ $pageTitle = .Title }}{{ end }}
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{{ .Title }}</title>
+    <title>{{ $pageTitle }} · {{ t . "common.appName" }}</title>
     <link rel="stylesheet" href="/static/css/base.css" />
     <script src="/static/js/htmx.min.js" defer></script>
   </head>
@@ -12,9 +14,12 @@
     <header class="container header-bar">
       <div class="header-top">
         <h1>{{ t . "common.appName" }}</h1>
-        <form method="post" action="/{{ .Locale }}/logout" class="logout-form">
-          <button type="submit">{{ t . "common.actions.logout" }}</button>
-        </form>
+        <div class="header-actions">
+          {{ template "partials/language_switcher" . }}
+          <form method="post" action="/{{ .Locale }}/logout" class="logout-form">
+            <button type="submit">{{ t . "common.actions.logout" }}</button>
+          </form>
+        </div>
       </div>
       <p class="muted">{{ t . "common.status.signedIn" }}: {{ .User.Username }}</p>
       {{ template "partials/nav" . }}

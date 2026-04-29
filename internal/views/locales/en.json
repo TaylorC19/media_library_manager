@@ -1,6 +1,12 @@
 {
   "common": {
     "appName": "Media Library Manager",
+    "languageSwitcher": {
+      "aria": "Language switcher",
+      "label": "Language",
+      "en": "English",
+      "ja": "日本語"
+    },
     "actions": {
       "logout": "Logout",
       "signIn": "Sign in",
@@ -65,6 +71,7 @@
       "wishlist": "Wishlist",
       "search": "Search",
       "scan": "Scan",
+      "settings": "Settings",
       "add": "Add item"
     },
     "catalog": {
@@ -133,6 +140,10 @@
       "catalog": "Catalog",
       "wishlist": "Wishlist"
     },
+    "source": {
+      "manual": "Manual",
+      "provider": "Provider"
+    },
     "mediatype": {
       "movie": "Movie",
       "tv": "TV",
@@ -183,6 +194,20 @@
     "errors": {
       "lookupFailed": "Lookup failed.",
       "httpError": "Server returned an error."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "intro": "Review your account details and switch the app language.",
+    "account": {
+      "heading": "Account",
+      "username": "Username",
+      "displayName": "Display name"
+    },
+    "language": {
+      "heading": "Language",
+      "current": "Current language",
+      "choose": "Choose language"
     }
   },
   "search": {
