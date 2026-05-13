@@ -155,6 +155,6 @@ flowchart LR
 - it supports provider refresh without rewriting the user-facing library model
 - it leaves room for better deduplication and richer provider syncing later
 
-## Shared Type Source
+## Type definitions in code
 
-The authoritative TypeScript contracts for the app-level data model live in `packages/types`, and the API maps Mongo documents into those shared shapes before returning responses.
+Domain shapes for the Go app live under [`internal/domain`](../internal/domain) and repository documents under [`internal/repository`](../internal/repository). MongoDB stores the canonical documents described throughout this doc.

@@ -1,0 +1,7 @@
+{{ define "partials/flash" }}
+{{ if .Flash }}
+<section class="inline-notice">
+  <p><strong>{{ t . .Flash.Level }}</strong>: {{ t . .Flash.Message }}</p>
+</section>
+{{ end }}
+{{ end }}

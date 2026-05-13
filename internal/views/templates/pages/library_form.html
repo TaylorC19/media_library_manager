@@ -1,0 +1,101 @@
+{{ define "pages/library_form.content" }}
+<h2>{{ if .IsEdit }}{{ t . "library.form.editTitle" }}{{ else }}{{ t . "library.form.newTitle" }}{{ end }}</h2>
+{{ template "partials/form_errors" . }}
+<form method="post" action="{{ .FormAction }}" class="stack-form">
+  <input type="hidden" name="locale" value="{{ .Locale }}" />
+
+  <fieldset class="form-fieldset">
+    <legend>{{ t . "library.detail.myCopy" }}</legend>
+
+    <label class="field">
+      <span>{{ t . "library.fields.bucket" }}</span>
+      <select name="bucket" required>
+        {{ range .Buckets }}
+        <option value="{{ . }}" {{ if eq . (index $.Values "bucket") }}selected{{ end }}>{{ t $ (printf "library.bucket.%s" .) }}</option>
+        {{ end }}
+      </select>
+    </label>
+
+    <label class="field">
+      <span>{{ t . "library.fields.format" }}</span>
+      <select name="format">
+        <option value="">{{ t . "library.format.unset" }}</option>
+        {{ range .Formats }}
+        <option value="{{ . }}" {{ if eq . (index $.Values "format") }}selected{{ end }}>{{ t $ (libraryFormatKey .) }}</option>
+        {{ end }}
+      </select>
+    </label>
+
+    <label class="field">
+      <span>{{ t . "library.fields.barcode" }}</span>
+      <input type="text" name="barcode" value="{{ index .Values "barcode" }}" autocomplete="off" />
+    </label>
+
+    <label class="field">
+      <span>{{ t . "library.fields.purchaseDate" }}</span>
+      <input type="date" name="purchase_date" value="{{ index .Values "purchase_date" }}" />
+    </label>
+
+    <label class="field">
+      <span>{{ t . "library.fields.notes" }}</span>
+      <textarea name="notes" rows="4">{{ index .Values "notes" }}</textarea>
+    </label>
+
+    <label class="field">
+      <span>{{ t . "library.fields.tags" }}</span>
+      <input type="text" name="tags" value="{{ index .Values "tags" }}" placeholder="{{ t . "library.fields.tagsHint" }}" />
+    </label>
+  </fieldset>
+
+  <fieldset class="form-fieldset">
+    <legend>{{ t . "library.detail.mediaDetails" }}</legend>
+
+    {{ if .CanEditMedia }}
+    <label class="field">
+      <span>{{ t . "library.fields.mediaType" }}</span>
+      <select name="media_type" required>
+        {{ range .MediaTypes }}
+        <option value="{{ . }}" {{ if eq . (index $.Values "media_type") }}selected{{ end }}>{{ t $ (printf "library.mediatype.%s" .) }}</option>
+        {{ end }}
+      </select>
+    </label>
+
+    <label class="field">
+      <span>{{ t . "library.fields.title" }}</span>
+      <input type="text" name="title" value="{{ index .Values "title" }}" required />
+    </label>
+
+    <label class="field">
+      <span>{{ t . "library.fields.year" }}</span>
+      <input type="number" name="year" value="{{ index .Values "year" }}" min="0" step="1" />
+    </label>
+    {{ else }}
+    <p class="muted">{{ t . "library.form.mediaReadOnly" }}</p>
+    <input type="hidden" name="media_type" value="{{ index .Values "media_type" }}" />
+    <input type="hidden" name="title" value="{{ index .Values "title" }}" />
+    <input type="hidden" name="year" value="{{ index .Values "year" }}" />
+    <dl class="detail-dl">
+      <dt>{{ t . "library.fields.mediaType" }}</dt>
+      <dd>{{ t . (printf "library.mediatype.%s" (index .Values "media_type")) }}</dd>
+      <dt>{{ t . "library.fields.title" }}</dt>
+      <dd>{{ index .Values "title" }}</dd>
+      <dt>{{ t . "library.fields.year" }}</dt>
+      <dd>{{ if index .Values "year" }}{{ index .Values "year" }}{{ else }}—{{ end }}</dd>
+    </dl>
+    {{ end }}
+  </fieldset>
+
+  <p class="actions">
+    <button type="submit" class="button-primary">{{ t . "common.actions.save" }}</button>
+    {{ if .IsEdit }}
+    <a class="button-link" href="/{{ .Locale }}/library/{{ .EntryID }}">{{ t . "library.form.cancelToDetail" }}</a>
+    {{ else }}
+    <a class="button-link" href="/{{ .Locale }}/catalog">{{ t . "library.form.cancelToCatalog" }}</a>
+    {{ end }}
+  </p>
+</form>
+{{ end }}
+
+{{ define "pages/library_form.html" }}
+{{ template "layout/app_shell" . }}
+{{ end }}

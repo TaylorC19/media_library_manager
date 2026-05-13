@@ -1,0 +1,21 @@
+{{ define "pages/catalog.content" }}
+<h2>{{ t . "library.catalog.title" }}</h2>
+<p class="actions"><a class="button-link primary" href="/{{ .Locale }}/library/new?bucket=catalog">{{ t . "library.list.addToCatalog" }}</a></p>
+{{ template "partials/library_filters" . }}
+<div id="library-list-section" class="results-region" aria-live="polite">
+  {{ template "partials/library_list_section" . }}
+</div>
+{{ end }}
+
+{{ define "pages/wishlist.content" }}
+<h2>{{ t . "library.wishlist.title" }}</h2>
+<p class="actions"><a class="button-link primary" href="/{{ .Locale }}/library/new?bucket=wishlist">{{ t . "library.list.addToWishlist" }}</a></p>
+{{ template "partials/library_filters" . }}
+<div id="library-list-section" class="results-region" aria-live="polite">
+  {{ template "partials/library_list_section" . }}
+</div>
+{{ end }}
+
+{{ define "pages/library_list.html" }}
+{{ template "layout/app_shell" . }}
+{{ end }}

@@ -1,0 +1,12 @@
+{{ define "partials/inline_notice" }}
+{{ if .Notice }}
+<div class="inline-notice" role="status">
+  <p>
+    <strong>{{ t . .Notice.Level }}</strong>: {{ t . .Notice.Message }}
+    {{ if .Notice.DetailURL }}
+      <a href="{{ .Notice.DetailURL }}">{{ t . .Notice.DetailKey }}</a>
+    {{ end }}
+  </p>
+</div>
+{{ end }}
+{{ end }}

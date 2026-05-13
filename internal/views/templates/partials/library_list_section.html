@@ -1,0 +1,9 @@
+{{ define "partials/library_list_section" }}
+{{ if gt .ListTotal 0 }}
+  <p class="muted results-summary">
+    {{ t . "library.list.summary" }}: {{ .Pagination.StartItem }}-{{ .Pagination.EndItem }} / {{ .Pagination.TotalItems }}
+  </p>
+{{ end }}
+{{ template "partials/library_entry_list" . }}
+{{ template "partials/pagination" (dict "Page" . "Pagination" .Pagination) }}
+{{ end }}

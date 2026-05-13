@@ -1,0 +1,81 @@
+{{ define "pages/scan.content" }}
+<section class="scan-page" id="scan-root" data-locale="{{ .Locale }}">
+  <h2>{{ t . "scan.title" }}</h2>
+  <p class="muted scan-intro">{{ t . "scan.intro" }}</p>
+
+  <div class="is-hidden" id="scan-i18n" aria-hidden="true">
+    <span id="str-lookup-failed">{{ t . "scan.errors.lookupFailed" }}</span>
+    <span id="str-http-error">{{ t . "scan.errors.httpError" }}</span>
+    <span id="str-results-heading">{{ t . "scan.resultsHeading" }}</span>
+    <span id="str-failures-heading">{{ t . "scan.failuresHeading" }}</span>
+    <span id="str-fallback-intro">{{ t . "scan.fallbackIntro" }}</span>
+    <span id="str-view-entry">{{ t . "scan.viewEntry" }}</span>
+    <span id="str-view-entry-short">{{ t . "scan.viewEntryShort" }}</span>
+    <span id="str-barcode-label">{{ t . "scan.barcodeLabel" }}</span>
+    <span id="str-noresults">{{ t . "scan.noResults" }}</span>
+    <span id="str-no-zxing">{{ t . "scan.noZxing" }}</span>
+    <span id="str-no-decoder">{{ t . "scan.noDecoder" }}</span>
+    <span id="str-camera-unsupported">{{ t . "scan.cameraUnsupported" }}</span>
+    <span id="str-camera-denied">{{ t . "scan.cameraDenied" }}</span>
+    <span id="str-source-local">{{ t . "scan.sourceLocal" }}</span>
+    <span id="str-source-provider">{{ t . "scan.sourceProvider" }}</span>
+    <span id="str-add-catalog">{{ t . "search.actions.addCatalog" }}</span>
+    <span id="str-add-wishlist">{{ t . "search.actions.addWishlist" }}</span>
+    {{ range .MediaTypes }}
+    <span id="str-mediatype-{{ . }}">{{ t $ (printf "library.mediatype.%s" .) }}</span>
+    {{ end }}
+    <span id="str-provider-tmdb">{{ t . "search.provider.tmdb" }}</span>
+    <span id="str-provider-musicbrainz">{{ t . "search.provider.musicbrainz" }}</span>
+    <span id="str-provider-openlibrary">{{ t . "search.provider.openlibrary" }}</span>
+    <span id="str-provider-open_library">{{ t . "search.provider.open_library" }}</span>
+    <span id="str-provider-discogs">{{ t . "search.provider.discogs" }}</span>
+    <span id="str-provider-rawg">{{ t . "search.provider.rawg" }}</span>
+  </div>
+
+  <form class="scan-controls scan-row" id="scan-pref-form" action="#" onsubmit="return false;">
+    <div class="field">
+      <label for="scan-preferred-type">{{ t . "scan.preferredType" }}</label>
+      <select id="scan-preferred-type" name="preferred_type">
+        <option value="">{{ t . "scan.preferredAny" }}</option>
+        {{ range .MediaTypes }}
+        <option value="{{ . }}">{{ t $ (printf "library.mediatype.%s" .) }}</option>
+        {{ end }}
+      </select>
+    </div>
+  </form>
+
+  <div class="scan-manual scan-row" id="scan-manual-block">
+    <div class="field grow">
+      <label for="scan-barcode-input">{{ t . "scan.barcode" }}</label>
+      <input id="scan-barcode-input" name="barcode" type="text" inputmode="numeric" autocomplete="off" />
+    </div>
+    <div class="field field--actions">
+      <button class="button-primary" type="button" id="scan-lookup-btn">{{ t . "scan.lookup" }}</button>
+    </div>
+  </div>
+
+  <div class="scan-camera card">
+    <div class="scan-video-wrap">
+      <video id="scan-video" class="scan-video" playsinline muted></video>
+    </div>
+    <div class="scan-actions">
+      <button type="button" class="button-primary" id="scan-start-cam">{{ t . "scan.startCamera" }}</button>
+      <button type="button" class="button-secondary" id="scan-stop-cam" disabled>{{ t . "scan.stopCamera" }}</button>
+      <button type="button" class="button-link" id="scan-again-btn" disabled>{{ t . "scan.scanAgain" }}</button>
+    </div>
+    <p class="scan-hint muted" id="scan-camera-hint" hidden></p>
+  </div>
+
+  <p class="scan-status" id="scan-status" role="status" aria-live="polite"></p>
+
+  <p class="scan-fallback-link-wrap">
+    <a class="button-link" id="scan-fallback-search" href="/{{ .Locale }}/search">{{ t . "scan.fallbackIntro" }}</a>
+  </p>
+
+  <div id="scan-results" class="scan-results" aria-live="polite"></div>
+</section>
+{{ end }}
+
+{{ define "pages/scan.html" }}
+{{ template "layout/app_shell" . }}
+{{ end }}

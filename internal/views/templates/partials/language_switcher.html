@@ -1,0 +1,7 @@
+{{ define "partials/language_switcher" }}
+<nav class="language-switcher" aria-label="{{ t . "common.languageSwitcher.aria" }}">
+  <span class="muted">{{ t . "common.languageSwitcher.label" }}:</span>
+  <a href="{{ swapLocale .Path "en" }}" {{ if eq .Locale "en" }}aria-current="true"{{ end }}>{{ t . "common.languageSwitcher.en" }}</a>
+  <a href="{{ swapLocale .Path "ja" }}" {{ if eq .Locale "ja" }}aria-current="true"{{ end }}>{{ t . "common.languageSwitcher.ja" }}</a>
+</nav>
+{{ end }}

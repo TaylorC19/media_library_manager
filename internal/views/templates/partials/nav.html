@@ -1,0 +1,11 @@
+{{ define "partials/nav" }}
+<nav class="nav" aria-label="{{ t . "library.nav.aria" }}">
+  <a href="/{{ .Locale }}/">{{ t . "library.nav.dashboard" }}</a>
+  <a href="/{{ .Locale }}/catalog">{{ t . "library.nav.catalog" }}</a>
+  <a href="/{{ .Locale }}/wishlist">{{ t . "library.nav.wishlist" }}</a>
+  <a href="/{{ .Locale }}/search">{{ t . "library.nav.search" }}</a>
+  <a href="/{{ .Locale }}/scan">{{ t . "library.nav.scan" }}</a>
+  <a href="/{{ .Locale }}/settings">{{ t . "library.nav.settings" }}</a>
+  <a href="/{{ .Locale }}/library/new">{{ t . "library.nav.add" }}</a>
+</nav>
+{{ end }}

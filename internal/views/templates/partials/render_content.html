@@ -1,0 +1,25 @@
+{{ define "partials/render_content" }}
+{{ if eq .ContentTemplate "pages/home.content" }}
+  {{ template "pages/home.content" . }}
+{{ else if eq .ContentTemplate "pages/login.content" }}
+  {{ template "pages/login.content" . }}
+{{ else if eq .ContentTemplate "pages/register.content" }}
+  {{ template "pages/register.content" . }}
+{{ else if eq .ContentTemplate "pages/dashboard.content" }}
+  {{ template "pages/dashboard.content" . }}
+{{ else if eq .ContentTemplate "pages/catalog.content" }}
+  {{ template "pages/catalog.content" . }}
+{{ else if eq .ContentTemplate "pages/wishlist.content" }}
+  {{ template "pages/wishlist.content" . }}
+{{ else if eq .ContentTemplate "pages/library_detail.content" }}
+  {{ template "pages/library_detail.content" . }}
+{{ else if eq .ContentTemplate "pages/library_form.content" }}
+  {{ template "pages/library_form.content" . }}
+{{ else if eq .ContentTemplate "pages/search.content" }}
+  {{ template "pages/search.content" . }}
+{{ else if eq .ContentTemplate "pages/scan.content" }}
+  {{ template "pages/scan.content" . }}
+{{ else if eq .ContentTemplate "pages/settings.content" }}
+  {{ template "pages/settings.content" . }}
+{{ end }}
+{{ end }}
