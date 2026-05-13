@@ -14,11 +14,13 @@ import (
 	"media_library_manager/internal/db"
 	"media_library_manager/internal/http/handlers"
 	"media_library_manager/internal/http/middleware"
+	"media_library_manager/internal/providers/musicbrainz"
 	"media_library_manager/internal/repository"
 	authsvc "media_library_manager/internal/service/auth"
+	barcodesvc "media_library_manager/internal/service/barcode"
 	libsvc "media_library_manager/internal/service/library"
 	mediasvc "media_library_manager/internal/service/media"
-	barcodesvc "media_library_manager/internal/service/barcode"
+	"media_library_manager/internal/service/reliability"
 	searchsvc "media_library_manager/internal/service/search"
 	"media_library_manager/internal/static"
 	"media_library_manager/internal/views"
@@ -79,11 +81,18 @@ func New(cfg config.Config) (*App, error) {
 	if err := scanLogsRepo.EnsureIndexes(ctx); err != nil {
 		return nil, err
 	}
+	providerCacheRepo := repository.NewProviderCacheRepository(instance.Database)
+	if err := providerCacheRepo.EnsureIndexes(ctx); err != nil {
+		return nil, err
+	}
+	reliabilitySvc := reliability.NewService(cfg)
+	cache := reliability.NewCache(providerCacheRepo, reliabilitySvc)
+	mbThrottle := musicbrainz.NewThrottle(reliabilitySvc.MusicBrainzThrottle)
 	instance.Auth = authsvc.NewService(usersRepo, sessionsRepo, cfg.SessionTTL())
 	librarySvc := libsvc.NewService(mediaRepo, libEntriesRepo)
-	mediaSvc := mediasvc.NewService(cfg, mediaRepo, libEntriesRepo)
-	searchSvc := searchsvc.NewService(cfg)
-	barcodeSvc := barcodesvc.NewService(cfg, mediaRepo, libEntriesRepo, scanLogsRepo)
+	mediaSvc := mediasvc.NewService(cfg, mediaRepo, libEntriesRepo, cache, reliabilitySvc, mbThrottle)
+	searchSvc := searchsvc.NewService(cfg, cache, reliabilitySvc, mbThrottle)
+	barcodeSvc := barcodesvc.NewService(cfg, mediaRepo, libEntriesRepo, scanLogsRepo, cache, reliabilitySvc, mbThrottle)
 	instance.Router = instance.newRouter(staticFS, librarySvc, mediaSvc, searchSvc, barcodeSvc)
 
 	return instance, nil

@@ -7,13 +7,15 @@ import (
 	"strconv"
 	"strings"
 
-	bdom "media_library_manager/internal/domain/barcode"
 	"media_library_manager/internal/config"
+	bdom "media_library_manager/internal/domain/barcode"
 	domainlib "media_library_manager/internal/domain/library"
 	"media_library_manager/internal/providers/discogs"
 	"media_library_manager/internal/providers/musicbrainz"
 	"media_library_manager/internal/providers/openlibrary"
+	"media_library_manager/internal/providers/providererrors"
 	"media_library_manager/internal/repository"
+	"media_library_manager/internal/service/reliability"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -26,25 +28,30 @@ const providerResultLimit = 10
 
 // Service orchestrates local + provider barcode lookup (lookup only; no writes to media/ library).
 type Service struct {
-	cfg   config.Config
-	media *repository.MediaRecordsRepository
-	lib   *repository.LibraryEntriesRepository
-	scan  *repository.ScanLogsRepository
-	ol    *openlibrary.Client
-	mb    *musicbrainz.Client
-	disc  *discogs.Client
+	cfg         config.Config
+	media       *repository.MediaRecordsRepository
+	lib         *repository.LibraryEntriesRepository
+	scan        *repository.ScanLogsRepository
+	cache       *reliability.Cache
+	reliability *reliability.Service
+	ol          *openlibrary.Client
+	mb          *musicbrainz.Client
+	disc        *discogs.Client
 }
 
-func NewService(cfg config.Config, media *repository.MediaRecordsRepository, lib *repository.LibraryEntriesRepository, scan *repository.ScanLogsRepository) *Service {
+func NewService(cfg config.Config, media *repository.MediaRecordsRepository, lib *repository.LibraryEntriesRepository, scan *repository.ScanLogsRepository, cache *reliability.Cache, reliabilitySvc *reliability.Service, mbThrottle *musicbrainz.Throttle) *Service {
 	return &Service{
-		cfg:   cfg,
-		media: media,
-		lib:   lib,
-		scan:  scan,
-		ol:    &openlibrary.Client{HTTP: openlibrary.DefaultHTTPClient()},
+		cfg:         cfg,
+		media:       media,
+		lib:         lib,
+		scan:        scan,
+		cache:       cache,
+		reliability: reliabilitySvc,
+		ol:          &openlibrary.Client{HTTP: openlibrary.DefaultHTTPClient()},
 		mb: &musicbrainz.Client{
 			UserAgent: cfg.MusicBrainzUA,
 			HTTP:      musicbrainz.DefaultHTTPClient(),
+			Throttle:  mbThrottle,
 		},
 		disc: &discogs.Client{
 			Token: cfg.DiscogsToken,
@@ -208,7 +215,9 @@ func (s *Service) buildLocalCandidates(ctx context.Context, userID primitive.Obj
 }
 
 func (s *Service) openLibraryByISBN(ctx context.Context, norm string, stageIdx, rankTier int) ([]scoredCandidate, []bdom.Failure) {
-	hits, err := s.ol.SearchByISBN(ctx, norm, providerResultLimit)
+	hits, err := reliability.Wrap(ctx, s.cache, reliability.OperationBarcode, bdom.ProviderOpenLibrary, s.reliability.BarcodeCacheKey(strPtr("book"), norm), func(ctx context.Context) ([]openlibrary.WorkHit, error) {
+		return s.ol.SearchByISBN(ctx, norm, providerResultLimit)
+	})
 	if err != nil {
 		f := mapProviderErr(bdom.ProviderOpenLibrary, err)
 		return nil, []bdom.Failure{f}
@@ -250,7 +259,9 @@ func (s *Service) openLibraryByISBN(ctx context.Context, norm string, stageIdx, 
 }
 
 func (s *Service) discogsByBarcode(ctx context.Context, norm string, stageIdx, rankTier int) ([]scoredCandidate, *bdom.Failure) {
-	hits, err := s.disc.SearchByBarcode(ctx, norm, providerResultLimit)
+	hits, err := reliability.Wrap(ctx, s.cache, reliability.OperationBarcode, bdom.ProviderDiscogs, s.reliability.BarcodeCacheKey(strPtr("album"), norm), func(ctx context.Context) ([]discogs.SearchHit, error) {
+		return s.disc.SearchByBarcode(ctx, norm, providerResultLimit)
+	})
 	if err != nil {
 		f := mapProviderErr(bdom.ProviderDiscogs, err)
 		return nil, &f
@@ -277,13 +288,13 @@ func (s *Service) discogsByBarcode(ctx context.Context, norm string, stageIdx, r
 			tier = 1
 		}
 		c := bdom.Candidate{
-			Source:     "provider",
-			Provider:   bdom.ProviderDiscogs,
-			ProviderID: strconv.Itoa(h.ID),
-			MediaType:  "album",
-			Title:      title,
-			Year:       int32PtrFromInt(h.Year),
-			ImageURL:   h.CoverImage,
+			Source:      "provider",
+			Provider:    bdom.ProviderDiscogs,
+			ProviderID:  strconv.Itoa(h.ID),
+			MediaType:   "album",
+			Title:       title,
+			Year:        int32PtrFromInt(h.Year),
+			ImageURL:    h.CoverImage,
 			CreatorLine: cl,
 		}
 		out = append(out, scoredCandidate{c: c, sortTier: tier, stageIdx: stageIdx, hasLinked: false, sortKey: "provider:discogs:" + strconv.Itoa(h.ID)})
@@ -292,7 +303,9 @@ func (s *Service) discogsByBarcode(ctx context.Context, norm string, stageIdx, r
 }
 
 func (s *Service) musicBrainzByBarcode(ctx context.Context, norm string, stageIdx, rankTier int) ([]scoredCandidate, *bdom.Failure) {
-	hits, err := s.mb.SearchByBarcode(ctx, norm)
+	hits, err := reliability.Wrap(ctx, s.cache, reliability.OperationBarcode, bdom.ProviderMusicBrainz, s.reliability.BarcodeCacheKey(strPtr("album"), norm), func(ctx context.Context) ([]musicbrainz.ReleaseHit, error) {
+		return s.mb.SearchByBarcode(ctx, norm)
+	})
 	if err != nil {
 		f := mapProviderErr(bdom.ProviderMusicBrainz, err)
 		return nil, &f
@@ -359,19 +372,22 @@ func mapProviderErr(provider string, err error) bdom.Failure {
 	if err == nil {
 		return bdom.Failure{Provider: provider, Code: bdom.CodeUnavailable}
 	}
-	if errors.Is(err, context.DeadlineExceeded) {
-		return bdom.Failure{Provider: provider, Code: bdom.CodeTimeout}
-	}
-	s := err.Error()
-	if strings.HasPrefix(s, "discogs:") || strings.HasPrefix(s, "openlibrary:") || strings.HasPrefix(s, "musicbrainz:") {
-		// Heuristic: JSON or unexpected body
-		if strings.Contains(strings.ToLower(s), "json") {
+
+	var perr *providererrors.Error
+	if errors.As(err, &perr) {
+		switch perr.Code {
+		case providererrors.CodeTimeout:
+			return bdom.Failure{Provider: provider, Code: bdom.CodeTimeout}
+		case providererrors.CodeInvalidResponse:
 			return bdom.Failure{Provider: provider, Code: bdom.CodeInvalidResponse}
+		case providererrors.CodeUnsupported:
+			return bdom.Failure{Provider: provider, Code: bdom.CodeUnsupported}
+		default:
+			return bdom.Failure{Provider: provider, Code: bdom.CodeUnavailable}
 		}
 	}
-	// status errors
-	if strings.Contains(s, "unexpected status") {
-		return bdom.Failure{Provider: provider, Code: bdom.CodeUnavailable}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return bdom.Failure{Provider: provider, Code: bdom.CodeTimeout}
 	}
 	return bdom.Failure{Provider: provider, Code: bdom.CodeUnavailable}
 }

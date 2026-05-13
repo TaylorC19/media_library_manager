@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -12,27 +13,33 @@ import (
 	"media_library_manager/internal/providers/discogs"
 	"media_library_manager/internal/providers/musicbrainz"
 	"media_library_manager/internal/providers/openlibrary"
+	"media_library_manager/internal/providers/providererrors"
 	"media_library_manager/internal/providers/rawg"
 	"media_library_manager/internal/providers/tmdb"
+	"media_library_manager/internal/service/reliability"
 )
 
 type Service struct {
-	cfg     config.Config
-	tmdb    *tmdb.Client
-	mb      *musicbrainz.Client
-	ol      *openlibrary.Client
-	rawg    *rawg.Client
-	discogs *discogs.Client
+	cfg         config.Config
+	cache       *reliability.Cache
+	reliability *reliability.Service
+	tmdb        *tmdb.Client
+	mb          *musicbrainz.Client
+	ol          *openlibrary.Client
+	rawg        *rawg.Client
+	discogs     *discogs.Client
 }
 
-func NewService(cfg config.Config) *Service {
+func NewService(cfg config.Config, cache *reliability.Cache, reliabilitySvc *reliability.Service, mbThrottle *musicbrainz.Throttle) *Service {
 	httpTMDB := tmdb.DefaultHTTPClient()
 	httpMB := musicbrainz.DefaultHTTPClient()
 	httpOL := openlibrary.DefaultHTTPClient()
 	httpRAWG := rawg.DefaultHTTPClient()
 
 	return &Service{
-		cfg: cfg,
+		cfg:         cfg,
+		cache:       cache,
+		reliability: reliabilitySvc,
 		tmdb: &tmdb.Client{
 			APIKey: cfg.TMDBAPIKey,
 			HTTP:   httpTMDB,
@@ -40,6 +47,7 @@ func NewService(cfg config.Config) *Service {
 		mb: &musicbrainz.Client{
 			UserAgent: cfg.MusicBrainzUA,
 			HTTP:      httpMB,
+			Throttle:  mbThrottle,
 		},
 		ol: &openlibrary.Client{HTTP: httpOL},
 		rawg: &rawg.Client{
@@ -76,8 +84,14 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 			warnings = append(warnings, "search.warnings.tmdbKeyMissing")
 			return Outcome{Warnings: warnings}, nil
 		}
-		rows, err := s.tmdb.SearchMovies(ctx, query)
+		rows, err := reliability.Wrap(ctx, s.cache, reliability.OperationSearch, "tmdb", s.reliability.SearchCacheKey("movie", query), func(ctx context.Context) ([]tmdb.Result, error) {
+			return s.tmdb.SearchMovies(ctx, query)
+		})
 		if err != nil {
+			if searchWarning, ok := providerSearchWarning(err); ok {
+				warnings = append(warnings, searchWarning)
+				return Outcome{Warnings: warnings}, nil
+			}
 			return Outcome{}, err
 		}
 		for _, r := range rows {
@@ -100,8 +114,14 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 			warnings = append(warnings, "search.warnings.tmdbKeyMissing")
 			return Outcome{Warnings: warnings}, nil
 		}
-		rows, err := s.tmdb.SearchTV(ctx, query)
+		rows, err := reliability.Wrap(ctx, s.cache, reliability.OperationSearch, "tmdb", s.reliability.SearchCacheKey("tv", query), func(ctx context.Context) ([]tmdb.Result, error) {
+			return s.tmdb.SearchTV(ctx, query)
+		})
 		if err != nil {
+			if searchWarning, ok := providerSearchWarning(err); ok {
+				warnings = append(warnings, searchWarning)
+				return Outcome{Warnings: warnings}, nil
+			}
 			return Outcome{}, err
 		}
 		for _, r := range rows {
@@ -120,8 +140,14 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 		}
 
 	case "album":
-		rows, err := s.mb.SearchReleases(ctx, query)
+		rows, err := reliability.Wrap(ctx, s.cache, reliability.OperationSearch, "musicbrainz", s.reliability.SearchCacheKey("album", query), func(ctx context.Context) ([]musicbrainz.ReleaseHit, error) {
+			return s.mb.SearchReleases(ctx, query)
+		})
 		if err != nil {
+			if searchWarning, ok := providerSearchWarning(err); ok {
+				warnings = append(warnings, searchWarning)
+				return Outcome{Warnings: warnings}, nil
+			}
 			return Outcome{}, err
 		}
 		for _, r := range rows {
@@ -146,8 +172,14 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 		}
 
 	case "book":
-		rows, err := s.ol.SearchWorks(ctx, query)
+		rows, err := reliability.Wrap(ctx, s.cache, reliability.OperationSearch, "open_library", s.reliability.SearchCacheKey("book", query), func(ctx context.Context) ([]openlibrary.WorkHit, error) {
+			return s.ol.SearchWorks(ctx, query)
+		})
 		if err != nil {
+			if searchWarning, ok := providerSearchWarning(err); ok {
+				warnings = append(warnings, searchWarning)
+				return Outcome{Warnings: warnings}, nil
+			}
 			return Outcome{}, err
 		}
 		for _, w := range rows {
@@ -175,8 +207,14 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 			warnings = append(warnings, "search.warnings.rawgKeyMissing")
 			return Outcome{Warnings: warnings}, nil
 		}
-		rows, err := s.rawg.SearchGames(ctx, query)
+		rows, err := reliability.Wrap(ctx, s.cache, reliability.OperationSearch, "rawg", s.reliability.SearchCacheKey("game", query), func(ctx context.Context) ([]rawg.GameHit, error) {
+			return s.rawg.SearchGames(ctx, query)
+		})
 		if err != nil {
+			if searchWarning, ok := providerSearchWarning(err); ok {
+				warnings = append(warnings, searchWarning)
+				return Outcome{Warnings: warnings}, nil
+			}
 			return Outcome{}, err
 		}
 		for _, g := range rows {
@@ -194,6 +232,14 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 	}
 
 	return Outcome{Hits: hits, Warnings: warnings}, nil
+}
+
+func providerSearchWarning(err error) (string, bool) {
+	var perr *providererrors.Error
+	if !errors.As(err, &perr) {
+		return "", false
+	}
+	return "search.warnings.providerUnavailable", true
 }
 
 func truncate(s string, max int) string {

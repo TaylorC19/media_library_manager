@@ -15,6 +15,7 @@ import (
 	"media_library_manager/internal/providers/rawg"
 	"media_library_manager/internal/providers/tmdb"
 	"media_library_manager/internal/repository"
+	"media_library_manager/internal/service/reliability"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -27,12 +28,14 @@ var (
 )
 
 type Service struct {
-	media   *repository.MediaRecordsRepository
-	entries *repository.LibraryEntriesRepository
-	tmdb    *tmdb.Client
-	mb      *musicbrainz.Client
-	ol      *openlibrary.Client
-	rawg    *rawg.Client
+	media       *repository.MediaRecordsRepository
+	entries     *repository.LibraryEntriesRepository
+	cache       *reliability.Cache
+	reliability *reliability.Service
+	tmdb        *tmdb.Client
+	mb          *musicbrainz.Client
+	ol          *openlibrary.Client
+	rawg        *rawg.Client
 }
 
 type ImportForm struct {
@@ -57,10 +60,12 @@ type RefreshOutcome struct {
 	UnavailableReason     string                 `json:"unavailableReason,omitempty"`
 }
 
-func NewService(cfg config.Config, media *repository.MediaRecordsRepository, entries *repository.LibraryEntriesRepository) *Service {
+func NewService(cfg config.Config, media *repository.MediaRecordsRepository, entries *repository.LibraryEntriesRepository, cache *reliability.Cache, reliabilitySvc *reliability.Service, mbThrottle *musicbrainz.Throttle) *Service {
 	return &Service{
-		media:   media,
-		entries: entries,
+		media:       media,
+		entries:     entries,
+		cache:       cache,
+		reliability: reliabilitySvc,
 		tmdb: &tmdb.Client{
 			APIKey: cfg.TMDBAPIKey,
 			HTTP:   tmdb.DefaultHTTPClient(),
@@ -68,6 +73,7 @@ func NewService(cfg config.Config, media *repository.MediaRecordsRepository, ent
 		mb: &musicbrainz.Client{
 			UserAgent: cfg.MusicBrainzUA,
 			HTTP:      musicbrainz.DefaultHTTPClient(),
+			Throttle:  mbThrottle,
 		},
 		ol: &openlibrary.Client{HTTP: openlibrary.DefaultHTTPClient()},
 		rawg: &rawg.Client{
@@ -196,7 +202,9 @@ func (s *Service) attachLibraryEntry(ctx context.Context, userID primitive.Objec
 func (s *Service) fetchNormalizedRecord(ctx context.Context, form ImportForm) (*domainlib.MediaRecord, error) {
 	switch form.Provider {
 	case "tmdb":
-		detail, err := s.tmdb.GetDetails(ctx, form.ExternalID, form.TMDBKind)
+		detail, err := reliability.Wrap(ctx, s.cache, reliability.OperationDetail, "tmdb", s.reliability.DetailCacheKey(form.MediaType, form.ExternalID+":"+form.TMDBKind), func(ctx context.Context) (*tmdb.Detail, error) {
+			return s.tmdb.GetDetails(ctx, form.ExternalID, form.TMDBKind)
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -205,7 +213,9 @@ func (s *Service) fetchNormalizedRecord(ctx context.Context, form ImportForm) (*
 		}
 		return normalizeTMDBRecord(detail), nil
 	case "musicbrainz":
-		detail, err := s.mb.GetReleaseDetails(ctx, form.ExternalID)
+		detail, err := reliability.Wrap(ctx, s.cache, reliability.OperationDetail, "musicbrainz", s.reliability.DetailCacheKey(form.MediaType, form.ExternalID), func(ctx context.Context) (*musicbrainz.ReleaseDetails, error) {
+			return s.mb.GetReleaseDetails(ctx, form.ExternalID)
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -214,7 +224,9 @@ func (s *Service) fetchNormalizedRecord(ctx context.Context, form ImportForm) (*
 		}
 		return normalizeMusicBrainzRecord(detail), nil
 	case "open_library":
-		detail, err := s.ol.GetWorkDetails(ctx, form.ExternalID)
+		detail, err := reliability.Wrap(ctx, s.cache, reliability.OperationDetail, "open_library", s.reliability.DetailCacheKey(form.MediaType, form.ExternalID), func(ctx context.Context) (*openlibrary.WorkDetails, error) {
+			return s.ol.GetWorkDetails(ctx, form.ExternalID)
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -223,7 +235,9 @@ func (s *Service) fetchNormalizedRecord(ctx context.Context, form ImportForm) (*
 		}
 		return normalizeOpenLibraryRecord(detail), nil
 	case "rawg":
-		detail, err := s.rawg.GetGameDetails(ctx, form.ExternalID)
+		detail, err := reliability.Wrap(ctx, s.cache, reliability.OperationDetail, "rawg", s.reliability.DetailCacheKey(form.MediaType, form.ExternalID), func(ctx context.Context) (*rawg.GameDetails, error) {
+			return s.rawg.GetGameDetails(ctx, form.ExternalID)
+		})
 		if err != nil {
 			return nil, err
 		}

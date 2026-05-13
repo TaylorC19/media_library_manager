@@ -3,12 +3,14 @@ package tmdb
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"media_library_manager/internal/providers/httpx"
+	"media_library_manager/internal/providers/providererrors"
 )
 
 const (
@@ -24,24 +26,14 @@ func (c *Client) SearchMovies(ctx context.Context, query string) ([]Result, erro
 	if strings.TrimSpace(c.APIKey) == "" {
 		return nil, nil
 	}
-	u := fmt.Sprintf(
-		"https://api.themoviedb.org/3/search/movie?api_key=%s&query=%s&language=en-US",
-		url.QueryEscape(c.APIKey),
-		url.QueryEscape(strings.TrimSpace(query)),
-	)
-	return c.decodeSearch(ctx, u, "movie")
+	return c.decodeSearch(ctx, "https://api.themoviedb.org/3/search/movie", "movie", strings.TrimSpace(query))
 }
 
 func (c *Client) SearchTV(ctx context.Context, query string) ([]Result, error) {
 	if strings.TrimSpace(c.APIKey) == "" {
 		return nil, nil
 	}
-	u := fmt.Sprintf(
-		"https://api.themoviedb.org/3/search/tv?api_key=%s&query=%s&language=en-US",
-		url.QueryEscape(c.APIKey),
-		url.QueryEscape(strings.TrimSpace(query)),
-	)
-	return c.decodeSearch(ctx, u, "tv")
+	return c.decodeSearch(ctx, "https://api.themoviedb.org/3/search/tv", "tv", strings.TrimSpace(query))
 }
 
 type Result struct {
@@ -74,26 +66,16 @@ type searchResponse struct {
 	Results []json.RawMessage `json:"results"`
 }
 
-func (c *Client) decodeSearch(ctx context.Context, rawURL, kind string) ([]Result, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
-	if err != nil {
-		return nil, err
-	}
-	hc := c.HTTP
-	if hc == nil {
-		hc = http.DefaultClient
-	}
-	res, err := hc.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return nil, fmt.Errorf("tmdb: unexpected status %d", res.StatusCode)
-	}
-
+func (c *Client) decodeSearch(ctx context.Context, endpoint, kind, query string) ([]Result, error) {
 	var envelope searchResponse
-	if err := json.NewDecoder(res.Body).Decode(&envelope); err != nil {
+	if err := httpx.GetJSON(ctx, c.HTTP, "tmdb", "search", endpoint, httpx.GetJSONOptions{
+		Query: map[string]any{
+			"api_key":  c.APIKey,
+			"query":    query,
+			"language": "en-US",
+		},
+		Timeout: 20 * time.Second,
+	}, &envelope); err != nil {
 		return nil, err
 	}
 
@@ -157,32 +139,6 @@ func (c *Client) GetDetails(ctx context.Context, externalID, kind string) (*Deta
 		return nil, nil
 	}
 
-	u := fmt.Sprintf(
-		"https://api.themoviedb.org/3/%s/%d?api_key=%s&language=en-US&append_to_response=credits",
-		kind,
-		id,
-		url.QueryEscape(c.APIKey),
-	)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
-	if err != nil {
-		return nil, err
-	}
-	hc := c.HTTP
-	if hc == nil {
-		hc = http.DefaultClient
-	}
-	res, err := hc.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	if res.StatusCode == http.StatusNotFound {
-		return nil, nil
-	}
-	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return nil, fmt.Errorf("tmdb: unexpected status %d", res.StatusCode)
-	}
-
 	var payload struct {
 		ID               int     `json:"id"`
 		Title            string  `json:"title"`
@@ -212,7 +168,19 @@ func (c *Client) GetDetails(ctx context.Context, externalID, kind string) (*Deta
 			} `json:"crew"`
 		} `json:"credits"`
 	}
-	if err := json.NewDecoder(res.Body).Decode(&payload); err != nil {
+	err = httpx.GetJSON(ctx, c.HTTP, "tmdb", "detail", "https://api.themoviedb.org/3/"+kind+"/"+strconv.Itoa(id), httpx.GetJSONOptions{
+		Query: map[string]any{
+			"api_key":            c.APIKey,
+			"language":           "en-US",
+			"append_to_response": "credits",
+		},
+		Timeout: 20 * time.Second,
+	}, &payload)
+	if err != nil {
+		var perr *providererrors.Error
+		if errors.As(err, &perr) && perr.Code == providererrors.CodeNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 

@@ -2,12 +2,16 @@ package openlibrary
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"net/http"
+
+	"media_library_manager/internal/providers/httpx"
+	"media_library_manager/internal/providers/providererrors"
 )
 
 type Client struct {
@@ -52,8 +56,10 @@ func (c *Client) SearchWorks(ctx context.Context, query string) ([]WorkHit, erro
 	if query == "" {
 		return nil, nil
 	}
-	u := "https://openlibrary.org/search.json?limit=50&q=" + url.QueryEscape(query)
-	return c.searchJSON(ctx, u)
+	return c.searchJSON(ctx, map[string]any{
+		"limit": 50,
+		"q":     query,
+	})
 }
 
 // SearchByISBN uses Open Library ISBN index (search.json?isbn=...).
@@ -65,30 +71,18 @@ func (c *Client) SearchByISBN(ctx context.Context, isbn string, limit int) ([]Wo
 	if limit <= 0 {
 		limit = 10
 	}
-	u := fmt.Sprintf("https://openlibrary.org/search.json?limit=%d&isbn=%s", limit, url.QueryEscape(isbn))
-	return c.searchJSON(ctx, u)
+	return c.searchJSON(ctx, map[string]any{
+		"limit": limit,
+		"isbn":  isbn,
+	})
 }
 
-func (c *Client) searchJSON(ctx context.Context, u string) ([]WorkHit, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
-	if err != nil {
-		return nil, err
-	}
-	hc := c.HTTP
-	if hc == nil {
-		hc = http.DefaultClient
-	}
-	res, err := hc.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return nil, fmt.Errorf("openlibrary: unexpected status %d", res.StatusCode)
-	}
-
+func (c *Client) searchJSON(ctx context.Context, query map[string]any) ([]WorkHit, error) {
 	var payload searchResponse
-	if err := json.NewDecoder(res.Body).Decode(&payload); err != nil {
+	if err := httpx.GetJSON(ctx, c.HTTP, "open_library", "search", "https://openlibrary.org/search.json", httpx.GetJSONOptions{
+		Query:   query,
+		Timeout: 15 * time.Second,
+	}, &payload); err != nil {
 		return nil, err
 	}
 
@@ -124,28 +118,6 @@ func (c *Client) GetWorkDetails(ctx context.Context, workKey string) (*WorkDetai
 		return nil, nil
 	}
 
-	workURL := "https://openlibrary.org/works/" + url.PathEscape(workKey) + ".json"
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, workURL, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	hc := c.HTTP
-	if hc == nil {
-		hc = http.DefaultClient
-	}
-	res, err := hc.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	if res.StatusCode == http.StatusNotFound {
-		return nil, nil
-	}
-	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return nil, fmt.Errorf("openlibrary: unexpected status %d", res.StatusCode)
-	}
-
 	var payload struct {
 		Key              string `json:"key"`
 		Title            string `json:"title"`
@@ -158,7 +130,14 @@ func (c *Client) GetWorkDetails(ctx context.Context, workKey string) (*WorkDetai
 			} `json:"author"`
 		} `json:"authors"`
 	}
-	if err := json.NewDecoder(res.Body).Decode(&payload); err != nil {
+	err := httpx.GetJSON(ctx, c.HTTP, "open_library", "detail", "https://openlibrary.org/works/"+url.PathEscape(workKey)+".json", httpx.GetJSONOptions{
+		Timeout: 15 * time.Second,
+	}, &payload)
+	if err != nil {
+		var perr *providererrors.Error
+		if errors.As(err, &perr) && perr.Code == providererrors.CodeNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 
@@ -251,11 +230,6 @@ func (c *Client) fetchAuthorNames(ctx context.Context, refs []struct {
 }) ([]string, error) {
 	seen := map[string]struct{}{}
 	var out []string
-	hc := c.HTTP
-	if hc == nil {
-		hc = http.DefaultClient
-	}
-
 	for _, ref := range refs {
 		key := strings.TrimSpace(ref.Author.Key)
 		key = strings.TrimPrefix(key, "/authors/")
@@ -264,36 +238,28 @@ func (c *Client) fetchAuthorNames(ctx context.Context, refs []struct {
 			continue
 		}
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://openlibrary.org/authors/"+url.PathEscape(key)+".json", nil)
-		if err != nil {
+		var payload struct {
+			Name string `json:"name"`
+		}
+		if err := httpx.GetJSON(ctx, c.HTTP, "open_library", "detail", "https://openlibrary.org/authors/"+url.PathEscape(key)+".json", httpx.GetJSONOptions{
+			Timeout: 15 * time.Second,
+		}, &payload); err != nil {
+			var perr *providererrors.Error
+			if errors.As(err, &perr) {
+				continue
+			}
 			return nil, err
 		}
-		res, err := hc.Do(req)
-		if err != nil {
-			return nil, err
+		name := strings.TrimSpace(payload.Name)
+		if name == "" {
+			continue
 		}
-		func() {
-			defer res.Body.Close()
-			if res.StatusCode < 200 || res.StatusCode >= 300 {
-				return
-			}
-			var payload struct {
-				Name string `json:"name"`
-			}
-			if err := json.NewDecoder(res.Body).Decode(&payload); err != nil {
-				return
-			}
-			name := strings.TrimSpace(payload.Name)
-			if name == "" {
-				return
-			}
-			lower := strings.ToLower(name)
-			if _, ok := seen[lower]; ok {
-				return
-			}
-			seen[lower] = struct{}{}
-			out = append(out, name)
-		}()
+		lower := strings.ToLower(name)
+		if _, ok := seen[lower]; ok {
+			continue
+		}
+		seen[lower] = struct{}{}
+		out = append(out, name)
 	}
 
 	return out, nil

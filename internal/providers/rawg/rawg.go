@@ -2,12 +2,14 @@ package rawg
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"media_library_manager/internal/providers/httpx"
+	"media_library_manager/internal/providers/providererrors"
 )
 
 type Client struct {
@@ -54,30 +56,15 @@ func (c *Client) SearchGames(ctx context.Context, query string) ([]GameHit, erro
 	if strings.TrimSpace(c.APIKey) == "" {
 		return nil, nil
 	}
-	u := fmt.Sprintf(
-		"https://api.rawg.io/api/games?key=%s&search=%s&page_size=50",
-		url.QueryEscape(c.APIKey),
-		url.QueryEscape(query),
-	)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
-	if err != nil {
-		return nil, err
-	}
-	hc := c.HTTP
-	if hc == nil {
-		hc = http.DefaultClient
-	}
-	res, err := hc.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return nil, fmt.Errorf("rawg: unexpected status %d", res.StatusCode)
-	}
-
 	var payload searchResponse
-	if err := json.NewDecoder(res.Body).Decode(&payload); err != nil {
+	if err := httpx.GetJSON(ctx, c.HTTP, "rawg", "search", "https://api.rawg.io/api/games", httpx.GetJSONOptions{
+		Query: map[string]any{
+			"key":       c.APIKey,
+			"search":    query,
+			"page_size": 50,
+		},
+		Timeout: 15 * time.Second,
+	}, &payload); err != nil {
 		return nil, err
 	}
 
@@ -107,31 +94,6 @@ func (c *Client) GetGameDetails(ctx context.Context, externalID string) (*GameDe
 		return nil, nil
 	}
 
-	u := fmt.Sprintf(
-		"https://api.rawg.io/api/games/%s?key=%s",
-		url.PathEscape(externalID),
-		url.QueryEscape(c.APIKey),
-	)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
-	if err != nil {
-		return nil, err
-	}
-	hc := c.HTTP
-	if hc == nil {
-		hc = http.DefaultClient
-	}
-	res, err := hc.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	if res.StatusCode == http.StatusNotFound {
-		return nil, nil
-	}
-	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return nil, fmt.Errorf("rawg: unexpected status %d", res.StatusCode)
-	}
-
 	var payload struct {
 		ID              int     `json:"id"`
 		Name            string  `json:"name"`
@@ -154,7 +116,17 @@ func (c *Client) GetGameDetails(ctx context.Context, externalID string) (*GameDe
 			} `json:"platform"`
 		} `json:"platforms"`
 	}
-	if err := json.NewDecoder(res.Body).Decode(&payload); err != nil {
+	err := httpx.GetJSON(ctx, c.HTTP, "rawg", "detail", "https://api.rawg.io/api/games/"+url.PathEscape(externalID), httpx.GetJSONOptions{
+		Query: map[string]any{
+			"key": c.APIKey,
+		},
+		Timeout: 15 * time.Second,
+	}, &payload)
+	if err != nil {
+		var perr *providererrors.Error
+		if errors.As(err, &perr) && perr.Code == providererrors.CodeNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 	if payload.ID == 0 || strings.TrimSpace(payload.Name) == "" {

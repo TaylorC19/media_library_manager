@@ -229,7 +229,8 @@
     },
     "warnings": {
       "tmdbKeyMissing": "TMDB の API キーが未設定です。映画/TV を検索するには TMDB_API_KEY を設定してください。",
-      "rawgKeyMissing": "RAWG の API キーが未設定です。ゲームを検索するには RAWG_API_KEY を設定してください。"
+      "rawgKeyMissing": "RAWG の API キーが未設定です。ゲームを検索するには RAWG_API_KEY を設定してください。",
+      "providerUnavailable": "プロバイダーに一時的に接続できません。しばらくしてから再試行してください。"
     },
     "errors": {
       "mediaTypeRequired": "検索する前にメディア種別を選んでください。",

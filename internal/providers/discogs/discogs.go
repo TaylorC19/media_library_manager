@@ -2,13 +2,12 @@ package discogs
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"media_library_manager/internal/providers/httpx"
 )
 
 // Client calls the Discogs HTTP API when Token is set.
@@ -47,33 +46,19 @@ func (c *Client) SearchByBarcode(ctx context.Context, barcode string, limit int)
 	if limit <= 0 {
 		limit = 10
 	}
-	u := fmt.Sprintf(
-		"https://api.discogs.com/database/search?type=release&barcode=%s&per_page=%d",
-		url.QueryEscape(barcode),
-		limit,
-	)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Authorization", "Discogs token="+strings.TrimSpace(c.Token))
-	req.Header.Set("User-Agent", "MediaLibraryManager/1.0")
-
-	hc := c.HTTP
-	if hc == nil {
-		hc = DefaultHTTPClient()
-	}
-	res, err := hc.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return nil, fmt.Errorf("discogs: unexpected status %d", res.StatusCode)
-	}
-
 	var payload searchResponse
-	if err := json.NewDecoder(res.Body).Decode(&payload); err != nil {
+	if err := httpx.GetJSON(ctx, c.HTTP, "discogs", "barcode", "https://api.discogs.com/database/search", httpx.GetJSONOptions{
+		Query: map[string]any{
+			"type":     "release",
+			"barcode":  barcode,
+			"per_page": limit,
+		},
+		Headers: map[string]string{
+			"Authorization": "Discogs token=" + strings.TrimSpace(c.Token),
+			"User-Agent":    "MediaLibraryManager/1.0",
+		},
+		Timeout: 20 * time.Second,
+	}, &payload); err != nil {
 		return nil, err
 	}
 

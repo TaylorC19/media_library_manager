@@ -229,7 +229,8 @@
     },
     "warnings": {
       "tmdbKeyMissing": "TMDB API key is not configured. Add TMDB_API_KEY to search movies and TV.",
-      "rawgKeyMissing": "RAWG API key is not configured. Add RAWG_API_KEY to search games."
+      "rawgKeyMissing": "RAWG API key is not configured. Add RAWG_API_KEY to search games.",
+      "providerUnavailable": "The provider is temporarily unavailable. Try again in a moment."
     },
     "errors": {
       "mediaTypeRequired": "Choose a media type before searching.",
