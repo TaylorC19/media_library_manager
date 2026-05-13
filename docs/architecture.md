@@ -2,142 +2,68 @@
 
 ## Overview
 
-`Media Library Manager` is a monorepo with a clear web/API boundary:
+`Media Library Manager` ships as a **single Go application**:
 
-- `apps/web` renders the UI and handles browser-only concerns
-- `apps/api` owns auth, sessions, provider access, normalization, caching, and persistence
-- `packages/types` defines shared request, response, and domain contracts
-- `packages/provider-sdk` holds provider-facing contracts and normalization helpers
+- **HTTP server** — [`github.com/go-chi/chi/v5`](https://github.com/go-chi/chi) in [`internal/app/app.go`](../internal/app/app.go)
+- **Rendering** — `html/template` with embedded or on-disk templates under [`internal/views`](../internal/views)
+- **Static assets** — [`internal/static`](../internal/static), embedded when `APP_ENV=production`
+- **Persistence** — MongoDB via the official Go driver, [`internal/repository`](../internal/repository)
+- **Providers** — [`internal/providers`](../internal/providers) (TMDB, MusicBrainz, Discogs, Open Library, RAWG)
+- **Business logic** — [`internal/service`](../internal/service)
 
-This separation is intentional. The frontend never talks to TMDB, MusicBrainz, Open Library, RAWG, or Discogs directly.
+The browser does not call TMDB, MusicBrainz, Open Library, RAWG, or Discogs directly. All provider traffic is server-side.
 
-## Monorepo Shape
+## Repository shape
 
 ```txt
-apps/
-  api/            NestJS API, Mongo models, provider adapters
-  web/            Next.js App Router UI
-packages/
-  config/         Shared config helpers
-  provider-sdk/   Provider contracts and mapping utilities
-  types/          Shared TypeScript contracts
+cmd/web/           main()
+internal/
+  app/             wiring: router, services, renderer
+  config/          environment loading
+  db/              Mongo client
+  domain/          domain types and enums
+  http/            handlers, middleware
+  providers/       external APIs + throttling
+  repository/      Mongo collections
+  service/         auth, library, media, search, barcode, reliability
+  views/           templates, locales
+  static/          CSS, JS (e.g. scan), embed
 ```
 
-## System Flow
+## System flow
 
 ```mermaid
 flowchart LR
   browser[Browser]
-  webApp[NextWebApp]
-  api[NestApi]
+  goApp[GoMonolith]
   mongo[(MongoDB)]
-  providers[ProviderAdapters]
+  providers[Providers]
 
-  browser --> webApp
-  webApp -->|"HTTP requests with session cookie"| api
-  api --> mongo
-  api --> providers
-  providers --> api
-  api --> webApp
+  browser -->|"HTTP HTML forms and GET pages"| goApp
+  goApp --> mongo
+  goApp --> providers
 ```
 
-## Web App Responsibilities
+## Responsibilities
 
-The web app is responsible for:
+- **Routes and middleware** — locale prefix, logging, recovery, session cookie, auth gate for protected pages.
+- **Auth** — register, login, logout; sessions stored in MongoDB; password hashing with `golang.org/x/crypto`.
+- **Library** — `catalog` / `wishlist`, manual entries, detail and edit flows.
+- **Search** — provider fan-out, normalized results, links into import/attach flows.
+- **Import** — create or reuse `media_records`, attach `library_entries`, dedupe in the media service.
+- **Barcode** — orchestrated lookup, optional `scan_logs`, never auto-saves library state.
+- **Localization** — English and Japanese presentation strings in [`internal/views/locales`](../internal/views/locales).
 
-- rendering public auth pages and protected app routes
-- collecting user input for manual entry, search, and scan flows
-- showing loading, empty, and error states
-- sending authenticated requests to the API
-- localizing the interface for `en` and `ja`
+## Persistence model
 
-The web app is not responsible for:
+- **`library_entries`** — user-owned collection state (bucket, notes, tags, format, etc.).
+- **`media_records`** — normalized shared metadata and provider references.
 
-- provider authentication or rate limiting
-- metadata normalization
-- barcode lookup orchestration
-- permission checks beyond route gating UX
+See [`docs/data-model.md`](./data-model.md).
 
-## API Responsibilities
+## Deployment shape
 
-The API is responsible for:
+- **Development on host:** `./scripts/dev-db-up.sh` (Mongo in Docker) + `./scripts/dev-web.sh` with `APP_ENV=development` loads templates from disk for fast iteration.
+- **Production:** root `Dockerfile` + [`docker-compose.prod.yml`](../docker-compose.prod.yml). Local [`docker-compose.yml`](../docker-compose.yml) is **MongoDB only** for dev.
 
-- username/password auth
-- session creation, validation, and logout
-- scoping protected routes to the current user
-- storing normalized `media_records`
-- storing user-owned `library_entries`
-- fan-out provider search
-- provider-backed import and refresh
-- barcode lookup against local data and providers
-- provider response caching
-- health reporting for deployment checks
-
-## Auth And Session Boundary
-
-Auth is session-cookie based.
-
-- the API sets an HTTP-only cookie
-- the raw session token is never stored directly in Mongo
-- the API stores a hashed token in the `sessions` collection
-- protected routes rely on the global session guard
-
-This keeps auth simple for a private app while still demonstrating production-minded session handling.
-
-## Search And Import Flow
-
-```mermaid
-flowchart TD
-  searchUi[SearchUi]
-  searchEndpoint[GET_search]
-  adapters[ProviderAdapters]
-  normalized[NormalizedSearchResult]
-  importEndpoint[POST_media_import]
-  mediaRecords[media_records]
-  libraryEntries[library_entries]
-
-  searchUi --> searchEndpoint
-  searchEndpoint --> adapters
-  adapters --> normalized
-  normalized --> searchUi
-  searchUi --> importEndpoint
-  importEndpoint --> mediaRecords
-  importEndpoint --> libraryEntries
-```
-
-Key rule:
-
-- provider data is normalized into internal shapes before it becomes part of the app's stored model
-
-## Barcode Flow
-
-Barcode scanning is designed as input acceleration, not auto-match automation.
-
-1. The web app reads a UPC/EAN style barcode from the camera.
-2. The API checks local matches and provider-backed candidates.
-3. The API returns candidate matches plus fallback hints.
-4. The user explicitly selects a result and chooses `catalog` or `wishlist`.
-
-This keeps the UX safer for ambiguous or weak barcode coverage.
-
-## Persistence Model
-
-The data model is split on purpose:
-
-- `library_entries` stores user-specific collection state
-- `media_records` stores normalized shared metadata snapshots
-
-That separation allows the same media record to be reused across entries while keeping personal notes, tags, purchase info, and bucket assignment user-owned.
-
-See [`docs/data-model.md`](./data-model.md) for the collection-level breakdown.
-
-## Deployment Shape
-
-The repo supports two main operational modes:
-
-- local Docker development with `web`, `api`, and `mongo`
-- production-style Docker deployment with app images and either Atlas, external Mongo, or an optional bundled Mongo profile
-
-The API exposes `GET /health`, and both Compose files use it for readiness checks.
-
-See [`docs/deployment.md`](./deployment.md) for the exact commands and env expectations.
+See [`docs/deployment.md`](./deployment.md).

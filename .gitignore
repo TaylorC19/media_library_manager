@@ -12,3 +12,6 @@ coverage
 *.tsbuildinfo
 mongodb-data
 tmp/
+
+# Go build artifact at repo root (if you use go build -o web).
+/web

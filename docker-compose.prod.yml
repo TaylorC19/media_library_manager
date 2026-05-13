@@ -1,83 +1,27 @@
 services:
-  web:
+  app:
     build:
       context: .
-      dockerfile: apps/web/Dockerfile
+      dockerfile: Dockerfile
     init: true
     restart: unless-stopped
+    env_file:
+      - .env.prod
     environment:
-      INTERNAL_API_BASE_URL: ${INTERNAL_API_BASE_URL:-http://api:4000}
-      NEXT_TELEMETRY_DISABLED: "1"
-      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
-      NODE_ENV: ${NODE_ENV:-production}
-      WEB_PORT: "3000"
+      # Force embedded assets in container; see internal/config.UseEmbeddedAssets.
+      APP_ENV: production
+      PORT: "8080"
     ports:
-      - "${WEB_PORT:-3000}:3000"
-    depends_on:
-      api:
-        condition: service_healthy
+      - "${PORT:-8080}:8080"
     healthcheck:
       test:
         [
           "CMD",
-          "node",
-          "-e",
-          "fetch('http://127.0.0.1:3000').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+          "wget",
+          "-qO-",
+          "http://127.0.0.1:8080/health",
         ]
       interval: 15s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-
-  api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
-    init: true
-    restart: unless-stopped
-    environment:
-      APP_BASE_URL: ${APP_BASE_URL}
-      API_PORT: "4000"
-      CORS_ORIGIN: ${CORS_ORIGIN}
-      DISCOGS_BASE_URL: ${DISCOGS_BASE_URL:-https://api.discogs.com}
-      DISCOGS_TOKEN: ${DISCOGS_TOKEN:-}
-      MONGODB_URL: ${MONGODB_URL}
-      MUSICBRAINZ_BASE_URL: ${MUSICBRAINZ_BASE_URL:-https://musicbrainz.org/ws/2}
-      MUSICBRAINZ_MIN_INTERVAL_MS: ${MUSICBRAINZ_MIN_INTERVAL_MS:-1100}
-      MUSICBRAINZ_RATE_LIMIT_COOLDOWN_MS: ${MUSICBRAINZ_RATE_LIMIT_COOLDOWN_MS:-5000}
-      MUSICBRAINZ_RETRYABLE_COOLDOWN_MS: ${MUSICBRAINZ_RETRYABLE_COOLDOWN_MS:-2000}
-      MUSICBRAINZ_USER_AGENT: ${MUSICBRAINZ_USER_AGENT}
-      NODE_ENV: ${NODE_ENV:-production}
-      OPENLIBRARY_BASE_URL: ${OPENLIBRARY_BASE_URL:-https://openlibrary.org}
-      PROVIDER_CACHE_BARCODE_TTL_MS: ${PROVIDER_CACHE_BARCODE_TTL_MS:-604800000}
-      PROVIDER_CACHE_DETAIL_TTL_MS: ${PROVIDER_CACHE_DETAIL_TTL_MS:-604800000}
-      PROVIDER_CACHE_NEGATIVE_BARCODE_TTL_MS: ${PROVIDER_CACHE_NEGATIVE_BARCODE_TTL_MS:-3600000}
-      PROVIDER_CACHE_NEGATIVE_DETAIL_TTL_MS: ${PROVIDER_CACHE_NEGATIVE_DETAIL_TTL_MS:-3600000}
-      PROVIDER_CACHE_NEGATIVE_SEARCH_TTL_MS: ${PROVIDER_CACHE_NEGATIVE_SEARCH_TTL_MS:-900000}
-      PROVIDER_CACHE_SEARCH_TTL_MS: ${PROVIDER_CACHE_SEARCH_TTL_MS:-43200000}
-      PROVIDER_CACHE_VERSION: ${PROVIDER_CACHE_VERSION:-v3}
-      RAWG_API_KEY: ${RAWG_API_KEY:-}
-      RAWG_BASE_URL: ${RAWG_BASE_URL:-https://api.rawg.io/api}
-      SESSION_COOKIE_NAME: ${SESSION_COOKIE_NAME:-mlib_session}
-      SESSION_SECRET: ${SESSION_SECRET}
-      SESSION_TTL_DAYS: ${SESSION_TTL_DAYS:-30}
-      TMDB_API_KEY: ${TMDB_API_KEY:-}
-      TMDB_BASE_URL: ${TMDB_BASE_URL:-https://api.themoviedb.org/3}
-    ports:
-      - "${API_PORT:-4000}:4000"
-    depends_on:
-      mongo:
-        condition: service_healthy
-        required: false
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "node",
-          "-e",
-          "fetch('http://127.0.0.1:4000/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
-        ]
-      interval: 10s
       timeout: 5s
       retries: 10
       start_period: 20s
@@ -93,7 +37,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "echo 'db.adminCommand({ ping: 1 })' | mongosh mongodb://127.0.0.1:27017/admin --quiet >/dev/null 2>&1 || exit 1"
+          "echo 'db.adminCommand({ ping: 1 })' | mongosh mongodb://127.0.0.1:27017/admin --quiet >/dev/null 2>&1 || exit 1",
         ]
       interval: 5s
       timeout: 5s

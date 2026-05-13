@@ -1,38 +1,40 @@
 ---
-description: Core architectural constraints for the Media Library Manager project
-alwaysApply: true
+description: This project is a single Go application (see go-v2-foundation). The historical split app note below is superseded.
+alwaysApply: false
 ---
 
-# Stack
+# Legacy note — superseded
+
+The repository **no longer** uses a Next.js + NestJS monorepo (`apps/web`, `apps/api`, `packages/*`). Those paths were removed after the Go implementation reached replacement coverage.
+
+**Canonical rules:** use [`.cursor/rules/go-v2-foundation.mdc`](go-v2-foundation.mdc) and [`docs/go-v2/spec.md`](../../docs/go-v2/spec.md).
+
+If you need context on the old stack, see [`docs/go-v2/migration-archive.md`](../../docs/go-v2/migration-archive.md).
+
+---
+
+_Archived content (do not follow for new work):_
+
+# Stack (obsolete)
+
 - Monorepo with `apps/web` and `apps/api`
 - Frontend: Next.js + TypeScript + Tailwind
 - Backend: NestJS + TypeScript
 - Database: MongoDB
-- Shared domain types belong in `packages/types`
+- Shared domain types: `packages/types`
 
-# Product constraints
+# Product constraints (still valid at domain level)
+
 - Private login-first app
-- Two buckets only in v1: `catalog` and `wishlist`
+- Two buckets: `catalog` and `wishlist`
 - Media types: `movie`, `tv`, `album`, `book`, `game`
 - Ratings are read-only external metadata only
 - No email verification or password reset
 - Barcode scanning is best-effort candidate matching, never assume exact auto-match
 
-# Architecture rules
+# Architecture rules (superseded by Go monolith)
+
 - Frontend must never call third-party metadata providers directly
 - Backend owns auth, sessions, provider integrations, normalization, barcode lookup, caching, and permission checks
 - Do not replace MongoDB with Postgres
-- Do not use Prisma
-- Do not use NextAuth/Auth.js
-- Do not collapse frontend and backend into one app unless explicitly asked
-
-# Data model rules
-- Use `users`, `sessions`, `library_entries`, `media_records`
-- Do not use SQL-style subtype tables like `item_as_cd` or `item_as_game`
-- Keep user-owned collection state separate from provider-imported metadata
-
-# Working style
-- Before large edits, produce a plan with affected files
-- Prefer complete working code over pseudocode
-- Keep types explicit and reusable
-- After major edits, run relevant typecheck/build commands
+- Do not collapse frontend and backend into separate deployable services for *new* work—the shipped product is one Go binary

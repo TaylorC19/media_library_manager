@@ -1,3 +1,7 @@
+**Historical document.** This file captured the original Next.js / NestJS monorepo product spec. The current rewrite targets a single Go application; see [`docs/go-v2/spec.md`](go-v2/spec.md) for authoritative architecture and behavior.
+
+---
+
 Below is the full build package.
 
 I’ve locked the external-provider assumptions to current official docs: MongoDB Atlas still has a free tier with 512 MB storage, TMDB is free for non-commercial use with attribution, MusicBrainz enforces a 1 request/second client limit, Open Library provides public-good APIs for book lookup/discovery, Discogs splits API data into CC0 vs restricted data, and RAWG allows free personal use with attribution. ([MongoDB][1])

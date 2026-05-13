@@ -2,73 +2,60 @@
 
 ## Overview
 
-This repo ships with two Docker Compose flows:
+The Go application is built from the root [`Dockerfile`](../Dockerfile) (Alpine-based, static binary `web`). Compose files:
 
-- `docker-compose.yml` for local development
-- `docker-compose.prod.yml` for production-style self-hosting
+- [`docker-compose.yml`](../docker-compose.yml) — **local development only:** MongoDB (run the Go binary on the host with `./scripts/dev-web.sh`)
+- [`docker-compose.prod.yml`](../docker-compose.prod.yml) — **production:** Go **app** container; optional **mongo** service via profile
 
-The deployment story stays intentionally simple:
+Deployment stays intentionally simple: no Kubernetes in-repo, no bundled TLS reverse proxy.
 
-- no Kubernetes
-- no separate infra repo
-- no bundled TLS or reverse proxy
-- one Mongo connection variable: `MONGODB_URL`
+MongoDB connection uses **`MONGODB_URI`** or **`MONGODB_URL`** (alias) and **`MONGODB_DATABASE`**, as read by [`internal/config/config.go`](../internal/config/config.go).
 
-## Images And Runtime
+## Image and runtime
 
-### Web
+- **Build context:** repository root
+- **Binary:** `/home/app/web` in the runtime image, listens on `PORT` (default `8080`)
+- **Templates/static:** when `APP_ENV=production`, the app uses embedded assets (`internal/config.UseEmbeddedAssets`). The production Compose service sets `APP_ENV=production` so the container works without mounting source.
 
-- built from `apps/web/Dockerfile`
-- uses Next.js standalone output
-- starts with `node apps/web/server.js`
-
-### API
-
-- built from `apps/api/Dockerfile`
-- compiles NestJS into `dist`
-- starts with `node dist/main.js`
-
-Both Dockerfiles use `node:22-alpine`.
-
-## Local Development
+## Local development (Mongo in Docker, Go on the host)
 
 ### 1. Create `.env`
 
-```bash 
+```bash
 cp .env.example .env
 ```
 
-The root `.env` is host-friendly by default:
+The Go process on your machine should use **localhost** to reach the published Mongo port:
 
-- `NEXT_PUBLIC_API_BASE_URL=http://localhost:4000`
-- `INTERNAL_API_BASE_URL=http://localhost:4000`
-- `MONGODB_URL=mongodb://localhost:27017/media_library`
-
-The dev Compose file overrides the container-only values that should resolve to Docker service names instead.
-
-### 2. Start the dev stack
-
-```bash
-pnpm docker:dev:up
+```env
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DATABASE=media_library
 ```
 
-Services:
-
-- `deps`: installs workspace dependencies into the shared volume
-- `mongo`: local MongoDB on `mongodb://localhost:27017`
-- `api`: NestJS watch-mode server on `http://localhost:4000`
-- `web`: Next.js dev server on `http://localhost:3000`
-
-### 3. Stop or reset
+### 2. Start MongoDB
 
 ```bash
-pnpm docker:dev:down
-pnpm docker:dev:reset
+make docker-up
+# or: docker compose up -d
+# or: ./scripts/dev-db-up.sh
 ```
 
-`docker:dev:reset` also removes volumes.
+### 3. Run the Go app
 
-## Production-Style Deployment
+```bash
+./scripts/dev-web.sh
+```
+
+### 4. Stop Mongo
+
+```bash
+make docker-down
+# or: docker compose down
+```
+
+To remove volumes: `docker compose down -v`.
+
+## Production-style Compose
 
 ### 1. Create `.env.prod`
 
@@ -76,143 +63,72 @@ pnpm docker:dev:reset
 cp .env.prod.example .env.prod
 ```
 
-Required edits:
+Edit at minimum:
 
-- set `SESSION_SECRET` to a strong random string
-- set `APP_BASE_URL` to the real web origin
-- set `CORS_ORIGIN` to the same browser-facing web origin
-- set `NEXT_PUBLIC_API_BASE_URL` to the browser-facing API origin
-- set `MONGODB_URL` to Atlas, bundled Mongo, or another external Mongo instance
-- keep `INTERNAL_API_BASE_URL=http://api:4000` when `web` and `api` stay on the same Compose network
+- **`MONGODB_URI`** — Atlas (`mongodb+srv://...`), bundled `mongo` service (`mongodb://mongo:27017`), or another host
+- **`SESSION_COOKIE_SECURE`** — `true` when serving over HTTPS
+- Provider keys and **`MUSICBRAINZ_USER_AGENT`** as needed
 
-### 2. Preview the resolved Compose config
+There is **no** `SESSION_SECRET` in the Go app: sessions use stored tokens in MongoDB (see auth service). Use strong cookie settings and HTTPS in production.
 
-```bash
-pnpm docker:prod:config
-```
-
-### 3. Start the stack
-
-Atlas or another external Mongo:
+### 2. Preview the resolved config
 
 ```bash
-pnpm docker:prod:up
+make docker-prod-config
 ```
 
-Bundled self-hosted Mongo:
+### 3. Start
+
+External or Atlas Mongo:
 
 ```bash
-pnpm docker:prod:up:mongo
+make docker-prod-up
 ```
 
-### 4. Operate the stack
+With bundled Mongo:
 
 ```bash
-pnpm docker:prod:logs
-pnpm docker:prod:down
+make docker-prod-up-mongo
 ```
 
-## MongoDB Switching
+Ensure `.env.prod` uses `MONGODB_URI=mongodb://mongo:27017` when using the `mongo` profile.
 
-### Local Docker dev
-
-Keep the host-friendly root value:
-
-```env
-MONGODB_URL=mongodb://localhost:27017/media_library
-```
-
-The Compose file overrides the API container to:
-
-```env
-MONGODB_URL=mongodb://mongo:27017/media_library
-```
-
-### Production with MongoDB Atlas
-
-Set:
-
-```env
-MONGODB_URL=mongodb+srv://<user>:<password>@<cluster>/<db>?retryWrites=true&w=majority
-```
-
-Then run:
+### 4. Logs and stop
 
 ```bash
-pnpm docker:prod:up
+make docker-prod-logs
+make docker-prod-down
 ```
 
-### Production with bundled self-hosted Mongo
+## MongoDB switching
 
-Set:
+### Compose `mongo` service
 
-```env
-MONGODB_URL=mongodb://mongo:27017/media_library
-```
+Use host/port `mongo:27017` from the app container.
 
-Then run:
+### MongoDB Atlas
 
-```bash
-pnpm docker:prod:up:mongo
-```
+Set `MONGODB_URI` to your `mongodb+srv://` connection string. Do not start the `mongo` profile.
 
-The `mongo` service is behind an optional Compose profile, so Atlas users do not need to run a database container.
+### Self-hosted Mongo elsewhere
 
-### Production with another external Mongo instance
+Set `MONGODB_URI` to your replica set or standalone URI.
 
-Set:
+## Health checks
 
-```env
-MONGODB_URL=mongodb://<host>:27017/media_library
-```
+- **`GET /health`** — JSON `{ "ok": true, ... }`. Docker health checks use `wget` against `http://127.0.0.1:8080/health` (default `PORT`).
 
-Then run:
+## HTTPS and cookies
 
-```bash
-pnpm docker:prod:up
-```
+Set `SESSION_COOKIE_SECURE=true` when the app is served behind HTTPS so session cookies are marked `Secure`. Terminate TLS at your reverse proxy or platform edge.
 
-## Health Checks And Startup Order
+## Provider environment
 
-### Development
+Production templates include provider keys and cache TTLs (`PROVIDER_CACHE_*`, MusicBrainz throttling). See [`.env.prod.example`](../.env.prod.example) and [`internal/config/config.go`](../internal/config/config.go).
 
-- `deps` must complete before the app services start
-- `api` waits for a healthy `mongo`
-- `web` waits for a healthy `api`
+## Raspberry Pi notes
 
-### Production
-
-- `api` exposes `GET /health`
-- `web` waits for a healthy `api`
-- `mongo` has its own health check when the `mongo` profile is enabled
-- `api` marks `mongo` as an optional dependency so Atlas and external Mongo stay valid
-
-The API health route returns service status plus Mongo readiness and is the correct first endpoint to test after boot.
-
-## HTTPS And Cookies
-
-When `NODE_ENV=production`, the API marks auth cookies as `Secure`. Browser-based auth should therefore run behind HTTPS.
-
-This repo does not bundle TLS termination. For an internet-facing deployment, place the stack behind a trusted HTTPS-capable reverse proxy or platform edge.
-
-## Provider Env Notes
-
-Production env templates include provider-specific settings for:
-
-- TMDB
-- MusicBrainz
-- Discogs
-- Open Library
-- RAWG
-- provider cache TTLs and cache versioning
-
-MusicBrainz-specific throttling env vars are especially important for stability in self-hosted deployments.
-
-## Raspberry Pi Notes
-
-- use a 64-bit OS on the Pi
-- `node:22-alpine` works well for both amd64 and arm64 builds
-- `mongo:7` is suitable for the optional bundled database on 64-bit ARM
-- Atlas is usually the easiest path on a Pi because it removes local database CPU, RAM, and disk pressure
-- if you self-host Mongo on the Pi, use reliable storage and expect slower image builds than on desktop hardware
-- build directly on the Pi for the simplest flow, or adopt `docker buildx` later if you want multi-arch image publishing
+- Prefer **64-bit** OS.
+- The Go binary and `mongo:7` images support **arm64**.
+- Atlas often reduces load on the Pi versus running Mongo locally.
+- Building on the Pi is straightforward; use `buildx` if you need multi-arch publishing.
