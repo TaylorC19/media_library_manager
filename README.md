@@ -1,4 +1,4 @@
-# Media Library Manager Version 1.0.0
+# Media Library Manager Alpha Version 0.1.0
 
 A self-hosted media library app for tracking movies, TV, albums, books, and games in one private collection.
 
