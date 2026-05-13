@@ -78,7 +78,7 @@ func InferHint(normalized, preferred string) Hint {
 	}
 }
 
-// BuildStages returns ordered provider stages (mirrors apps/api barcode-lookup.strategy.ts).
+// BuildStages returns ordered provider stages for barcode lookup.
 func BuildStages(h Hint) []Stage {
 	if h.PreferredMediaType != nil {
 		switch *h.PreferredMediaType {
