@@ -1,0 +1,22 @@
+{{ define "pages/login.content" }}
+<h2>{{ t . "auth.login.title" }}</h2>
+{{ template "partials/form_errors" . }}
+<form method="post" action="/{{ .Locale }}/login">
+  <label for="username">{{ t . "auth.fields.username" }}</label>
+  <input id="username" name="username" required value="{{ index .Values "username" }}" />
+
+  <label for="password">{{ t . "auth.fields.password" }}</label>
+  <input id="password" name="password" type="password" required />
+
+  <button type="submit">{{ t . "common.actions.signIn" }}</button>
+</form>
+
+<p>
+  {{ t . "auth.login.altLabel" }}
+  <a href="/{{ .Locale }}/register">{{ t . "auth.register.title" }}</a>
+</p>
+{{ end }}
+
+{{ define "pages/login.html" }}
+{{ template "layout/auth_shell" . }}
+{{ end }}

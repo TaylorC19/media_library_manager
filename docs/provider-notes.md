@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This project uses providers for metadata lookup, not as a full mirrored data warehouse. The API normalizes provider responses into internal record shapes and stores only the fields it needs.
+This project uses providers for metadata lookup, not as a full mirrored data warehouse. The Go server normalizes provider responses into internal record shapes and stores only the fields it needs.
 
 ## TMDB
 
@@ -26,7 +26,7 @@ Used for:
 Notes:
 
 - this is the most rate-limit-sensitive provider in the current stack
-- the API includes MusicBrainz-specific throttling settings through env vars
+- the Go server includes MusicBrainz-specific throttling settings through env vars
 - response caching matters here more than for most other providers
 
 Relevant env vars:
@@ -75,8 +75,7 @@ Notes:
 
 ## Implementation Rules
 
-- provider access belongs to `apps/api`
-- provider contracts and normalization helpers belong to `packages/provider-sdk`
+- provider access and adapters live in the Go application under `internal/providers` (and related services), not in the browser
 - cached responses are stored in `provider_cache`
 - barcode lookup may return failures and fallback hints instead of pretending every provider can resolve every code
 

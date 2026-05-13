@@ -1,0 +1,264 @@
+{
+  "common": {
+    "appName": "Media Library Manager",
+    "languageSwitcher": {
+      "aria": "Language switcher",
+      "label": "Language",
+      "en": "English",
+      "ja": "日本語"
+    },
+    "actions": {
+      "logout": "Logout",
+      "signIn": "Sign in",
+      "createAccount": "Create account",
+      "save": "Save",
+      "edit": "Edit",
+      "delete": "Delete",
+      "view": "View item"
+    },
+    "status": {
+      "signedIn": "Signed in"
+    },
+    "flash": {
+      "info": "Info",
+      "error": "Error",
+      "serverError": "Something went wrong. Please try again."
+    },
+    "pagination": {
+      "aria": "Pagination",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "altLabel": "Need an account?"
+    },
+    "register": {
+      "title": "Register",
+      "altLabel": "Already have an account?"
+    },
+    "fields": {
+      "username": "Username",
+      "password": "Password",
+      "passwordMin": "Password (8+ chars)"
+    },
+    "errors": {
+      "invalidCredentials": "Invalid username or password.",
+      "registerFailed": "Registration failed. Use at least 8 characters and a unique username.",
+      "invalidRegisterInput": "Use at least 8 characters for the password and a non-empty username.",
+      "usernameTaken": "That username is already registered.",
+      "serverError": "Something went wrong. Please try again."
+    },
+    "flash": {
+      "loggedOut": "Logged out.",
+      "registered": "Account created. Welcome!"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome,",
+    "authOwned": "Authentication is now owned by the Go app.",
+    "openCatalog": "Open catalog",
+    "openWishlist": "Open wishlist"
+  },
+  "library": {
+    "nav": {
+      "aria": "Main",
+      "dashboard": "Home",
+      "catalog": "Catalog",
+      "wishlist": "Wishlist",
+      "search": "Search",
+      "scan": "Scan",
+      "settings": "Settings",
+      "add": "Add item"
+    },
+    "catalog": {
+      "title": "Catalog"
+    },
+    "wishlist": {
+      "title": "Wishlist"
+    },
+    "list": {
+      "empty": "Nothing here yet.",
+      "addToCatalog": "Add to catalog",
+      "addToWishlist": "Add to wishlist",
+      "summary": "Showing"
+    },
+    "detail": {
+      "myCopy": "My copy",
+      "mediaDetails": "Media details",
+      "missingMedia": "Linked media record is missing."
+    },
+    "fields": {
+      "bucket": "Bucket",
+      "mediaType": "Media type",
+      "format": "Format",
+      "barcode": "Barcode",
+      "purchaseDate": "Purchase date",
+      "notes": "Notes",
+      "tags": "Tags",
+      "tagsHint": "Comma-separated",
+      "title": "Title",
+      "year": "Year",
+      "source": "Source"
+    },
+    "form": {
+      "newTitle": "Add item",
+      "editTitle": "Edit item",
+      "mediaReadOnly": "This item is linked to provider metadata. Only your copy fields are editable here.",
+      "cancelToDetail": "Back to detail",
+      "cancelToCatalog": "Cancel"
+    },
+    "filters": {
+      "query": "Filter titles",
+      "anyMediaType": "Any media type",
+      "anyFormat": "Any format",
+      "apply": "Apply filters",
+      "clear": "Clear"
+    },
+    "actions": {
+      "refreshMedia": "Refresh media details"
+    },
+    "errors": {
+      "titleRequired": "Title is required.",
+      "invalidMediaType": "Choose a valid media type.",
+      "invalidBucket": "Choose catalog or wishlist.",
+      "invalidFormat": "Choose a valid format.",
+      "duplicateEntry": "You already have this title in that bucket with the same format.",
+      "mediaNotFound": "That media record could not be found.",
+      "invalidMediaRecordId": "That media id is not valid."
+    },
+    "flash": {
+      "created": "Item saved.",
+      "updated": "Changes saved.",
+      "deleted": "Item removed from your library.",
+      "addedToLibrary": "Added to your library."
+    },
+    "bucket": {
+      "catalog": "Catalog",
+      "wishlist": "Wishlist"
+    },
+    "source": {
+      "manual": "Manual",
+      "provider": "Provider"
+    },
+    "mediatype": {
+      "movie": "Movie",
+      "tv": "TV",
+      "album": "Album",
+      "book": "Book",
+      "game": "Game"
+    },
+    "format": {
+      "unset": "Not set",
+      "blu_ray": "Blu-ray",
+      "dvd": "DVD",
+      "vhs": "VHS",
+      "cd": "CD",
+      "vinyl": "Vinyl",
+      "cassette": "Cassette",
+      "hardcover": "Hardcover",
+      "paperback": "Paperback",
+      "switch": "Nintendo Switch",
+      "ps5": "PlayStation 5",
+      "xbox": "Xbox",
+      "digital": "Digital",
+      "other": "Other"
+    }
+  },
+  "scan": {
+    "title": "Scan barcode",
+    "intro": "Start the camera and point it at a barcode, or type the digits and look them up. Nothing is saved until you add an item.",
+    "preferredType": "Preferred type (optional)",
+    "preferredAny": "Any",
+    "barcode": "Barcode",
+    "lookup": "Look up",
+    "startCamera": "Start camera",
+    "stopCamera": "Stop camera",
+    "scanAgain": "Scan again",
+    "cameraDenied": "Camera access was denied. You can still type a barcode below.",
+    "cameraUnsupported": "Camera is not available in this browser.",
+    "noDecoder": "This browser does not support automatic scanning. Type the barcode manually.",
+    "resultsHeading": "Matches",
+    "failuresHeading": "Lookup notes",
+    "fallbackIntro": "Try a manual search",
+    "viewEntry": "View in library",
+    "viewEntryShort": "View",
+    "sourceLocal": "In your library",
+    "sourceProvider": "Provider",
+    "barcodeLabel": "Barcode",
+    "noResults": "No matches found.",
+    "noZxing": "Scanner library could not be loaded. Reload the page.",
+    "errors": {
+      "lookupFailed": "Lookup failed.",
+      "httpError": "Server returned an error."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "intro": "Review your account details and switch the app language.",
+    "account": {
+      "heading": "Account",
+      "username": "Username",
+      "displayName": "Display name"
+    },
+    "language": {
+      "heading": "Language",
+      "current": "Current language",
+      "choose": "Choose language"
+    }
+  },
+  "search": {
+    "title": "Search",
+    "fields": {
+      "query": "Search",
+      "mediaType": "Media type",
+      "mediaTypePlaceholder": "Choose a type…"
+    },
+    "actions": {
+      "submit": "Search",
+      "addCatalog": "Add to catalog",
+      "addWishlist": "Add to wishlist"
+    },
+    "results": {
+      "heading": "Results",
+      "empty": "No matches found.",
+      "summary": "Showing"
+    },
+    "warnings": {
+      "tmdbKeyMissing": "TMDB API key is not configured. Add TMDB_API_KEY to search movies and TV.",
+      "rawgKeyMissing": "RAWG API key is not configured. Add RAWG_API_KEY to search games.",
+      "providerUnavailable": "The provider is temporarily unavailable. Try again in a moment."
+    },
+    "errors": {
+      "mediaTypeRequired": "Choose a media type before searching.",
+      "invalidMediaType": "That media type is not supported."
+    },
+    "provider": {
+      "tmdb": "TMDB",
+      "musicbrainz": "MusicBrainz",
+      "open_library": "Open Library",
+      "openlibrary": "Open Library",
+      "discogs": "Discogs",
+      "rawg": "RAWG"
+    },
+    "import": {
+      "externalIdRequired": "Provider id is required.",
+      "invalidProvider": "That provider is not supported.",
+      "invalidTMDBKind": "TMDB kind is invalid.",
+      "mediaTypeMismatch": "Media type does not match the selected provider.",
+      "invalidImageURL": "Image URL must use HTTPS.",
+      "notFound": "The provider record could not be found."
+    },
+    "flash": {
+      "imported": "Added to your library.",
+      "existingEntry": "That item is already in your library."
+    },
+    "refresh": {
+      "providerRefUnavailable": "This media record does not have a refreshable provider reference yet.",
+      "notImplemented": "Refresh scaffolding is in place, but provider refresh updates are not implemented yet."
+    }
+  }
+}

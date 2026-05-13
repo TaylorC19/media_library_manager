@@ -1,0 +1,28 @@
+{{ define "partials/search_results" }}
+{{ if ne .SearchError "" }}
+  <p class="form-error" role="alert">{{ t . .SearchError }}</p>
+{{ end }}
+
+{{ range .SearchWarnings }}
+  <p class="search-warning muted" role="status">{{ t $ . }}</p>
+{{ end }}
+
+{{ if and .Query (eq .SearchError "") }}
+  {{ if .Hits }}
+    <div class="results-header">
+      <h3 class="search-results-heading">{{ t . "search.results.heading" }}</h3>
+      <p class="muted results-summary">
+        {{ t . "search.results.summary" }}: {{ .Pagination.StartItem }}-{{ .Pagination.EndItem }} / {{ .Pagination.TotalItems }}
+      </p>
+    </div>
+    <div class="search-results">
+      {{ range .Hits }}
+        {{ template "partials/search_result_card" (dict "Page" $ "Hit" .) }}
+      {{ end }}
+    </div>
+    {{ template "partials/pagination" (dict "Page" . "Pagination" .Pagination) }}
+  {{ else if .Values.media_type }}
+    <p class="empty-state">{{ t . "search.results.empty" }}</p>
+  {{ end }}
+{{ end }}
+{{ end }}

@@ -1,0 +1,11 @@
+{{ define "partials/form_errors" }}
+{{ if .FormErrors }}
+<section>
+  <ul>
+    {{ range .FormErrors }}
+    <li>{{ t $ . }}</li>
+    {{ end }}
+  </ul>
+</section>
+{{ end }}
+{{ end }}

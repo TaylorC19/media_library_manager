@@ -1,0 +1,38 @@
+{{ define "partials/library_filters" }}
+<form
+  class="library-filters"
+  method="get"
+  action="{{ .ListPath }}"
+  hx-get="{{ .ListPath }}"
+  hx-target="#library-list-section"
+  hx-push-url="true"
+>
+  <div class="field">
+    <label for="list-q">{{ t . "library.filters.query" }}</label>
+    <input id="list-q" name="q" type="search" value="{{ .Values.q }}" autocomplete="off" />
+  </div>
+  <div class="field">
+    <label for="list-media-type">{{ t . "library.fields.mediaType" }}</label>
+    <select id="list-media-type" name="media_type">
+      <option value="">{{ t . "library.filters.anyMediaType" }}</option>
+      {{ range .MediaTypes }}
+        <option value="{{ . }}" {{ if eq $.Values.media_type . }}selected{{ end }}>{{ t $ (printf "library.mediatype.%s" .) }}</option>
+      {{ end }}
+    </select>
+  </div>
+  <div class="field">
+    <label for="list-format">{{ t . "library.fields.format" }}</label>
+    <select id="list-format" name="format">
+      <option value="">{{ t . "library.filters.anyFormat" }}</option>
+      {{ range .Formats }}
+        <option value="{{ . }}" {{ if eq $.Values.format . }}selected{{ end }}>{{ t $ (printf "library.format.%s" .) }}</option>
+      {{ end }}
+    </select>
+  </div>
+  <input type="hidden" name="page_size" value="{{ .Values.page_size }}" />
+  <div class="actions">
+    <button type="submit" class="button-primary">{{ t . "library.filters.apply" }}</button>
+    <a class="button-link" href="{{ .ListPath }}">{{ t . "library.filters.clear" }}</a>
+  </div>
+</form>
+{{ end }}

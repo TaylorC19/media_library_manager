@@ -1,0 +1,264 @@
+{
+  "common": {
+    "appName": "メディアライブラリーマネージャー",
+    "languageSwitcher": {
+      "aria": "言語切り替え",
+      "label": "言語",
+      "en": "English",
+      "ja": "日本語"
+    },
+    "actions": {
+      "logout": "ログアウト",
+      "signIn": "ログイン",
+      "createAccount": "登録",
+      "save": "保存",
+      "edit": "編集",
+      "delete": "削除",
+      "view": "詳細を見る"
+    },
+    "status": {
+      "signedIn": "ログイン中"
+    },
+    "flash": {
+      "info": "お知らせ",
+      "error": "エラー",
+      "serverError": "エラーが発生しました。しばらくしてから再度お試しください。"
+    },
+    "pagination": {
+      "aria": "ページ送り",
+      "previous": "前へ",
+      "next": "次へ"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "ログイン",
+      "altLabel": "アカウントを作成しますか？"
+    },
+    "register": {
+      "title": "登録",
+      "altLabel": "既にアカウントがありますか？"
+    },
+    "fields": {
+      "username": "ユーザー名",
+      "password": "パスワード",
+      "passwordMin": "パスワード（8文字以上）"
+    },
+    "errors": {
+      "invalidCredentials": "ユーザー名またはパスワードが正しくありません。",
+      "registerFailed": "登録に失敗しました。8文字以上のパスワードと一意のユーザー名を入力してください。",
+      "invalidRegisterInput": "パスワードは8文字以上、ユーザー名は空にしないでください。",
+      "usernameTaken": "このユーザー名は既に登録されています。",
+      "serverError": "エラーが発生しました。しばらくしてから再度お試しください。"
+    },
+    "flash": {
+      "loggedOut": "ログアウトしました。",
+      "registered": "アカウントを作成しました。ようこそ！"
+    }
+  },
+  "dashboard": {
+    "title": "ダッシュボード",
+    "welcome": "ようこそ、",
+    "authOwned": "Goアプリが認証を管理しています。",
+    "openCatalog": "カタログを開く",
+    "openWishlist": "ウィッシュリストを開く"
+  },
+  "library": {
+    "nav": {
+      "aria": "メイン",
+      "dashboard": "ホーム",
+      "catalog": "カタログ",
+      "wishlist": "ウィッシュリスト",
+      "search": "検索",
+      "scan": "スキャン",
+      "settings": "設定",
+      "add": "追加"
+    },
+    "catalog": {
+      "title": "カタログ"
+    },
+    "wishlist": {
+      "title": "ウィッシュリスト"
+    },
+    "list": {
+      "empty": "まだありません。",
+      "addToCatalog": "カタログに追加",
+      "addToWishlist": "ウィッシュリストに追加",
+      "summary": "表示中"
+    },
+    "detail": {
+      "myCopy": "マイコピー",
+      "mediaDetails": "作品情報",
+      "missingMedia": "関連するメディアレコードがありません。"
+    },
+    "fields": {
+      "bucket": "バケット",
+      "mediaType": "メディア種別",
+      "format": "フォーマット",
+      "barcode": "バーコード",
+      "purchaseDate": "購入日",
+      "notes": "メモ",
+      "tags": "タグ",
+      "tagsHint": "カンマ区切り",
+      "title": "タイトル",
+      "year": "年",
+      "source": "ソース"
+    },
+    "form": {
+      "newTitle": "アイテムを追加",
+      "editTitle": "アイテムを編集",
+      "mediaReadOnly": "このアイテムはプロバイダー由来のメタデータに紐づいています。ここでは所有情報のみ編集できます。",
+      "cancelToDetail": "詳細に戻る",
+      "cancelToCatalog": "キャンセル"
+    },
+    "filters": {
+      "query": "タイトルで絞り込む",
+      "anyMediaType": "すべてのメディア種別",
+      "anyFormat": "すべてのフォーマット",
+      "apply": "絞り込む",
+      "clear": "クリア"
+    },
+    "actions": {
+      "refreshMedia": "作品情報を更新"
+    },
+    "errors": {
+      "titleRequired": "タイトルは必須です。",
+      "invalidMediaType": "有効なメディア種別を選んでください。",
+      "invalidBucket": "カタログかウィッシュリストを選んでください。",
+      "invalidFormat": "有効なフォーマットを選んでください。",
+      "duplicateEntry": "同じバケット・フォーマットの組み合わせで既に登録されています。",
+      "mediaNotFound": "該当するメディアレコードが見つかりませんでした。",
+      "invalidMediaRecordId": "メディアIDの形式が正しくありません。"
+    },
+    "flash": {
+      "created": "保存しました。",
+      "updated": "更新しました。",
+      "deleted": "ライブラリから削除しました。",
+      "addedToLibrary": "ライブラリに追加しました。"
+    },
+    "bucket": {
+      "catalog": "カタログ",
+      "wishlist": "ウィッシュリスト"
+    },
+    "source": {
+      "manual": "手動",
+      "provider": "プロバイダー"
+    },
+    "mediatype": {
+      "movie": "映画",
+      "tv": "TV",
+      "album": "アルバム",
+      "book": "本",
+      "game": "ゲーム"
+    },
+    "format": {
+      "unset": "未設定",
+      "blu_ray": "Blu-ray",
+      "dvd": "DVD",
+      "vhs": "VHS",
+      "cd": "CD",
+      "vinyl": "レコード",
+      "cassette": "カセット",
+      "hardcover": "ハードカバー",
+      "paperback": "ペーパーバック",
+      "switch": "Nintendo Switch",
+      "ps5": "PlayStation 5",
+      "xbox": "Xbox",
+      "digital": "デジタル",
+      "other": "その他"
+    }
+  },
+  "scan": {
+    "title": "バーコードスキャン",
+    "intro": "カメラを向けるか、数字を入力して検索します。保存するのは手動で「追加」したときだけです。",
+    "preferredType": "優先する種別（任意）",
+    "preferredAny": "指定なし",
+    "barcode": "バーコード",
+    "lookup": "検索",
+    "startCamera": "カメラを開始",
+    "stopCamera": "カメラを停止",
+    "scanAgain": "もう一度スキャン",
+    "cameraDenied": "カメラへのアクセスが拒否されました。下に手入力できます。",
+    "cameraUnsupported": "このブラウザではカメラを利用できません。",
+    "noDecoder": "このブラウザでは自動スキャンに未対応です。手で入力してください。",
+    "resultsHeading": "候補",
+    "failuresHeading": "照会メモ",
+    "fallbackIntro": "手動で検索する",
+    "viewEntry": "ライブラリで表示",
+    "viewEntryShort": "表示",
+    "sourceLocal": "手元のデータ",
+    "sourceProvider": "プロバイダー",
+    "barcodeLabel": "バーコード",
+    "noResults": "候補が見つかりません。",
+    "noZxing": "スキャナ用ライブラリを読み込めませんでした。ページを再読み込みしてください。",
+    "errors": {
+      "lookupFailed": "照会に失敗しました。",
+      "httpError": "サーバーがエラーを返しました。"
+    }
+  },
+  "settings": {
+    "title": "設定",
+    "intro": "アカウント情報を確認し、アプリの表示言語を切り替えます。",
+    "account": {
+      "heading": "アカウント",
+      "username": "ユーザー名",
+      "displayName": "表示名"
+    },
+    "language": {
+      "heading": "言語",
+      "current": "現在の言語",
+      "choose": "言語を選ぶ"
+    }
+  },
+  "search": {
+    "title": "検索",
+    "fields": {
+      "query": "検索キーワード",
+      "mediaType": "メディア種別",
+      "mediaTypePlaceholder": "種別を選ぶ…"
+    },
+    "actions": {
+      "submit": "検索",
+      "addCatalog": "カタログに追加",
+      "addWishlist": "ウィッシュリストに追加"
+    },
+    "results": {
+      "heading": "結果",
+      "empty": "該当する結果がありません。",
+      "summary": "表示中"
+    },
+    "warnings": {
+      "tmdbKeyMissing": "TMDB の API キーが未設定です。映画/TV を検索するには TMDB_API_KEY を設定してください。",
+      "rawgKeyMissing": "RAWG の API キーが未設定です。ゲームを検索するには RAWG_API_KEY を設定してください。",
+      "providerUnavailable": "プロバイダーに一時的に接続できません。しばらくしてから再試行してください。"
+    },
+    "errors": {
+      "mediaTypeRequired": "検索する前にメディア種別を選んでください。",
+      "invalidMediaType": "そのメディア種別には対応していません。"
+    },
+    "provider": {
+      "tmdb": "TMDB",
+      "musicbrainz": "MusicBrainz",
+      "open_library": "Open Library",
+      "openlibrary": "Open Library",
+      "discogs": "Discogs",
+      "rawg": "RAWG"
+    },
+    "import": {
+      "externalIdRequired": "プロバイダー ID が必要です。",
+      "invalidProvider": "そのプロバイダーには対応していません。",
+      "invalidTMDBKind": "TMDB の種別が不正です。",
+      "mediaTypeMismatch": "メディア種別がプロバイダーと一致しません。",
+      "invalidImageURL": "画像 URL は HTTPS である必要があります。",
+      "notFound": "プロバイダーのレコードが見つかりませんでした。"
+    },
+    "flash": {
+      "imported": "ライブラリに追加しました。",
+      "existingEntry": "このアイテムは既にライブラリにあります。"
+    },
+    "refresh": {
+      "providerRefUnavailable": "このメディアレコードには更新可能なプロバイダー参照がまだありません。",
+      "notImplemented": "更新の土台は追加しましたが、プロバイダーからの更新処理はまだ未実装です。"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{{ define "pages/dashboard.content" }}
+<h2>{{ t . "dashboard.title" }}</h2>
+<p>{{ t . "dashboard.welcome" }} {{ .User.ShowName }}.</p>
+<section class="stats">
+  <p><strong>{{ t . "library.nav.catalog" }}</strong>: {{ .CatalogCount }}</p>
+  <p><strong>{{ t . "library.nav.wishlist" }}</strong>: {{ .WishlistCount }}</p>
+</section>
+<p class="actions">
+  <a class="button-link" href="/{{ .Locale }}/catalog">{{ t . "dashboard.openCatalog" }}</a>
+  <a class="button-link" href="/{{ .Locale }}/wishlist">{{ t . "dashboard.openWishlist" }}</a>
+  <a class="button-link primary" href="/{{ .Locale }}/library/new">{{ t . "library.nav.add" }}</a>
+</p>
+{{ end }}
+
+{{ define "pages/dashboard.html" }}
+{{ template "layout/app_shell" . }}
+{{ end }}

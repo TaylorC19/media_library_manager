@@ -2,7 +2,7 @@
 
 A self-hosted media library app for tracking movies, TV, albums, books, and games in one private collection.
 
-`Media Library Manager` is built for people who want to keep their own catalog instead of spreading it across spreadsheets, notes, and closed third-party services. It combines a clean web UI with a backend that handles auth, metadata lookups, normalization, and barcode-assisted workflows.
+`Media Library Manager` is built for people who want to keep their own catalog instead of spreading it across spreadsheets, notes, and closed third-party services. The app is a **single Go web application** (server-rendered HTML) with MongoDB persistence and server-side metadata providers.
 
 In v1, every item lives in one of two buckets:
 
@@ -28,176 +28,129 @@ In v1, every item lives in one of two buckets:
 - Provider-backed search with normalized results
 - Barcode-assisted lookup with confirmation-first matching
 - English and Japanese UI support
-- Docker Compose for development and production-style deployment
-- `GET /health` endpoint for readiness and container health checks
+- Docker Compose for local **MongoDB** only; production Go image via `docker-compose.prod.yml`
+- `GET /health` for readiness and container health checks
 
 ## Philosophy
 
-This project is meant to feel like a practical self-hosted app:
-
-- the frontend never talks to third-party metadata providers directly
-- the API owns auth, provider access, normalization, caching, and barcode lookup
+- the browser never talks to third-party metadata providers directly
+- the Go server owns auth, provider access, normalization, caching, and barcode lookup
 - user-owned collection data is stored separately from imported metadata
 - barcode scanning is treated as candidate matching, not silent automation
 
-That makes the app easier to reason about, easier to extend, and safer to run as a private personal service.
+## Why Go
 
-## Quick Start
+A single Go binary keeps deployment small and predictable: one process to run on a home server or a Raspberry Pi, explicit layering (handlers → services → repositories), and strong control over concurrency and resource use. Provider HTTP calls, normalization, caching, and sessions stay in one codebase—no separate “frontend” and “API” deployables to version together.
 
-### Docker
+## Why HTML-first (and not a SPA)
 
-The easiest way to run the app locally is with Docker Compose.
+Pages are rendered on the server with `html/template`. That makes auth, links, and forms straightforward, works well for a private catalog app, and keeps **canonical state on the server**. The UI is **not** a single-page React or Vue app; it also is **not** “no JavaScript.” **[htmx](https://htmx.org/)** swaps in HTML fragments for search results, list filters, pagination, and inline notices so interactions feel responsive without moving business logic into the browser. **Vanilla JS** is used where the platform requires it—especially the **scan** flow (camera and barcode decoding). See [`docs/templates.md`](docs/templates.md).
 
-1. Create a local env file: 
+## Quick Start (recommended)
 
-```bash
-cp .env.example .env
-```
-
-2. Start the development stack:
+1. **MongoDB in Docker** (database only — fast iteration on the Go app on your host):
 
 ```bash
-pnpm docker:dev:up
+./scripts/dev-db-up.sh
 ```
 
-3. Open:
-
-- web: [http://localhost:3000](http://localhost:3000)
-- API health: [http://localhost:4000/health](http://localhost:4000/health)
-
-This starts:
-
-- `web`
-- `api`
-- `mongo`
-
-The Compose file wires container-to-container networking automatically, so the web app talks to `api` and the API talks to `mongo`.
-
-### Without Docker
-
-If you want to run the services directly on your machine:
+2. **Run the Go app** with live reload:
 
 ```bash
-cp .env.example .env
-corepack enable
-pnpm install
-pnpm dev
+./scripts/dev-web.sh
 ```
 
-You will need a running MongoDB instance at the `MONGODB_URL` from `.env`.
+3. Open [http://localhost:8080](http://localhost:8080)
+
+`./scripts/dev-web.sh` uses `air` when available so template, locale, and static asset changes restart the server. For a one-shot run without `air`:
+
+```bash
+./scripts/dev-web-run.sh
+```
+
+4. Copy [`.env.example`](.env.example) to `.env` and adjust. For local Mongo, `MONGODB_URI=mongodb://localhost:27017` matches `./scripts/dev-db-up.sh`.
+
+## Docker Compose (local dev)
+
+[`docker-compose.yml`](docker-compose.yml) runs **only MongoDB** for development. Start the DB, then run the Go app on your machine (see Quick Start above):
+
+```bash
+make docker-up
+# or: docker compose up -d
+```
+
+Use `MONGODB_URI=mongodb://localhost:27017` in `.env` when the app runs on the host.
+
+For **production**, build and run the Go app in Docker with [`docker-compose.prod.yml`](docker-compose.prod.yml) and the root [`Dockerfile`](Dockerfile) — see [Deployment](#deployment) and [`docs/deployment.md`](docs/deployment.md).
 
 ## Configuration
 
-Important env vars:
-
-- `NEXT_PUBLIC_API_BASE_URL`
-- `INTERNAL_API_BASE_URL`
-- `API_PORT`
-- `WEB_PORT`
-- `MONGODB_URL`
-- `SESSION_COOKIE_NAME`
-- `SESSION_SECRET`
-- `CORS_ORIGIN`
-
-Provider integrations also use env vars for API keys, base URLs, and cache behavior.
+Key variables are documented in [`.env.example`](.env.example) and loaded in [`internal/config/config.go`](internal/config/config.go). They include MongoDB, session cookie settings, provider API keys, MusicBrainz throttling, and provider cache TTLs.
 
 Templates:
 
-- `.env.example` for local development
-- `.env.prod.example` for production-style deployment
+- `.env.example` — local development
+- `.env.prod.example` — copy to `.env.prod` for production-style Compose (see [`docs/deployment.md`](docs/deployment.md))
 
 ## Providers
 
-The current provider setup is:
+- **TMDB** — movies and TV
+- **MusicBrainz** — albums
+- **Discogs** — music enrichment and some barcode support
+- **Open Library** — books
+- **RAWG** — games
 
-- `TMDB` for movies and TV
-- `MusicBrainz` for albums
-- `Discogs` for music enrichment and some barcode support
-- `Open Library` for books
-- `RAWG` for games
-
-These are treated as backend adapters, not frontend dependencies. The app stores normalized records and provider references rather than mirroring raw external payloads.
-
-More notes are in [`docs/provider-notes.md`](docs/provider-notes.md).
-
-## Screenshots
-
-Suggested screenshots for this project:
-
-- login screen
-- dashboard
-- catalog or wishlist view
-- provider search results
-- barcode scan flow
-- library detail page
-
-If you want to add screenshots to the repo, place them in `docs/screenshots/` and link them here.
+Details: [`docs/provider-notes.md`](docs/provider-notes.md).
 
 ## Deployment
 
-For a production-style deployment:
+Production-style Compose (see [`.env.prod.example`](.env.prod.example)):
 
 ```bash
 cp .env.prod.example .env.prod
-pnpm docker:prod:up
+# edit .env.prod (especially MONGODB_URI)
+make docker-prod-up
 ```
 
-If you want to run the bundled Mongo container instead of Atlas or another external Mongo instance:
+Optional bundled Mongo:
 
 ```bash
-pnpm docker:prod:up:mongo
+make docker-prod-up-mongo
 ```
 
-Notes:
+Full notes: [`docs/deployment.md`](docs/deployment.md).
 
-- the web image uses Next.js standalone output
-- the API image runs compiled NestJS output
-- the API health route is used by Docker health checks
-- auth cookies are `Secure` in production, so browser access should be behind HTTPS
+## Health checks
 
-See [`docs/deployment.md`](docs/deployment.md) for the full deployment guide, Mongo switching options, and Raspberry Pi notes.
-
-## Health Checks
-
-The API exposes:
-
-- `GET /health`
-
-It returns API status and Mongo connection state and is used by the Compose health checks.
+- `GET /health` — JSON status; used by Docker health checks.
 
 ## Architecture
 
-This repo uses a split web/API architecture:
+The codebase is a **Go monolith**:
 
-- `apps/web` is the Next.js frontend
-- `apps/api` is the NestJS backend
-- `packages/types` contains shared contracts
-- `packages/provider-sdk` contains provider-facing contracts and helpers
+- `cmd/web` — entrypoint
+- `internal/http` — routes, middleware, handlers
+- `internal/views` — `html/template` and locales
+- `internal/service` — business logic
+- `internal/repository` — MongoDB access
+- `internal/providers` — TMDB, MusicBrainz, etc.
 
-That structure keeps provider access, normalization, auth, and persistence logic on the server where they belong.
+Further reading:
 
-If you want the deeper system breakdown, see:
-
+- [`docs/spec.md`](docs/spec.md) — product rules and technical constraints
 - [`docs/architecture.md`](docs/architecture.md)
-- [`docs/api.md`](docs/api.md)
+- [`docs/routes.md`](docs/routes.md) and [`docs/api.md`](docs/api.md)
 - [`docs/data-model.md`](docs/data-model.md)
+- [`docs/migration-from-legacy.md`](docs/migration-from-legacy.md) — retired Node monorepo (historical)
 
-## Project Structure
+## Project layout
 
 ```txt
-apps/
-  api/            NestJS API
-  web/            Next.js frontend
-packages/
-  config/         Shared config helpers
-  provider-sdk/   Provider contracts and normalization helpers
-  types/          Shared domain and API types
-docs/
-  architecture.md
-  api.md
-  data-model.md
-  deployment.md
-  provider-notes.md
+cmd/web/           main
+internal/          app code (HTTP, services, repos, providers, views, static embed)
+docs/              spec, architecture, deployment, routes, templates, data model
+Dockerfile         multi-stage Go build
+docker-compose.yml mongo only (local dev DB); docker-compose.prod.yml Go app + optional mongo
 ```
 
 ## Roadmap
@@ -207,4 +160,4 @@ docs/
 - saved filters and collection views
 - deeper edition and release modeling for physical media
 - background metadata refresh
-- screenshot assets and more deployment examples
+- replace [`docs/screenshots/README.md`](docs/screenshots/README.md) placeholders with real captures; more deployment examples

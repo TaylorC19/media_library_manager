@@ -1,0 +1,44 @@
+{{ define "partials/search_result_card" }}
+{{ $page := .Page }}
+{{ $hit := .Hit }}
+<article class="search-hit card">
+  <div class="search-hit__media">
+    {{ if $hit.ImageURL }}
+      <img class="search-hit__img" src="{{ $hit.ImageURL }}" alt="" loading="lazy" width="96" height="144" />
+    {{ else }}
+      <div class="search-hit__placeholder" aria-hidden="true"></div>
+    {{ end }}
+  </div>
+  <div class="search-hit__body">
+    <h3 class="search-hit__title">{{ $hit.Title }}</h3>
+    {{ if $hit.Subtitle }}<p class="search-hit__subtitle muted">{{ $hit.Subtitle }}</p>{{ end }}
+    {{ with $hit.Year }}<p class="search-hit__year muted">{{ . }}</p>{{ end }}
+    {{ if $hit.Summary }}<p class="search-hit__summary">{{ $hit.Summary }}</p>{{ end }}
+    <p class="search-hit__provider">
+      <span class="provider-pill">{{ t $page (printf "search.provider.%s" $hit.Provider) }}</span>
+    </p>
+    <div class="search-hit__actions">
+      <form method="post" action="/media/import" class="inline-form" hx-post="/media/import" hx-target="find .inline-notice-host" hx-swap="outerHTML">
+        <input type="hidden" name="locale" value="{{ $page.Locale }}" />
+        <input type="hidden" name="bucket" value="catalog" />
+        <input type="hidden" name="media_type" value="{{ $hit.MediaType }}" />
+        <input type="hidden" name="provider" value="{{ $hit.Provider }}" />
+        <input type="hidden" name="external_id" value="{{ $hit.ExternalID }}" />
+        <input type="hidden" name="tmdb_kind" value="{{ $hit.TMDBKind }}" />
+        <button type="submit">{{ t $page "search.actions.addCatalog" }}</button>
+        <div class="inline-notice-host"></div>
+      </form>
+      <form method="post" action="/media/import" class="inline-form" hx-post="/media/import" hx-target="find .inline-notice-host" hx-swap="outerHTML">
+        <input type="hidden" name="locale" value="{{ $page.Locale }}" />
+        <input type="hidden" name="bucket" value="wishlist" />
+        <input type="hidden" name="media_type" value="{{ $hit.MediaType }}" />
+        <input type="hidden" name="provider" value="{{ $hit.Provider }}" />
+        <input type="hidden" name="external_id" value="{{ $hit.ExternalID }}" />
+        <input type="hidden" name="tmdb_kind" value="{{ $hit.TMDBKind }}" />
+        <button type="submit">{{ t $page "search.actions.addWishlist" }}</button>
+        <div class="inline-notice-host"></div>
+      </form>
+    </div>
+  </div>
+</article>
+{{ end }}
