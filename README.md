@@ -38,6 +38,14 @@ In v1, every item lives in one of two buckets:
 - user-owned collection data is stored separately from imported metadata
 - barcode scanning is treated as candidate matching, not silent automation
 
+## Why Go
+
+A single Go binary keeps deployment small and predictable: one process to run on a home server or a Raspberry Pi, explicit layering (handlers → services → repositories), and strong control over concurrency and resource use. Provider HTTP calls, normalization, caching, and sessions stay in one codebase—no separate “frontend” and “API” deployables to version together.
+
+## Why HTML-first (and not a SPA)
+
+Pages are rendered on the server with `html/template`. That makes auth, links, and forms straightforward, works well for a private catalog app, and keeps **canonical state on the server**. The UI is **not** a single-page React or Vue app; it also is **not** “no JavaScript.” **[htmx](https://htmx.org/)** swaps in HTML fragments for search results, list filters, pagination, and inline notices so interactions feel responsive without moving business logic into the browser. **Vanilla JS** is used where the platform requires it—especially the **scan** flow (camera and barcode decoding). See [`docs/templates.md`](docs/templates.md).
+
 ## Quick Start (recommended)
 
 1. **MongoDB in Docker** (database only — fast iteration on the Go app on your host):
@@ -129,17 +137,18 @@ The codebase is a **Go monolith**:
 
 Further reading:
 
+- [`docs/spec.md`](docs/spec.md) — product rules and technical constraints
 - [`docs/architecture.md`](docs/architecture.md)
-- [`docs/go-v2/spec.md`](docs/go-v2/spec.md)
+- [`docs/routes.md`](docs/routes.md) and [`docs/api.md`](docs/api.md)
 - [`docs/data-model.md`](docs/data-model.md)
-- [`docs/go-v2/migration-archive.md`](docs/go-v2/migration-archive.md) — what replaced the old Next/Nest apps
+- [`docs/migration-from-legacy.md`](docs/migration-from-legacy.md) — retired Node monorepo (historical)
 
 ## Project layout
 
 ```txt
 cmd/web/           main
 internal/          app code (HTTP, services, repos, providers, views, static embed)
-docs/              architecture, deployment, provider notes, Go rewrite spec
+docs/              spec, architecture, deployment, routes, templates, data model
 Dockerfile         multi-stage Go build
 docker-compose.yml mongo only (local dev DB); docker-compose.prod.yml Go app + optional mongo
 ```
@@ -151,4 +160,4 @@ docker-compose.yml mongo only (local dev DB); docker-compose.prod.yml Go app + o
 - saved filters and collection views
 - deeper edition and release modeling for physical media
 - background metadata refresh
-- screenshot assets and more deployment examples
+- replace [`docs/screenshots/README.md`](docs/screenshots/README.md) placeholders with real captures; more deployment examples

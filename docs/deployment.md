@@ -14,8 +14,13 @@ MongoDB connection uses **`MONGODB_URI`** or **`MONGODB_URL`** (alias) and **`MO
 ## Image and runtime
 
 - **Build context:** repository root
-- **Binary:** `/home/app/web` in the runtime image, listens on `PORT` (default `8080`)
+- **Binary:** runs as non-root user `app` from `/home/app/web`, listens on `PORT` (default `8080`)
+- **TLS to MongoDB and providers:** the runtime image installs **`ca-certificates`** (Alpine) so `mongodb+srv://` (Atlas) and HTTPS provider APIs trust public CAs.
 - **Templates/static:** when `APP_ENV=production`, the app uses embedded assets (`internal/config.UseEmbeddedAssets`). The production Compose service sets `APP_ENV=production` so the container works without mounting source.
+
+When **`APP_ENV=development`** (typical local `./scripts/dev-web.sh`), templates and static files are read from the working tree under `internal/views` and `internal/static` so edits apply on restart (or live with `air`).
+
+When **`APP_ENV=production`**, templates, locale JSON, and `internal/static/public/**` are served from `go:embed` data baked into the binary—no bind-mount of source is required in Docker.
 
 ## Local development (Mongo in Docker, Go on the host)
 

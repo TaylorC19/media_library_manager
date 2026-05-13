@@ -1,4 +1,4 @@
-**Historical document.** This file captured the original Next.js / NestJS monorepo product spec. The current rewrite targets a single Go application; see [`docs/go-v2/spec.md`](go-v2/spec.md) for authoritative architecture and behavior.
+**Historical document.** This file captured the original Next.js / NestJS monorepo product spec. The shipping product is a single Go application; see [`docs/spec.md`](spec.md) for authoritative architecture and behavior.
 
 ---
 

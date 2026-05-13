@@ -60,5 +60,5 @@ Sessions use an HTTP-only cookie (name from `SESSION_COOKIE_NAME`, default `mlm_
 
 ## Related docs
 
-- Route map: [`docs/go-v2/routes.md`](go-v2/routes.md)
+- Route map: [`docs/routes.md`](routes.md)
 - Router wiring: [`internal/app/app.go`](../internal/app/app.go)
