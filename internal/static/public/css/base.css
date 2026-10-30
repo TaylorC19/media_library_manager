@@ -632,11 +632,21 @@ main.container .view-switch button:disabled {
 }
 #search-detail-dialog::backdrop { background: rgba(0,0,0,0.6); }
 .dialog-toolbar { display: flex; justify-content: flex-end; margin-bottom: 0.75rem; }
+.media-preview { container-type: inline-size; }
 .media-preview__layout { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 1.25rem; }
 .media-preview__cover { display: block; width: 180px; max-width: 100%; height: auto; border-radius: 6px; }
 .media-preview__summary { white-space: pre-line; }
 .media-preview__actions { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #aaa; }
 .media-preview .detail-dl { grid-template-columns: minmax(5rem, 8rem) minmax(0, 1fr); overflow-wrap: anywhere; }
+/* Size detail columns against the actual card/dialog, not the viewport. */
+@container (max-width: 36rem) {
+  .media-preview__layout { grid-template-columns: minmax(0, 1fr); }
+  .media-preview__cover { width: 120px; }
+}
+@container (max-width: 22rem) {
+  .media-preview .detail-dl { grid-template-columns: minmax(0, 1fr); gap: 0.2rem; }
+  .media-preview .detail-dl dd + dt { margin-top: 0.6rem; }
+}
 @media (max-width: 480px) {
   .search-hit__preview { grid-template-columns: 64px minmax(0, 1fr); gap: 0.75rem; }
   .media-preview__layout { grid-template-columns: 1fr; }
