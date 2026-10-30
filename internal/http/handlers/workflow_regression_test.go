@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -116,7 +117,8 @@ func TestWishlistDeleteRedirectAndBarcodeImportPersistence(t *testing.T) {
 		t.Fatal(err)
 	}
 	handler := NewLibraryHandler(renderer, libsvc.NewService(media, entries))
-	r := httptest.NewRequest("POST", "/library/"+outcome.LibraryEntry.ID.Hex()+"/delete", nil)
+	r := httptest.NewRequest("POST", "/library/"+outcome.LibraryEntry.ID.Hex()+"/delete", strings.NewReader("confirm=delete"))
+	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	route := chi.NewRouteContext()
 	route.URLParams.Add("entryId", outcome.LibraryEntry.ID.Hex())
 	r = r.WithContext(context.WithValue(middleware.WithUser(r.Context(), &domainauth.User{ID: owner, Role: domainauth.RoleGeneral}), chi.RouteCtxKey, route))

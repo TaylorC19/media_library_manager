@@ -32,6 +32,7 @@ Locales are `en` or `ja`.
 | GET | `/{locale}/library/new` |
 | GET | `/{locale}/library/{entryId}` |
 | GET | `/{locale}/library/{entryId}/edit` |
+| GET | `/{locale}/library/{entryId}/delete` |
 | GET | `/{locale}/scan` |
 | GET | `/{locale}/settings` |
 | GET | `/{locale}/admin/users` |

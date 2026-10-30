@@ -37,6 +37,7 @@ Unauthenticated visitors hitting protected URLs are redirected to login (locale 
 | GET | `/{locale}/search/details` | Read-only metadata preview; `fragment=1` returns dialog content, otherwise a full page. |
 | GET | `/{locale}/library/new` | Manual entry fallback from Search; prefills title query, media type, and barcode when supplied. |
 | GET | `/{locale}/library/{entryId}` | Detail |
+| GET | `/{locale}/library/{entryId}/delete` | Read-only confirmation naming the owned item and its copy details; writable accounts only. |
 | GET | `/{locale}/library/{entryId}/edit` | Edit entry form |
 | GET | `/{locale}/scan` | Compatibility redirect to Search with `mode=barcode`; preserves query parameters. |
 | GET | `/{locale}/settings` | Settings |
@@ -78,9 +79,17 @@ My Library accepts `view=list` (default) or `view=grid`. Cover images appear in 
 
 ### Remembered layouts and filters
 
-Collection, Wishlist, and Search remember layout, media type, text query, and page size; Library views also remember format. Preferences are stored for up to one year in bounded, HttpOnly, SameSite=Lax browser cookies scoped by account ID and workspace. They work without JavaScript and do not modify account data, including for demo users. They are shared across languages within the same browser, and do not sync to other browsers/devices. Text filters longer than 256 bytes still work for the current request but are not persisted.
+Collection, Wishlist, and Search remember layout, media type, text query, and page size; Library views also remember format, tag, and sort order. Preferences are stored for up to one year in bounded, HttpOnly, SameSite=Lax browser cookies scoped by account ID and workspace. They work without JavaScript and do not modify account data, including for demo users. They are shared across languages within the same browser, and do not sync to other browsers/devices. Text filters longer than 256 bytes still work for the current request but are not persisted.
 
-Missing query parameters inherit saved preferences; explicit values, including empty strings, take priority. Returning via a bare workspace URL restores preferences and starts at page 1. Page number, barcode mode, and synchronous fallback flags are not saved. Restored requests canonicalize their URL (or use `HX-Push-Url` for HTMX fragments), while generated pagination links encode empty filters explicitly. Clear filters clears saved filter fields and retains layout/page size. Progressive search-group and detail requests do not update workspace preferences. Collection/Wishlist tabs continue carrying the chosen layout while restoring each bucket’s own filters.
+Missing query parameters inherit saved preferences; explicit values, including empty strings, take priority. Returning via a bare workspace URL restores preferences and starts at page 1. Page number, barcode mode, and synchronous fallback flags are not saved. Restored requests canonicalize their URL (or use `HX-Push-Url` for HTMX fragments), while generated pagination links encode empty filters explicitly. Clear filters clears saved filter fields and retains layout/page size and the Library sort order. Progressive search-group and detail requests do not update workspace preferences. Collection/Wishlist tabs continue carrying the chosen layout while restoring each bucket’s own filters.
+
+### Library discovery
+
+My Library supports `sort=recent` (default, entry creation date newest first), `title_asc`, `title_desc`, `year_desc`, and `year_asc`. Sorting happens before pagination, uses deterministic tie-breakers, and places unknown years last in either year direction. Title comparisons ignore case. Invalid sort values return HTTP 400.
+
+`tag` matches one whole tag case-insensitively. The tag dropdown lists only tags from the signed-in account’s current Collection/Wishlist, merging case variants; the selected tag remains visible even if it no longer exists. Clicking a saved item’s tag opens that bucket filtered by the tag. Text query `q` matches titles, descriptions, notes, tags, and media-specific creator fields: authors, directors, TV creators, artists, and developers. Tag, text, media type, and format criteria combine.
+
+Sort and tag choices persist with the existing browser preferences, across page links, layout changes, and locale switching. Existing preference cookies without these fields remain compatible. Clear removes the tag and other filters while keeping layout, sort, and page size. HTMX responses refresh the Clear link out of band so it retains the latest chosen sort. This feature retains in-memory filtering/sorting over matching entries; database-side Library pagination remains a separate scalability improvement.
 
 ### Moving saved items
 
@@ -88,7 +97,7 @@ Writable accounts see **Move to Collection** near the top of Wishlist item detai
 
 ### Search detail previews
 
-`GET /{locale}/search/details` accepts `provider`, `external_id`, `media_type`, and `tmdb_kind` for provider results, or `media_record_id` for shared local metadata. It fetches full metadata without importing records or creating entries. Each preview offers separate POST actions for Collection and Wishlist. The native dialog supports Escape, close, focus restoration, loading errors, and retry. Links navigate to a full detail page when JavaScript is unavailable. Barcode-only sources without an import adapter offer manual creation.
+`GET /{locale}/search/details` accepts `provider`, `external_id`, `media_type`, and `tmdb_kind` for provider results, or `media_record_id` for shared local metadata. It fetches full metadata without importing records or creating entries. Personal saved copies are looked up separately from shared metadata and never cached in provider responses. Each preview offers Open saved item links for existing Collection/Wishlist copies (including their formats); unsaved buckets offer separate POST actions. The native dialog supports Escape, close, focus restoration, loading errors, and retry. Links navigate to a full detail page when JavaScript is unavailable. Barcode-only sources without an import adapter offer manual creation.
 
 ## Actions (POST, mostly non-locale)
 
@@ -98,7 +107,7 @@ Writable accounts see **Move to Collection** near the top of Wishlist item detai
 | POST | `/library/attach` | Attach entry to existing media (flows that post here). |
 | POST | `/library/{entryId}/update` | Update entry |
 | POST | `/library/{entryId}/move-to-collection` | Move an owned Wishlist entry to Collection; preserves entry ID and all copy fields. Writable accounts only; rejects cross-origin submissions. |
-| POST | `/library/{entryId}/delete` | Delete entry |
+| POST | `/library/{entryId}/delete` | Delete an owned entry only with `confirm=delete`; enforces writable access and rejects cross-origin submissions. |
 | POST | `/media/import` | Import from provider ref into catalog/wishlist |
 | POST | `/media/refresh/{mediaRecordId}` | Refresh canonical metadata (htmx may target inline notice). |
 | POST | `/barcode/lookup` | Barcode lookup (JSON for the barcode section in Search; does **not** auto-save). |
@@ -132,3 +141,17 @@ Locale switching preserves path where the language switcher replaces the first p
 All protected routes require authentication. Full-database export/restore additionally require an admin role and reject cross-origin browser submissions. Library creation/attachment/editing/deletion, provider imports, metadata refresh, and provider-key saving require a writable account (admin or general); demo accounts receive HTTP 403. New/edit form pages are restricted in the same way. Public registration always creates general users; admins can create accounts and change other accounts’ roles in User management. Self-demotion is blocked, changes are serialized in the single-process server, and the actor’s current role is checked again before each change. The server-side `cmd/users` command remains available for initial promotion and recovery. Accounts without a stored role are general.
 
 Pagination clamps an out-of-range page to the same last page for both data slicing and footer labels. Provider-import forms retain scanned barcodes on the user's copy, and local lookup checks that account's saved barcodes. Refresh verifies ownership, fetches uncached provider details, replaces cached details after success, and updates the stored metadata. Deletion returns to the entry's original bucket. Language-switch links are updated from the live URL after HTMX filtering/pagination and history navigation.
+
+
+### Saving from search dialogs
+
+JavaScript intercepts the dialog’s import/attach forms and submits to the existing `/media/import` or `/library/attach` endpoint with `X-Search-Dialog: 1`. Success returns JSON containing only the saved `entryId`, `bucket`, a local `url`, and an `existing` flag. It does not redirect or set a success flash cookie. The dialog stays open, announces success, and replaces the saved bucket’s action with Open saved item. Matching visible result cards gain the corresponding badge immediately, preserving the search URL, page, layout, and scroll position.
+
+Save buttons are disabled while a request is pending. Failed requests leave the form available for retry and never add a badge. Closing a dialog does not cancel an in-flight write: its acknowledgement can update the matching visible badge without reopening the dialog or overwriting a different item’s preview. A preview that was already loading when a save completed reconciles that acknowledgement before displaying its actions.
+
+Both save endpoints enforce writable accounts and same-origin submissions. Normal forms retain the existing redirect-to-detail behavior when JavaScript is unavailable. Local barcode matches use the attach endpoint and participate in the same dialog behavior; barcode-only manual-create fallbacks remain ordinary navigation.
+
+
+### Deletion confirmation
+
+Delete on an item’s detail page opens `/{locale}/library/{entryId}/delete`. This read-only page shows its title, Collection/Wishlist location, media type, year, format, and barcode when available. Cancel returns to that same item. The final POST requires `confirm=delete`; missing or invalid confirmation re-renders the review page with HTTP 400 and leaves the item unchanged. Both the confirmation GET and deletion POST enforce writable access and ownership; the POST also checks origin. A confirmed deletion removes only the selected saved copy and returns to its original bucket. The page explains that deletion cannot be undone; Trash/Undo is not implemented.

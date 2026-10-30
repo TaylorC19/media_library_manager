@@ -19,7 +19,7 @@ func TestDemoCannotReachAnyWriteRouteEvenWithForgedRoleInput(t *testing.T) {
 		{"POST", "/library"}, {"POST", "/library/attach"}, {"POST", "/library/012345678901234567890123/update"},
 		{"POST", "/library/012345678901234567890123/move-to-collection"}, {"POST", "/library/012345678901234567890123/delete"}, {"POST", "/media/import"},
 		{"POST", "/media/refresh/012345678901234567890123"}, {"POST", "/en/settings/providers"},
-		{"GET", "/en/library/new"}, {"GET", "/en/library/012345678901234567890123/edit"},
+		{"GET", "/en/library/012345678901234567890123/delete"}, {"GET", "/en/library/new"}, {"GET", "/en/library/012345678901234567890123/edit"},
 	} {
 		r := httptest.NewRequest(test.method, test.path, strings.NewReader("role=admin"))
 		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")

@@ -24,12 +24,14 @@ func resolveListPreferences(w http.ResponseWriter, r *http.Request, scope string
 	keys := []string{"view", "media_type", "q", "page_size"}
 	defaultView := "grid"
 	if scope != "search" {
-		keys = append(keys, "format")
+		keys = append(keys, "format", "tag", "sort")
 		defaultView = "list"
 	}
 	defaults := url.Values{"view": {defaultView}, "media_type": {""}, "q": {""}, "page_size": {"10"}}
 	if scope != "search" {
 		defaults.Set("format", "")
+		defaults.Set("tag", "")
+		defaults.Set("sort", domainlib.DefaultSort)
 	}
 	stored := url.Values{}
 	cookieName := listPreferenceCookie(r, scope)
@@ -48,7 +50,9 @@ func resolveListPreferences(w http.ResponseWriter, r *http.Request, scope string
 		}
 		if stored.Has(key) {
 			query.Set(key, stored.Get(key))
-			restored = true
+			if stored.Get(key) != defaults.Get(key) {
+				restored = true
+			}
 		} else {
 			query.Set(key, defaults.Get(key))
 		}
@@ -56,6 +60,12 @@ func resolveListPreferences(w http.ResponseWriter, r *http.Request, scope string
 	// Normalize page size and view consistently with the existing page controls.
 	if query.Get("view") == "" {
 		query.Set("view", defaultView)
+	}
+	if scope != "search" {
+		query.Set("tag", strings.ToLower(strings.TrimSpace(query.Get("tag"))))
+		if query.Get("sort") == "" {
+			query.Set("sort", domainlib.DefaultSort)
+		}
 	}
 	query.Set("page_size", strconv.Itoa(parsePageSize(query.Get("page_size"))))
 	effective := url.Values{}
@@ -91,6 +101,9 @@ func validListPreferences(values url.Values, scope string) bool {
 		return false
 	}
 	if format := values.Get("format"); format != "" && (scope == "search" || !domainlib.IsFormat(format)) {
+		return false
+	}
+	if scope != "search" && (!domainlib.IsLibrarySort(values.Get("sort")) || len(values.Get("tag")) > 256) {
 		return false
 	}
 	if len(values.Get("q")) > 256 {

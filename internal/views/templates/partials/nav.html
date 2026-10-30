@@ -1,6 +1,6 @@
 {{ define "partials/nav" }}
 <nav class="nav" aria-label="{{ t . "library.nav.aria" }}">
-  <a href="/{{ .Locale }}/" {{ if or (eq .Path (printf "/%s/" .Locale)) (eq .Path (printf "/%s/catalog" .Locale)) (eq .Path (printf "/%s/wishlist" .Locale)) (eq .ContentTemplate "pages/library_detail.content") (eq .ContentTemplate "pages/library_form.content") }}aria-current="page"{{ end }}>{{ t . "library.title" }}</a>
+  <a href="/{{ .Locale }}/" {{ if or (eq .Path (printf "/%s/" .Locale)) (eq .Path (printf "/%s/catalog" .Locale)) (eq .Path (printf "/%s/wishlist" .Locale)) (eq .ContentTemplate "pages/library_detail.content") (eq .ContentTemplate "pages/library_form.content") (eq .ContentTemplate "pages/library_delete.content") }}aria-current="page"{{ end }}>{{ t . "library.title" }}</a>
   <a href="/{{ .Locale }}/search" {{ if or (eq .Path (printf "/%s/search" .Locale)) (eq .ContentTemplate "pages/search_detail.content") }}aria-current="page"{{ end }}>{{ t . "library.nav.search" }}</a>
 </nav>
 {{ end }}

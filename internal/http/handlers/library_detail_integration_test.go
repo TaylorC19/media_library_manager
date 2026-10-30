@@ -93,7 +93,7 @@ func TestSavedLibraryDetails(t *testing.T) {
 					if strings.Contains(html, "<script>alert(1)</script>") || strings.Contains(html, "ZgotmplZ") {
 						t.Error("unsafe metadata rendering")
 					}
-					if strings.Contains(html, `action="/library/`) != (role == "general") {
+					if strings.Contains(html, `/edit"`) != (role == "general") {
 						t.Error("write controls must respect account role")
 					}
 				}

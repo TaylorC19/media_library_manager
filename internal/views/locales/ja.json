@@ -98,6 +98,15 @@
       "listView": "リスト",
       "gridView": "グリッド"
     },
+    "delete": {
+      "location": "保存先",
+      "heading": "この保存済みアイテムを削除しますか？",
+      "intro": "削除する前に、以下のアイテムを確認してください。",
+      "effect": "このコピーと、メモ・タグ・購入情報が削除されます。他の保存済みコピーは保持されます。この操作は取り消せません。",
+      "confirm": "このアイテムを削除",
+      "cancel": "キャンセルしてアイテムを残す",
+      "confirmRequired": "アイテムを確認し、削除確認ボタンを押してください。"
+    },
     "detail": {
       "backCollection": "コレクションに戻る",
       "backWishlist": "ウィッシュリストに戻る",
@@ -127,7 +136,18 @@
       "cancelToDetail": "詳細に戻る",
       "cancelToCatalog": "キャンセル"
     },
+    "sort": {
+      "recent": "追加日が新しい順",
+      "title_asc": "タイトル：昇順",
+      "title_desc": "タイトル：降順",
+      "year_desc": "年：新しい順",
+      "year_asc": "年：古い順"
+    },
     "filters": {
+      "tag": "タグ",
+      "anyTag": "すべてのタグ",
+      "sort": "並び順",
+      "queryHint": "タイトル、制作者、タグ、説明、メモ",
       "query": "ライブラリ内を検索",
       "anyMediaType": "すべてのメディア種別",
       "anyFormat": "すべてのフォーマット",
@@ -363,6 +383,11 @@
     "barcodeMethod": "バーコードを入力・カメラでスキャン",
     "createManually": "見つかりませんか？ 手動で登録",
     "dialog": {
+      "saving": "保存中…",
+      "saveError": "保存できませんでした。もう一度お試しください。",
+      "saved": "ライブラリに保存しました。",
+      "existing": "このアイテムはすでにライブラリに保存されています。",
+      "openSaved": "保存済みアイテムを開く",
       "loading": "詳細を読み込み中…",
       "error": "詳細を読み込めませんでした。もう一度お試しください。",
       "viewDetails": "詳細を見る",

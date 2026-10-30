@@ -33,12 +33,15 @@ type EntryWithMedia struct {
 }
 
 type ListBucketFilters struct {
+	Sort      string
+	Tag       string
 	MediaType string
 	Format    string
 	Query     string
 }
 
 type ListBucketResult struct {
+	Tags       []TagOption
 	Items      []EntryWithMedia
 	TotalItems int
 }
@@ -130,6 +133,9 @@ func (s *Service) ListBucket(ctx context.Context, userID primitive.ObjectID, buc
 	if filters.Format != "" && !domainlib.IsFormat(filters.Format) {
 		return nil, fmt.Errorf("format: %w", ErrValidation)
 	}
+	if !domainlib.IsLibrarySort(filters.Sort) {
+		return nil, fmt.Errorf("sort: %w", ErrValidation)
+	}
 	if page <= 0 {
 		page = 1
 	}
@@ -149,10 +155,17 @@ func (s *Service) ListBucket(ctx context.Context, userID primitive.ObjectID, buc
 		return nil, err
 	}
 
+	tags, err := s.entries.ListTags(ctx, userID, bucket)
+	if err != nil {
+		return nil, err
+	}
+	rows = filterTag(rows, filters.Tag)
 	rows = filterRows(rows, filters.Query)
+	sortLibraryRows(rows, filters.Sort)
 	totalItems := len(rows)
 	start, end := pageBounds(totalItems, page, pageSize)
 	return &ListBucketResult{
+		Tags:       libraryTagOptions(tags),
 		Items:      rows[start:end],
 		TotalItems: totalItems,
 	}, nil
@@ -197,7 +210,18 @@ func filterRows(rows []EntryWithMedia, query string) []EntryWithMedia {
 			}
 		}
 		notes := strings.ToLower(strings.TrimSpace(stringValue(row.Entry.Notes)))
-		if strings.Contains(title, query) || strings.Contains(summary, query) || strings.Contains(notes, query) {
+		extra := append([]string(nil), row.Entry.Tags...)
+		if row.Media != nil {
+			extra = append(extra, creatorValues(row.Media.Details)...)
+		}
+		matched := false
+		for _, value := range extra {
+			if strings.Contains(strings.ToLower(value), query) {
+				matched = true
+				break
+			}
+		}
+		if matched || strings.Contains(title, query) || strings.Contains(summary, query) || strings.Contains(notes, query) {
 			filtered = append(filtered, row)
 		}
 	}

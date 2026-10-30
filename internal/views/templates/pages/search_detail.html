@@ -15,9 +15,15 @@
       </dl>
     </div>
   </div>
-  {{ if .User.CanWrite }}<div class="actions media-preview__actions">
+  <p data-save-status role="status" aria-live="polite"></p>
+  <div class="actions media-preview__actions">
     {{ range .Buckets }}
-    <form class="inline-form" method="post" action="{{ if $.LocalID }}/library/attach{{ else }}/media/import{{ end }}">
+    <div data-save-bucket="{{ . }}">
+    {{ $saved := false }}{{ if $.SavedByBucket }}{{ $saved = index $.SavedByBucket . }}{{ end }}
+    {{ if $saved }}
+      {{ range $saved }}<a class="button-link" href="/{{ $.Locale }}/library/{{ .ID }}">{{ t $ "search.dialog.openSaved" }} · {{ t $ (printf "library.bucket.%s" .Bucket) }}{{ if .Format }} · {{ t $ (libraryFormatKey .Format) }}{{ end }}</a>{{ end }}
+    {{ else if $.User.CanWrite }}
+    <form data-dialog-save class="inline-form" method="post" action="{{ if $.LocalID }}/library/attach{{ else }}/media/import{{ end }}">
       <input type="hidden" name="locale" value="{{ $.Locale }}" />
       <input type="hidden" name="bucket" value="{{ . }}" />
       {{ if $.LocalID }}
@@ -33,7 +39,10 @@
       <button type="submit" {{ if eq . "catalog" }}class="button-primary"{{ end }}>{{ if eq . "catalog" }}{{ t $ "search.actions.addCatalog" }}{{ else }}{{ t $ "search.actions.addWishlist" }}{{ end }}</button>
     </form>
     {{ end }}
-  </div>{{ else }}<p class="muted">{{ t . "auth.readOnly" }}</p>{{ end }}
+    </div>
+    {{ end }}
+  </div>
+  {{ if not .User.CanWrite }}<p class="muted">{{ t . "auth.readOnly" }}</p>{{ end }}
 </article>
 {{ end }}
 {{ define "pages/search_detail.html" }}{{ template "layout/app_shell" . }}{{ end }}

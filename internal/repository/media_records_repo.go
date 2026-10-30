@@ -280,6 +280,7 @@ func (r *MediaRecordsRepository) FindByIDs(ctx context.Context, ids []primitive.
 	}
 	cur, err := r.coll.Find(ctx, bson.M{"_id": bson.M{"$in": ids}}, options.Find().SetProjection(bson.M{
 		"title": 1, "year": 1, "mediaType": 1, "source": 1, "summary": 1, "imageUrl": 1,
+		"details.authors": 1, "details.directors": 1, "details.creators": 1, "details.artists": 1, "details.developers": 1,
 	}))
 	if err != nil {
 		return nil, fmt.Errorf("find media records by ids: %w", err)

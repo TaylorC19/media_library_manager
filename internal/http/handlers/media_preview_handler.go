@@ -20,8 +20,8 @@ func (h *MediaHandler) Preview(w http.ResponseWriter, r *http.Request) {
 	}
 	query := r.URL.Query()
 	form := mediasvc.ImportForm{
-		Provider: query.Get("provider"), ExternalID: query.Get("external_id"),
-		MediaType: query.Get("media_type"), TMDBKind: query.Get("tmdb_kind"),
+		Provider: strings.TrimSpace(query.Get("provider")), ExternalID: strings.TrimSpace(query.Get("external_id")),
+		MediaType: strings.TrimSpace(query.Get("media_type")), TMDBKind: strings.TrimSpace(query.Get("tmdb_kind")),
 	}
 	if form.Provider == "openlibrary" {
 		form.Provider = "open_library"
@@ -50,17 +50,23 @@ func (h *MediaHandler) Preview(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Could not load item details", status)
 		return
 	}
+	saved, err := h.media.SavedEntries(r.Context(), middleware.CurrentUser(r.Context()).ID, record, form)
+	if err != nil {
+		http.Error(w, "Could not load saved-item status", http.StatusInternalServerError)
+		return
+	}
 	locale := middleware.LocaleFromContext(r.Context())
 	data := map[string]any{
 		"Locale": locale, "Path": r.URL.Path, "User": middleware.CurrentUser(r.Context()),
 		"TitleKey": "search.dialog.title", "ContentTemplate": "pages/search_detail.content",
 		"Record": record, "Fields": previewFields(record), "Import": form, "LocalID": localID,
-		"Barcode": query.Get("barcode"), "Buckets": domainlib.Buckets,
+		"Barcode": query.Get("barcode"), "Buckets": domainlib.Buckets, "SavedByBucket": saved,
 	}
 	page := "pages/search_detail.html"
 	if query.Get("fragment") == "1" {
 		page = "pages/search_detail.content"
 	}
+	w.Header().Set("Cache-Control", "private, no-store")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := h.render.Render(w, page, data); err != nil {
 		http.Error(w, "Could not render item details", http.StatusInternalServerError)

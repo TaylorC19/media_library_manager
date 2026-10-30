@@ -723,3 +723,6 @@ main.container .user-role-form button:disabled { cursor: default; opacity: 0.6; 
   .saved-badge--collection { color: #b8edca; background: #193b29; border-color: #568669; }
   .saved-badge--wishlist { color: #ffe0a0; background: #493615; border-color: #9f8048; }
 }
+
+.delete-review { color: #a22; border-color: #a22; }
+@media (prefers-color-scheme: dark) { .delete-review { color: #ffb4b4; border-color: #d58b8b; } }

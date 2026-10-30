@@ -11,6 +11,8 @@
   {{ template "pages/wishlist.content" . }}
 {{ else if eq .ContentTemplate "pages/library_detail.content" }}
   {{ template "pages/library_detail.content" . }}
+{{ else if eq .ContentTemplate "pages/library_delete.content" }}
+  {{ template "pages/library_delete.content" . }}
 {{ else if eq .ContentTemplate "pages/library_form.content" }}
   {{ template "pages/library_form.content" . }}
 {{ else if eq .ContentTemplate "pages/search_detail.content" }}
