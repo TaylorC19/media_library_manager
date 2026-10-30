@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"strings"
@@ -9,17 +10,25 @@ import (
 	domainlib "media_library_manager/internal/domain/library"
 	domainsearch "media_library_manager/internal/domain/search"
 	"media_library_manager/internal/http/middleware"
+	libsvc "media_library_manager/internal/service/library"
 	searchsvc "media_library_manager/internal/service/search"
 	"media_library_manager/internal/views"
 )
 
-type SearchHandler struct {
-	render *views.Renderer
-	search *searchsvc.Service
+type searchProvider interface {
+	Search(context.Context, string, string) (searchsvc.Outcome, error)
+	SearchPage(context.Context, string, string, int, int) (searchsvc.Outcome, error)
+	SearchAll(context.Context, string) ([]searchsvc.Group, error)
 }
 
-func NewSearchHandler(render *views.Renderer, search *searchsvc.Service) *SearchHandler {
-	return &SearchHandler{render: render, search: search}
+type SearchHandler struct {
+	render  *views.Renderer
+	search  searchProvider
+	library *libsvc.Service
+}
+
+func NewSearchHandler(render *views.Renderer, search searchProvider, library *libsvc.Service) *SearchHandler {
+	return &SearchHandler{render: render, search: search, library: library}
 }
 
 func (h *SearchHandler) baseAppData(r *http.Request, titleKey string) map[string]any {
@@ -91,6 +100,9 @@ func (h *SearchHandler) Page(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		return
 	}
+	if !resolveListPreferences(w, r, "search") {
+		return
+	}
 
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
 	mediaType := strings.TrimSpace(r.URL.Query().Get("media_type"))
@@ -109,7 +121,7 @@ func (h *SearchHandler) Page(w http.ResponseWriter, r *http.Request) {
 	}
 	scanOpen := r.URL.Query().Get("mode") == "barcode"
 	data["ScanOpen"] = scanOpen
-	data["PageScripts"] = []string{"/static/js/vendor/zxing-browser.min.js", "/static/js/scan.js", "/static/js/search.js"}
+	data["PageScripts"] = []string{"/static/js/vendor/zxing-browser.min.js", "/static/js/scan.js", "/static/js/search.js", "/static/js/search-groups.js"}
 	data["Query"] = q
 	data["Hits"] = []domainsearch.Hit{}
 	data["AllMedia"] = mediaType == ""
@@ -135,6 +147,14 @@ func (h *SearchHandler) Page(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if mediaType == "" {
+		if r.URL.Query().Get("complete") != "1" {
+			data["ProgressiveGroups"] = pendingSearchGroups(locale, q, view, pageSize)
+			values := searchPageValues(q, "", view)
+			values.Set("complete", "1")
+			data["CompleteSearchURL"] = pageURL(basePath, values, 1, pageSize)
+			h.renderSearchResponse(w, r, data)
+			return
+		}
 		groups, err := h.search.SearchAll(r.Context(), q)
 		if err != nil {
 			http.Error(w, "Could not complete search", http.StatusBadGateway)
@@ -147,14 +167,14 @@ func (h *SearchHandler) Page(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	out, err := h.search.Search(r.Context(), mediaType, q)
+	out, err := h.search.SearchPage(r.Context(), mediaType, q, page, pageSize)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
-	totalItems := len(out.Hits)
-	start, end := pageBounds(totalItems, page, pageSize)
-	data["Hits"] = out.Hits[start:end]
+	totalItems := out.Total
+	page = out.Page
+	data["Hits"] = out.Hits
 	data["SearchWarnings"] = out.Warnings
 	data["Pagination"] = buildPagination(basePath, searchPageValues(q, mediaType, view), page, pageSize, totalItems)
 
@@ -162,6 +182,8 @@ func (h *SearchHandler) Page(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *SearchHandler) renderSearchResponse(w http.ResponseWriter, r *http.Request, data map[string]any) {
+	w.Header().Set("Cache-Control", "private, no-store")
+	h.addSavedStatus(r, data)
 	if isHTMX(r) {
 		h.renderPage(w, "partials/search_results", data)
 		return
@@ -207,7 +229,7 @@ func buildSearchGroups(path, query string, pageSize int, view string, groups []s
 		}
 		previews = append(previews, searchGroup{
 			MediaType: group.MediaType, Hits: group.Hits[:count], Warnings: group.Warnings,
-			Total: len(group.Hits), SeeAllURL: pageURL(path, searchPageValues(query, group.MediaType, view), 1, pageSize),
+			Total: searchGroupTotal(group), SeeAllURL: pageURL(path, searchPageValues(query, group.MediaType, view), 1, pageSize),
 		})
 	}
 	return previews, hasResults
@@ -222,6 +244,41 @@ func searchView(r *http.Request) string {
 
 func searchPageValues(query, mediaType, view string) url.Values {
 	values := searchValues(query, mediaType)
+	values.Set("q", query)
+	values.Set("media_type", mediaType)
 	values.Set("view", view)
 	return values
+}
+
+// Enrich only the displayed page or grouped previews in one batch.
+func (h *SearchHandler) addSavedStatus(r *http.Request, data map[string]any) {
+	hits, _ := data["Hits"].([]domainsearch.Hit)
+	groups, _ := data["SearchGroups"].([]searchGroup)
+	visible := append([]domainsearch.Hit(nil), hits...)
+	for _, group := range groups {
+		visible = append(visible, group.Hits...)
+	}
+	if len(visible) == 0 {
+		return
+	}
+	saved, err := h.library.SavedSearchHits(r.Context(), middleware.CurrentUser(r.Context()).ID, visible)
+	if err != nil {
+		data["SearchWarnings"] = append(data["SearchWarnings"].([]string), "search.warnings.savedStatusUnavailable")
+		return
+	}
+	data["Hits"] = saved[:len(hits)]
+	offset := len(hits)
+	for i := range groups {
+		count := len(groups[i].Hits)
+		groups[i].Hits = saved[offset : offset+count]
+		offset += count
+	}
+	data["SearchGroups"] = groups
+}
+
+func searchGroupTotal(group searchsvc.Group) int {
+	if group.Total > 0 {
+		return group.Total
+	}
+	return len(group.Hits)
 }

@@ -1,39 +1,32 @@
 {{ define "pages/library_detail.content" }}
+<p class="detail-back"><a class="button-link" href="/{{ .Locale }}/{{ if eq .Detail.Entry.Bucket "wishlist" }}wishlist{{ end }}"><span aria-hidden="true">←</span> {{ if eq .Detail.Entry.Bucket "wishlist" }}{{ t . "library.detail.backWishlist" }}{{ else }}{{ t . "library.detail.backCollection" }}{{ end }}</a></p>
 <h2>{{ if .Detail.Media }}{{ .Detail.Media.Title }}{{ else }}—{{ end }}</h2>
 
-<section class="detail-section card">
-  <h3>{{ t . "library.detail.myCopy" }}</h3>
-  <dl class="detail-dl">
-    <dt>{{ t . "library.fields.bucket" }}</dt>
-    <dd>{{ t . (printf "library.bucket.%s" .Detail.Entry.Bucket) }}</dd>
-    <dt>{{ t . "library.fields.mediaType" }}</dt>
-    <dd>{{ t . (printf "library.mediatype.%s" .Detail.Entry.MediaType) }}</dd>
-    <dt>{{ t . "library.fields.format" }}</dt>
-    <dd>{{ $fk := libraryFormatKey .Detail.Entry.Format }}{{ if $fk }}{{ t . $fk }}{{ else }}—{{ end }}</dd>
-    <dt>{{ t . "library.fields.barcode" }}</dt>
-    <dd>{{ if .Detail.Entry.Barcode }}{{ .Detail.Entry.Barcode }}{{ else }}—{{ end }}</dd>
-    <dt>{{ t . "library.fields.purchaseDate" }}</dt>
-    <dd>{{ if .Detail.Entry.PurchaseDate }}{{ .Detail.Entry.PurchaseDate }}{{ else }}—{{ end }}</dd>
-    <dt>{{ t . "library.fields.notes" }}</dt>
-    <dd>{{ if .Detail.Entry.Notes }}{{ .Detail.Entry.Notes }}{{ else }}—{{ end }}</dd>
-    <dt>{{ t . "library.fields.tags" }}</dt>
-    <dd>{{ if .Detail.Entry.Tags }}{{ range $i, $t := .Detail.Entry.Tags }}{{ if $i }}, {{ end }}{{ $t }}{{ end }}{{ else }}—{{ end }}</dd>
-  </dl>
-</section>
+{{ if and (eq .Detail.Entry.Bucket "wishlist") .User.CanWrite }}
+<form method="post" action="/library/{{ .Detail.Entry.ID.Hex }}/move-to-collection" class="detail-move">
+  <input type="hidden" name="locale" value="{{ .Locale }}" />
+  <button type="submit" class="button-primary">{{ t . "library.actions.moveToCollection" }}</button>
+  <p class="muted">{{ t . "library.detail.moveHint" }}</p>
+</form>
+{{ end }}
 
-<section class="detail-section card">
+<section class="detail-section card media-preview">
   <h3>{{ t . "library.detail.mediaDetails" }}</h3>
   {{ if .Detail.Media }}
-  <dl class="detail-dl">
-    <dt>{{ t . "library.fields.mediaType" }}</dt>
-    <dd>{{ t . (printf "library.mediatype.%s" .Detail.Media.MediaType) }}</dd>
-    <dt>{{ t . "library.fields.title" }}</dt>
-    <dd>{{ .Detail.Media.Title }}</dd>
-    <dt>{{ t . "library.fields.year" }}</dt>
-    <dd>{{ if .Detail.Media.Year }}{{ .Detail.Media.Year }}{{ else }}—{{ end }}</dd>
-    <dt>{{ t . "library.fields.source" }}</dt>
-    <dd>{{ t . (printf "library.source.%s" .Detail.Media.Source) }}</dd>
-  </dl>
+  <div class="media-preview__layout">
+    <div>
+      {{ if .Detail.Media.ImageURL }}<img class="media-preview__cover" src="{{ .Detail.Media.ImageURL }}" alt="" width="180" />
+      {{ else }}<div class="entry-cover entry-cover--missing">{{ t . "library.list.noCover" }}</div>{{ end }}
+    </div>
+    <div>
+      <p class="muted">{{ t . (printf "library.mediatype.%s" .Detail.Media.MediaType) }}{{ if .Detail.Media.Year }} · {{ .Detail.Media.Year }}{{ end }}</p>
+      {{ if .Detail.Media.Summary }}<p class="media-preview__summary">{{ .Detail.Media.Summary }}</p>{{ else }}<p class="muted">{{ t . "library.detail.noSummary" }}</p>{{ end }}
+      <dl class="detail-dl">
+        {{ range .Fields }}<dt>{{ t $ (printf "search.details.%s" .Key) }}</dt><dd>{{ .Value }}</dd>{{ end }}
+        <dt>{{ t . "library.fields.source" }}</dt><dd>{{ t . (printf "library.source.%s" .Detail.Media.Source) }}</dd>
+      </dl>
+    </div>
+  </div>
   {{ if and (eq .Detail.Media.Source "provider") .User.CanWrite }}
   <div class="detail-refresh">
     <form
@@ -54,6 +47,26 @@
   {{ else }}
   <p class="muted">{{ t . "library.detail.missingMedia" }}</p>
   {{ end }}
+</section>
+
+<section class="detail-section card">
+  <h3>{{ t . "library.detail.myCopy" }}</h3>
+  <dl class="detail-dl">
+    <dt>{{ t . "library.fields.bucket" }}</dt>
+    <dd>{{ t . (printf "library.bucket.%s" .Detail.Entry.Bucket) }}</dd>
+    <dt>{{ t . "library.fields.mediaType" }}</dt>
+    <dd>{{ t . (printf "library.mediatype.%s" .Detail.Entry.MediaType) }}</dd>
+    <dt>{{ t . "library.fields.format" }}</dt>
+    <dd>{{ $fk := libraryFormatKey .Detail.Entry.Format }}{{ if $fk }}{{ t . $fk }}{{ else }}—{{ end }}</dd>
+    <dt>{{ t . "library.fields.barcode" }}</dt>
+    <dd>{{ if .Detail.Entry.Barcode }}{{ .Detail.Entry.Barcode }}{{ else }}—{{ end }}</dd>
+    <dt>{{ t . "library.fields.purchaseDate" }}</dt>
+    <dd>{{ if .Detail.Entry.PurchaseDate }}{{ .Detail.Entry.PurchaseDate }}{{ else }}—{{ end }}</dd>
+    <dt>{{ t . "library.fields.notes" }}</dt>
+    <dd>{{ if .Detail.Entry.Notes }}{{ .Detail.Entry.Notes }}{{ else }}—{{ end }}</dd>
+    <dt>{{ t . "library.fields.tags" }}</dt>
+    <dd>{{ if .Detail.Entry.Tags }}{{ range $i, $t := .Detail.Entry.Tags }}{{ if $i }}, {{ end }}{{ $t }}{{ end }}{{ else }}—{{ end }}</dd>
+  </dl>
 </section>
 
 <p class="actions detail-actions">

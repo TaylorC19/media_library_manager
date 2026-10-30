@@ -66,35 +66,55 @@ type Detail struct {
 }
 
 type searchResponse struct {
-	Results []json.RawMessage `json:"results"`
+	Total      int               `json:"total_results"`
+	TotalPages int               `json:"total_pages"`
+	Results    []json.RawMessage `json:"results"`
 }
 
 func (c *Client) decodeSearch(ctx context.Context, endpoint, kind, query string) ([]Result, error) {
+	page, err := c.decodeSearchPage(ctx, endpoint, kind, query, 1)
+	valid := make([]Result, 0, len(page.Items))
+	for _, row := range page.Items {
+		if row.ID != 0 {
+			valid = append(valid, row)
+		}
+	}
+	return valid, err
+}
+func (c *Client) decodeSearchPage(ctx context.Context, endpoint, kind, query string, page int) (httpx.Page[Result], error) {
 	key := providerkeys.Resolve(ctx, "tmdb", c.APIKey)
 	var envelope searchResponse
 	if err := httpx.GetJSON(ctx, c.HTTP, "tmdb", "search", endpoint, httpx.GetJSONOptions{
 		Query: map[string]any{
 			"api_key":  key,
 			"query":    query,
+			"page":     page,
 			"language": "en-US",
 		},
 		Timeout: 20 * time.Second,
 	}, &envelope); err != nil {
-		return nil, err
+		return httpx.Page[Result]{}, err
 	}
 
 	var out []Result
 	for _, raw := range envelope.Results {
-		if len(out) >= 50 {
-			break
-		}
 		parsed, ok := decodeResultItem(raw, kind)
 		if !ok {
-			continue
+			parsed = Result{}
 		}
 		out = append(out, parsed)
 	}
-	return out, nil
+	total := envelope.Total
+	if total == 0 {
+		total = len(envelope.Results)
+	}
+	if envelope.TotalPages > 0 && envelope.TotalPages*20 < total {
+		total = envelope.TotalPages * 20
+	}
+	if total > 10000 {
+		total = 10000
+	}
+	return httpx.Page[Result]{Items: out, Total: total}, nil
 }
 
 func decodeResultItem(raw json.RawMessage, kind string) (Result, bool) {

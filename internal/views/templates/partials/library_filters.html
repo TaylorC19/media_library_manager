@@ -33,7 +33,7 @@
   <input type="hidden" name="page_size" value="{{ .Values.page_size }}" />
   <div class="actions">
     <button type="submit" class="button-primary">{{ t . "library.filters.apply" }}</button>
-    <a class="button-link" href="{{ .ListPath }}?view={{ .View }}">{{ t . "library.filters.clear" }}</a>
+    <a class="button-link" href="{{ .ListPath }}?q=&amp;media_type=&amp;format=&amp;view={{ .View }}&amp;page_size={{ .Values.page_size }}">{{ t . "library.filters.clear" }}</a>
   </div>
 </form>
 {{ end }}

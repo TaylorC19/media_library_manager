@@ -27,6 +27,7 @@
     },
     "pagination": {
       "aria": "Pagination",
+      "page": "Page",
       "previous": "Previous",
       "next": "Next"
     }
@@ -98,8 +99,12 @@
       "gridView": "Grid"
     },
     "detail": {
+      "backCollection": "Back to Collection",
+      "backWishlist": "Back to Wishlist",
+      "moveHint": "Keeps your notes, tags, format, barcode, and purchase details.",
       "myCopy": "My copy",
       "mediaDetails": "Media details",
+      "noSummary": "No description available.",
       "missingMedia": "Linked media record is missing."
     },
     "fields": {
@@ -130,6 +135,7 @@
       "clear": "Clear"
     },
     "actions": {
+      "moveToCollection": "Move to Collection",
       "refreshMedia": "Refresh media details"
     },
     "errors": {
@@ -137,11 +143,13 @@
       "invalidMediaType": "Choose a valid media type.",
       "invalidBucket": "Choose catalog or wishlist.",
       "invalidFormat": "Choose a valid format.",
+      "moveConflict": "This item is already in Collection with the same format. Nothing was changed; your Wishlist notes and copy details are still saved. You can edit the format if this is a different copy.",
       "duplicateEntry": "You already have this title in that bucket with the same format.",
       "mediaNotFound": "That media record could not be found.",
       "invalidMediaRecordId": "That media id is not valid."
     },
     "flash": {
+      "movedToCollection": "Moved to Collection. Your notes and copy details were kept.",
       "created": "Item saved.",
       "updated": "Changes saved.",
       "deleted": "Item removed from your library.",
@@ -303,6 +311,14 @@
       "addWishlist": "Add to wishlist"
     },
     "results": {
+      "inCollection": "In Collection",
+      "inWishlist": "In Wishlist",
+      "loading": "Searching all media…",
+      "loadingGroup": "Searching…",
+      "complete": "Search complete.",
+      "partial": "Some media types could not be loaded. You can retry them below.",
+      "groupError": "Could not load this media type. Please try again.",
+      "loadAll": "Load all results without JavaScript",
       "heading": "Results",
       "empty": "No matches found.",
       "summary": "Showing",
@@ -312,6 +328,7 @@
     "warnings": {
       "tmdbKeyMissing": "TMDB API key is not configured. Add TMDB_API_KEY to search movies and TV.",
       "rawgKeyMissing": "RAWG API key is not configured. Add RAWG_API_KEY to search games.",
+      "savedStatusUnavailable": "Saved-item badges could not be checked. Try reloading the page.",
       "providerUnavailable": "The provider is temporarily unavailable. Try again in a moment."
     },
     "errors": {

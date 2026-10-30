@@ -28,6 +28,7 @@ Locales are `en` or `ja`.
 | GET | `/{locale}/wishlist` |
 | GET | `/{locale}/search` |
 | GET | `/{locale}/search/details` |
+| GET | `/{locale}/search/group` |
 | GET | `/{locale}/library/new` |
 | GET | `/{locale}/library/{entryId}` |
 | GET | `/{locale}/library/{entryId}/edit` |
@@ -49,6 +50,7 @@ Admins can inspect personal-key status and open a confirmation page with `?provi
 | POST | `/library` |
 | POST | `/library/attach` |
 | POST | `/library/{entryId}/update` |
+| POST | `/library/{entryId}/move-to-collection` |
 | POST | `/library/{entryId}/delete` |
 | POST | `/media/import` |
 | POST | `/media/refresh/{mediaRecordId}` |

@@ -85,6 +85,9 @@ func (s *Service) BarcodeCacheKey(mediaType *string, barcode string) string {
 func (s *Service) IsNegativeCacheEligible(operation Operation, value any) bool {
 	switch operation {
 	case OperationSearch, OperationBarcode:
+		if page, ok := value.(interface{ IsEmpty() bool }); ok {
+			return page.IsEmpty()
+		}
 		v := reflect.ValueOf(value)
 		if !v.IsValid() {
 			return true

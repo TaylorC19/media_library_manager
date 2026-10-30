@@ -41,6 +41,7 @@ type ReleaseDetails struct {
 }
 
 type releaseSearchResponse struct {
+	Count    int          `json:"count"`
 	Releases []releaseDoc `json:"releases"`
 }
 
@@ -67,24 +68,29 @@ func (c *Client) SearchByBarcode(ctx context.Context, barcode string) ([]Release
 }
 
 func (c *Client) SearchReleases(ctx context.Context, query string) ([]ReleaseHit, error) {
+	page, err := c.SearchReleasesPage(ctx, query, 0, 50)
+	return page.Items, err
+}
+func (c *Client) SearchReleasesPage(ctx context.Context, query string, offset, limit int) (httpx.Page[ReleaseHit], error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
-		return nil, nil
+		return httpx.Page[ReleaseHit]{}, nil
 	}
-	return runWithThrottle(ctx, c.Throttle, func() ([]ReleaseHit, error) {
+	return runWithThrottle(ctx, c.Throttle, func() (httpx.Page[ReleaseHit], error) {
 		var payload releaseSearchResponse
 		if err := httpx.GetJSON(ctx, c.HTTP, "musicbrainz", "search", "https://musicbrainz.org/ws/2/release", httpx.GetJSONOptions{
 			Query: map[string]any{
-				"fmt":   "json",
-				"limit": 50,
-				"query": query,
+				"fmt":    "json",
+				"limit":  limit,
+				"offset": offset,
+				"query":  query,
 			},
 			Headers: map[string]string{
 				"User-Agent": c.userAgent(),
 			},
 			Timeout: 20 * time.Second,
 		}, &payload); err != nil {
-			return nil, err
+			return httpx.Page[ReleaseHit]{}, err
 		}
 
 		var out []ReleaseHit
@@ -107,7 +113,11 @@ func (c *Client) SearchReleases(ctx context.Context, query string) ([]ReleaseHit
 				Disambiguation: strings.TrimSpace(r.Disambiguation),
 			})
 		}
-		return out, nil
+		total := payload.Count
+		if total == 0 {
+			total = len(payload.Releases)
+		}
+		return httpx.Page[ReleaseHit]{Items: out, Total: total}, nil
 	})
 }
 

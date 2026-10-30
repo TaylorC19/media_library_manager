@@ -39,6 +39,7 @@ type GameDetails struct {
 }
 
 type searchResponse struct {
+	Count   int       `json:"count"`
 	Results []gameDoc `json:"results"`
 }
 
@@ -50,24 +51,29 @@ type gameDoc struct {
 }
 
 func (c *Client) SearchGames(ctx context.Context, query string) ([]GameHit, error) {
+	page, err := c.SearchGamesPage(ctx, query, 1, 50)
+	return page.Items, err
+}
+func (c *Client) SearchGamesPage(ctx context.Context, query string, page, limit int) (httpx.Page[GameHit], error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
-		return nil, nil
+		return httpx.Page[GameHit]{}, nil
 	}
 	key := providerkeys.Resolve(ctx, "rawg", c.APIKey)
 	if key == "" {
-		return nil, nil
+		return httpx.Page[GameHit]{}, nil
 	}
 	var payload searchResponse
 	if err := httpx.GetJSON(ctx, c.HTTP, "rawg", "search", "https://api.rawg.io/api/games", httpx.GetJSONOptions{
 		Query: map[string]any{
 			"key":       key,
 			"search":    query,
-			"page_size": 50,
+			"page_size": limit,
+			"page":      page,
 		},
 		Timeout: 15 * time.Second,
 	}, &payload); err != nil {
-		return nil, err
+		return httpx.Page[GameHit]{}, err
 	}
 
 	var out []GameHit
@@ -84,7 +90,11 @@ func (c *Client) SearchGames(ctx context.Context, query string) ([]GameHit, erro
 			BackgroundImage: img,
 		})
 	}
-	return out, nil
+	total := payload.Count
+	if total == 0 {
+		total = len(payload.Results)
+	}
+	return httpx.Page[GameHit]{Items: out, Total: total}, nil
 }
 
 func (c *Client) GetGameDetails(ctx context.Context, externalID string) (*GameDetails, error) {
