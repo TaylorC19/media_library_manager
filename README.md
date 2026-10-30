@@ -197,3 +197,20 @@ Tracked improvements; completed items are checked below. User management is also
 - [x] Progressive grouped search: show each group as it finishes.
 - [x] Actual provider pagination beyond the initial fetched batch.
 - [x] Persistent layout/filter preferences across visits (per account in the current browser).
+
+### Next improvements and browser QA
+
+Live browser review: [2026-10-30 report and screenshots](docs/qa/2026-10-30/report.md). Confirmed defects are separate from improvement suggestions; destructive and account-changing flows were not submitted.
+
+- [x] **BQA-01 — Responsive detail layout:** stack cover/metadata by component width and stack metadata labels/values on narrow cards; verified in the browser at 390, 515, and 1280 px.
+- [ ] **I-01 — Save and continue browsing:** save inside the search dialog, update badges immediately, and offer Open saved item for existing saves.
+- [ ] **I-02 — Safer deletion:** add an item-specific confirmation; consider Trash/Undo afterward.
+- [ ] **I-03 — Sorting and discovery:** title/year/recently-added sorting, tag filters, and creator/tag search.
+- [ ] **I-04 — Better copy details:** media-appropriate formats and optional format/notes when saving from Search.
+- [ ] **I-05 — Rich manual entries:** editable covers, descriptions, and creators for manually entered items.
+- [ ] **I-06 — Personal import/export:** account-scoped CSV/JSON export and import with a preview and duplicate handling.
+- [ ] **I-07 — Bulk actions:** select multiple items to tag, update formats, or move to Collection, with per-item conflict reporting.
+- [ ] **I-08 — Account self-service:** change display name/password and provide an admin recovery flow.
+- [ ] **I-09 — Large-library queries:** move Library filtering/sorting/pagination into database queries; current scalability concern is code-derived, not a measured browser slowdown.
+- [ ] **I-10 — Unsaved-edit protection:** warn before navigating away from changed forms; consider local drafts.
+- [ ] **I-11 — Compact mobile browsing:** reduce the search header/control footprint and add media-type jump links or collapsible groups.
