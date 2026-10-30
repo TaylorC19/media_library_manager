@@ -22,11 +22,19 @@
   function savedAction(result) {
     const slot = content.querySelector('[data-save-bucket="' + result.bucket + '"]');
     if (!slot) return null;
+    const existing = slot.querySelector('[data-saved-entry="' + result.entryId + '"]');
+    if (existing) return existing;
     const link = document.createElement("a");
+    link.dataset.savedEntry = result.entryId;
     link.href = result.url;
     link.className = "button-link";
     link.textContent = dialog.dataset.openSaved + " · " + (result.bucket === "catalog" ? dialog.dataset.collectionLabel : dialog.dataset.wishlistLabel);
-    slot.replaceChildren(link);
+    if (result.format) {
+      const select = content.querySelector('[name="format"]');
+      const option = Array.from(select?.options || []).find(option => option.value === result.format);
+      link.textContent += " · " + (option ? option.textContent : result.format);
+    }
+    slot.appendChild(link);
     return link;
   }
 
@@ -58,13 +66,14 @@
     });
   }
 
-  async function save(form) {
+  async function save(form, submitter) {
     if (pendingSave) return;
     const key = identity(currentURL);
     const body = new URLSearchParams(new FormData(form));
+    if (submitter?.name === "bucket") body.set("bucket", submitter.value);
     const bucket = body.get("bucket");
     const buttons = Array.from(content.querySelectorAll('form[data-dialog-save] button[type="submit"]'));
-    const submit = form.querySelector('button[type="submit"]');
+    const submit = submitter || form.querySelector('button[type="submit"]');
     const label = submit.textContent;
     pendingSave = { key };
     buttons.forEach(button => { button.disabled = true; });
@@ -105,7 +114,7 @@
     if (!form || !dialog.contains(form)) return;
     event.preventDefault();
     if (dialog.dataset.canWrite === "false") return;
-    save(form);
+    save(form, event.submitter);
   });
 
   function message(text) {

@@ -47,8 +47,11 @@ function setup(){
   const status=host.appendChild(new E('p'));status.setAttribute('data-save-status','');
   for(const bucket of ['catalog','wishlist']){
    const slot=host.appendChild(new E());slot.setAttribute('data-save-bucket',bucket);
-   const form=slot.appendChild(new E('form'));form.setAttribute('data-dialog-save','');form.action='http://localhost/media/import';form.fields={bucket,provider:'tmdb',external_id:'42',media_type:'movie',locale:'en'};
-   const button=form.appendChild(new E('button'));button.type='submit';button.textContent='Add '+bucket;
+  }
+  const form=host.appendChild(new E('form'));form.setAttribute('data-dialog-save','');form.action='http://localhost/media/import';form.fields={provider:'tmdb',external_id:'42',media_type:'movie',locale:'en',format:'',notes:''};
+  const format=form.appendChild(new E('select'));format.name='format';format.options=[{value:'',textContent:'Not set'},{value:'dvd',textContent:'DVD'},{value:'blu_ray',textContent:'Blu-ray'}];
+  for(const bucket of ['catalog','wishlist']){
+   const button=form.appendChild(new E('button'));button.type='submit';button.name='bucket';button.value=bucket;button.textContent='Add '+bucket;
   }
  }
  function result(kind){
@@ -63,7 +66,7 @@ function setup(){
   return Promise.resolve({ok:true,text:async()=>preview});
  }});
  const click=link=>listeners.click({target:link,button:0,preventDefault(){}});
- const submit=bucket=>{const form=content.querySelector(`[data-save-bucket="${bucket}"]`).querySelector('form');if(form){form.querySelector('button').focus();listeners.submit({target:form,preventDefault(){}});}return form;};
+ const submit=bucket=>{const form=content.querySelector('form');if(form){const button=form.querySelector('button[value="'+bucket+'"]');button.focus();listeners.submit({target:form,submitter:button,preventDefault(){}});}return form;};
  const success=(bucket='catalog')=>({ok:true,json:async()=>({entryId:'012345678901234567890123',bucket,url:'/en/library/012345678901234567890123',existing:false})});
  return {ids,content,dialog,trigger,other,requests,click,submit,success,window,document};
 }
@@ -79,9 +82,9 @@ test('save stays in dialog, immediately updates only the matching badge, and off
  assert.equal(s.trigger.querySelector('[data-saved-bucket="catalog"]').textContent,'In Collection');
  assert.equal(s.other.querySelector('[data-saved-bucket="catalog"]'),null);
  const slot=s.content.querySelector('[data-save-bucket="catalog"]');
- assert.equal(slot.querySelector('form'),null);assert.match(slot.querySelector('a').textContent,/Open saved item/);
+ assert.ok(s.content.querySelector('form'));assert.match(slot.querySelector('a').textContent,/Open saved item/);
  assert.equal(s.content.querySelector('[data-save-status]').textContent,'Saved');
- assert.equal(s.content.querySelector('[data-save-bucket="wishlist"]').querySelector('button').disabled,false);
+ assert.equal(s.content.querySelector('button[value="wishlist"]').disabled,false);
 });
 
 test('failed saves preserve the form, show an error, and do not invent a badge',async()=>{
@@ -102,7 +105,7 @@ test('closing a pending save does not cancel a committed save or reopen the dial
 test('a late save acknowledgement cannot replace a different item dialog',async()=>{
  const s=setup();s.click(s.trigger);await flush();s.submit('catalog');
  s.click(s.other);await flush();s.requests[0].resolve(s.success());await flush();
- assert.ok(s.content.querySelector('[data-save-bucket="catalog"]').querySelector('form'));
+ assert.ok(s.content.querySelector('form'));assert.equal(s.content.querySelector('[data-save-bucket="catalog"]').querySelector('a'),null);
  assert.equal(s.other.querySelector('.saved-badges'),null);
 });
 
@@ -110,5 +113,16 @@ test('saving to both buckets keeps both badges without duplicates',async()=>{
  const s=setup();s.click(s.trigger);await flush();s.submit('catalog');s.requests[0].resolve(s.success());await flush();
  s.submit('wishlist');s.requests[1].resolve(s.success('wishlist'));await flush();
  assert.equal(s.trigger.querySelectorAll('.saved-badge').length,2);
- assert.equal(s.content.querySelectorAll('form').length,0);
+ assert.equal(s.content.querySelectorAll('form').length,1);
+});
+
+
+test('format and notes are submitted with the clicked bucket, and different saved formats keep their own links',async()=>{
+ const s=setup();s.click(s.trigger);await flush();
+ const form=s.content.querySelector('form');form.fields.format='dvd';form.fields.notes='First copy notes';s.submit('wishlist');
+ assert.equal(s.requests[0].options.body.get('bucket'),'wishlist');assert.equal(s.requests[0].options.body.get('format'),'dvd');assert.equal(s.requests[0].options.body.get('notes'),'First copy notes');
+ s.requests[0].resolve({ok:true,json:async()=>({entryId:'012345678901234567890123',bucket:'wishlist',format:'dvd',url:'/en/library/012345678901234567890123'})});await flush();
+ form.fields.format='blu_ray';form.fields.notes='Another copy';s.submit('wishlist');
+ s.requests[1].resolve({ok:true,json:async()=>({entryId:'012345678901234567890124',bucket:'wishlist',format:'blu_ray',url:'/en/library/012345678901234567890124'})});await flush();
+ const links=s.content.querySelector('[data-save-bucket="wishlist"]').querySelectorAll('a');assert.equal(links.length,2);assert.match(links[0].textContent,/DVD/);assert.match(links[1].textContent,/Blu-ray/);
 });

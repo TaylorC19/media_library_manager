@@ -60,7 +60,7 @@ func (h *MediaHandler) Preview(w http.ResponseWriter, r *http.Request) {
 		"Locale": locale, "Path": r.URL.Path, "User": middleware.CurrentUser(r.Context()),
 		"TitleKey": "search.dialog.title", "ContentTemplate": "pages/search_detail.content",
 		"Record": record, "Fields": previewFields(record), "Import": form, "LocalID": localID,
-		"Barcode": query.Get("barcode"), "Buckets": domainlib.Buckets, "SavedByBucket": saved,
+		"Barcode": query.Get("barcode"), "Buckets": domainlib.Buckets, "SavedByBucket": saved, "Formats": domainlib.FormatsForMediaType(record.MediaType),
 	}
 	page := "pages/search_detail.html"
 	if query.Get("fragment") == "1" {

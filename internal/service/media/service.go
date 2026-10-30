@@ -54,6 +54,8 @@ type Service struct {
 }
 
 type ImportForm struct {
+	Format     string
+	Notes      string
 	Barcode    string
 	Bucket     string
 	MediaType  string
@@ -105,6 +107,8 @@ func (s *Service) Import(ctx context.Context, userID primitive.ObjectID, form Im
 	form.MediaType = strings.TrimSpace(form.MediaType)
 	form.Bucket = strings.TrimSpace(form.Bucket)
 	form.Barcode = strings.TrimSpace(form.Barcode)
+	form.Format = strings.TrimSpace(form.Format)
+	form.Notes = strings.TrimSpace(form.Notes)
 	form.TMDBKind = strings.TrimSpace(form.TMDBKind)
 
 	errs := validateImportForm(form)
@@ -117,7 +121,7 @@ func (s *Service) Import(ctx context.Context, userID primitive.ObjectID, form Im
 		return nil, nil, err
 	}
 	if existingByProviderRef != nil {
-		return s.attachLibraryEntry(ctx, userID, existingByProviderRef, form.Bucket, form.Barcode, true)
+		return s.attachLibraryEntry(ctx, userID, existingByProviderRef, form.Bucket, form.Barcode, form.Format, form.Notes, true)
 	}
 
 	normalized, err := s.fetchNormalizedRecord(ctx, form)
@@ -134,14 +138,14 @@ func (s *Service) Import(ctx context.Context, userID primitive.ObjectID, form Im
 		if err := s.media.Insert(ctx, normalized); err != nil {
 			return nil, nil, err
 		}
-		return s.attachLibraryEntry(ctx, userID, normalized, form.Bucket, form.Barcode, false)
+		return s.attachLibraryEntry(ctx, userID, normalized, form.Bucket, form.Barcode, form.Format, form.Notes, false)
 	}
 
 	merged := mergeProviderData(reusable, normalized)
 	if err := s.media.UpdateProviderData(ctx, merged); err != nil {
 		return nil, nil, err
 	}
-	return s.attachLibraryEntry(ctx, userID, merged, form.Bucket, form.Barcode, true)
+	return s.attachLibraryEntry(ctx, userID, merged, form.Bucket, form.Barcode, form.Format, form.Notes, true)
 }
 
 func (s *Service) Refresh(ctx context.Context, userID, mediaRecordID primitive.ObjectID) (*RefreshOutcome, error) {
@@ -181,7 +185,7 @@ func (s *Service) Refresh(ctx context.Context, userID, mediaRecordID primitive.O
 	return &RefreshOutcome{MediaRecord: merged, WasRefreshed: true, RefreshedFromProvider: provider}, nil
 }
 
-func (s *Service) attachLibraryEntry(ctx context.Context, userID primitive.ObjectID, mediaRec *domainlib.MediaRecord, bucket, barcode string, wasExistingMediaRecord bool) (*ImportOutcome, []string, error) {
+func (s *Service) attachLibraryEntry(ctx context.Context, userID primitive.ObjectID, mediaRec *domainlib.MediaRecord, bucket, barcode, format, notes string, wasExistingMediaRecord bool) (*ImportOutcome, []string, error) {
 	outcome := &ImportOutcome{
 		MediaRecord:            mediaRec,
 		WasExistingMediaRecord: wasExistingMediaRecord,
@@ -191,7 +195,11 @@ func (s *Service) attachLibraryEntry(ctx context.Context, userID primitive.Objec
 		return outcome, nil, nil
 	}
 
-	entry, err := s.entries.FindByUserMediaBucketAndFormat(ctx, userID, mediaRec.ID, bucket, nil)
+	if !domainlib.IsFormatForMediaType(mediaRec.MediaType, format) {
+		return nil, []string{"library.errors.invalidFormat"}, ErrValidation
+	}
+	formatPtr := trimmedPtr(format)
+	entry, err := s.entries.FindByUserMediaBucketAndFormat(ctx, userID, mediaRec.ID, bucket, formatPtr)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -206,6 +214,8 @@ func (s *Service) attachLibraryEntry(ctx context.Context, userID primitive.Objec
 
 	entry = &domainlib.LibraryEntry{
 		Barcode:       trimmedPtr(barcode),
+		Format:        formatPtr,
+		Notes:         trimmedPtr(notes),
 		UserID:        userID,
 		MediaRecordID: mediaRec.ID,
 		Bucket:        bucket,
@@ -213,7 +223,7 @@ func (s *Service) attachLibraryEntry(ctx context.Context, userID primitive.Objec
 	}
 	if err := s.entries.Insert(ctx, entry); err != nil {
 		if mongo.IsDuplicateKeyError(err) {
-			existing, lookupErr := s.entries.FindByUserMediaBucketAndFormat(ctx, userID, mediaRec.ID, bucket, nil)
+			existing, lookupErr := s.entries.FindByUserMediaBucketAndFormat(ctx, userID, mediaRec.ID, bucket, formatPtr)
 			if lookupErr != nil {
 				return nil, nil, lookupErr
 			}
@@ -329,6 +339,9 @@ func (s *Service) findReusableRecord(ctx context.Context, normalized *domainlib.
 
 func validateImportForm(form ImportForm) []string {
 	var errs []string
+	if !domainlib.IsFormatForMediaType(form.MediaType, form.Format) {
+		errs = append(errs, "library.errors.invalidFormat")
+	}
 	if strings.TrimSpace(form.ExternalID) == "" {
 		errs = append(errs, "search.import.externalIdRequired")
 	}

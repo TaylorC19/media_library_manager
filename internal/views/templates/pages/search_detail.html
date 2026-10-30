@@ -17,31 +17,36 @@
   </div>
   <p data-save-status role="status" aria-live="polite"></p>
   <div class="actions media-preview__actions">
-    {{ range .Buckets }}
-    <div data-save-bucket="{{ . }}">
-    {{ $saved := false }}{{ if $.SavedByBucket }}{{ $saved = index $.SavedByBucket . }}{{ end }}
-    {{ if $saved }}
-      {{ range $saved }}<a class="button-link" href="/{{ $.Locale }}/library/{{ .ID }}">{{ t $ "search.dialog.openSaved" }} · {{ t $ (printf "library.bucket.%s" .Bucket) }}{{ if .Format }} · {{ t $ (libraryFormatKey .Format) }}{{ end }}</a>{{ end }}
-    {{ else if $.User.CanWrite }}
-    <form data-dialog-save class="inline-form" method="post" action="{{ if $.LocalID }}/library/attach{{ else }}/media/import{{ end }}">
-      <input type="hidden" name="locale" value="{{ $.Locale }}" />
-      <input type="hidden" name="bucket" value="{{ . }}" />
-      {{ if $.LocalID }}
-      <input type="hidden" name="media_record_id" value="{{ $.LocalID }}" />
-      <input type="hidden" name="barcode" value="{{ $.Barcode }}" />
-      {{ else }}
-      <input type="hidden" name="barcode" value="{{ $.Barcode }}" />
-      <input type="hidden" name="provider" value="{{ $.Import.Provider }}" />
-      <input type="hidden" name="external_id" value="{{ $.Import.ExternalID }}" />
-      <input type="hidden" name="media_type" value="{{ $.Import.MediaType }}" />
-      <input type="hidden" name="tmdb_kind" value="{{ $.Import.TMDBKind }}" />
-      {{ end }}
-      <button type="submit" {{ if eq . "catalog" }}class="button-primary"{{ end }}>{{ if eq . "catalog" }}{{ t $ "search.actions.addCatalog" }}{{ else }}{{ t $ "search.actions.addWishlist" }}{{ end }}</button>
-    </form>
-    {{ end }}
-    </div>
-    {{ end }}
+    {{ range .Buckets }}<div data-save-bucket="{{ . }}">
+      {{ if $.SavedByBucket }}{{ range (index $.SavedByBucket .) }}<a class="button-link" data-saved-entry="{{ .ID }}" href="/{{ $.Locale }}/library/{{ .ID }}">{{ t $ "search.dialog.openSaved" }} · {{ t $ (printf "library.bucket.%s" .Bucket) }}{{ if .Format }} · {{ t $ (libraryFormatKey .Format) }}{{ end }}</a>{{ end }}{{ end }}
+    </div>{{ end }}
   </div>
+  {{ if .User.CanWrite }}
+  <form data-dialog-save class="dialog-copy-form stack-form" method="post" action="{{ if .LocalID }}/library/attach{{ else }}/media/import{{ end }}">
+    <input type="hidden" name="locale" value="{{ .Locale }}" />
+    <input type="hidden" name="barcode" value="{{ .Barcode }}" />
+    {{ if .LocalID }}<input type="hidden" name="media_record_id" value="{{ .LocalID }}" />
+    {{ else }}
+    <input type="hidden" name="provider" value="{{ .Import.Provider }}" />
+    <input type="hidden" name="external_id" value="{{ .Import.ExternalID }}" />
+    <input type="hidden" name="media_type" value="{{ .Import.MediaType }}" />
+    <input type="hidden" name="tmdb_kind" value="{{ .Import.TMDBKind }}" />
+    {{ end }}
+    <details class="dialog-copy-details" {{ if not .SavedByBucket }}open{{ end }}>
+      <summary>{{ if .SavedByBucket }}{{ t . "search.dialog.anotherCopy" }}{{ else }}{{ t . "search.dialog.copyDetails" }}{{ end }}</summary>
+      <p class="muted">{{ t . "search.dialog.copyHint" }}</p>
+      <label class="field" for="save-format"><span>{{ t . "library.fields.format" }}</span>
+        <select id="save-format" name="format"><option value="">{{ t . "library.format.unset" }}</option>
+          {{ range .Formats }}<option value="{{ . }}">{{ t $ (libraryFormatKey .) }}</option>{{ end }}
+        </select>
+      </label>
+      <label class="field" for="save-notes"><span>{{ t . "library.fields.notes" }}</span><textarea id="save-notes" name="notes" rows="3" maxlength="5000"></textarea></label>
+      <div class="actions">
+        {{ range .Buckets }}<button type="submit" name="bucket" value="{{ . }}" {{ if eq . "catalog" }}class="button-primary"{{ end }}>{{ if eq . "catalog" }}{{ t $ "search.actions.addCatalog" }}{{ else }}{{ t $ "search.actions.addWishlist" }}{{ end }}</button>{{ end }}
+      </div>
+    </details>
+  </form>
+  {{ end }}
   {{ if not .User.CanWrite }}<p class="muted">{{ t . "auth.readOnly" }}</p>{{ end }}
 </article>
 {{ end }}

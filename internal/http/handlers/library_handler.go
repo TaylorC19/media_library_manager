@@ -39,6 +39,7 @@ func (h *LibraryHandler) baseAppData(r *http.Request, titleKey string) map[strin
 		"MediaTypes":      domainlib.MediaTypes,
 		"Buckets":         domainlib.Buckets,
 		"Formats":         domainlib.Formats,
+		"AllFormats":      domainlib.Formats,
 		"Values":          map[string]string{},
 		"FormErrors":      []string{},
 		"ContentTemplate": "",
@@ -148,6 +149,7 @@ func (h *LibraryHandler) listBucket(w http.ResponseWriter, r *http.Request, buck
 	data["ListTotal"] = result.TotalItems
 	data["Bucket"] = bucket
 	data["ListPath"] = listPath
+	setFormFormats(data, filters.MediaType, filters.Format)
 	data["TagOptions"] = result.Tags
 	data["SortOrders"] = domainlib.SortOrders
 	data["SelectedTagMissing"] = filters.Tag != ""
@@ -227,7 +229,12 @@ func (h *LibraryHandler) NewForm(w http.ResponseWriter, r *http.Request) {
 	if !domainlib.IsBucket(bucket) {
 		bucket = domainlib.BucketCatalog
 	}
-	data["Values"] = map[string]string{"bucket": bucket, "title": r.URL.Query().Get("q"), "media_type": r.URL.Query().Get("media_type"), "barcode": r.URL.Query().Get("barcode")}
+	mediaType := r.URL.Query().Get("media_type")
+	if !domainlib.IsMediaType(mediaType) {
+		mediaType = "movie"
+	}
+	data["Values"] = map[string]string{"bucket": bucket, "title": r.URL.Query().Get("q"), "media_type": mediaType, "barcode": r.URL.Query().Get("barcode")}
+	setFormFormats(data, mediaType, "")
 	data["CanEditMedia"] = true
 	h.consumeFlash(w, r, data)
 	h.renderPage(w, "pages/library_form.html", data)
@@ -273,6 +280,7 @@ func (h *LibraryHandler) EditForm(w http.ResponseWriter, r *http.Request) {
 	data["EntryID"] = detail.Entry.ID.Hex()
 	data["Values"] = values
 	data["CanEditMedia"] = detail.Media.Source == domainlib.SourceManual
+	setFormFormats(data, detail.Media.MediaType, stringVal(detail.Entry.Format))
 	h.consumeFlash(w, r, data)
 	h.renderPage(w, "pages/library_form.html", data)
 }
@@ -359,7 +367,7 @@ func (h *LibraryHandler) AttachSubmit(w http.ResponseWriter, r *http.Request) {
 	bucket := strings.TrimSpace(r.FormValue("bucket"))
 	barcode := strings.TrimSpace(r.FormValue("barcode"))
 
-	entryID, wasExisting, formErrs, err := h.library.AttachFromMediaRecord(r.Context(), user.ID, mediaRecordID, bucket, barcode)
+	entryID, wasExisting, formErrs, err := h.library.AttachFromMediaRecord(r.Context(), user.ID, mediaRecordID, bucket, barcode, domainlib.CopyDetails{Format: r.FormValue("format"), Notes: r.FormValue("notes")})
 	if err != nil {
 		if dialogSaveRequest(r) {
 			status := http.StatusInternalServerError
@@ -384,7 +392,7 @@ func (h *LibraryHandler) AttachSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if dialogSaveRequest(r) {
-		writeDialogSave(w, entryID, bucket, locale, wasExisting)
+		writeDialogSave(w, entryID, bucket, locale, wasExisting, strings.TrimSpace(r.FormValue("format")))
 		return
 	}
 	flashKey := "library.flash.addedToLibrary"
@@ -504,16 +512,25 @@ func (h *LibraryHandler) renderFormErrors(w http.ResponseWriter, r *http.Request
 	data["Values"] = values
 	data["FormErrors"] = formErrs
 	canEditMedia := true
+	mediaType, legacy := values["media_type"], ""
 	if isEdit && entryID != "" {
 		user := middleware.CurrentUser(r.Context())
 		if user != nil {
 			if oid, err := primitive.ObjectIDFromHex(entryID); err == nil {
 				if d, err := h.library.GetEntryDetail(r.Context(), user.ID, oid); err == nil && d != nil {
 					canEditMedia = d.Media.Source == domainlib.SourceManual
+					if !canEditMedia {
+						mediaType = d.Media.MediaType
+						values["media_type"] = mediaType
+					}
+					if mediaType == d.Media.MediaType {
+						legacy = stringVal(d.Entry.Format)
+					}
 				}
 			}
 		}
 	}
+	setFormFormats(data, mediaType, legacy)
 	data["CanEditMedia"] = canEditMedia
 	h.renderPage(w, "pages/library_form.html", data)
 }
