@@ -125,7 +125,6 @@ func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc
 	searchHandler := handlers.NewSearchHandler(a.Renderer, search)
 	mediaHandler := handlers.NewMediaHandler(a.Renderer, media)
 	barcodeHandler := handlers.NewBarcodeHandler(barcode)
-	scanHandler := handlers.NewScanHandler(a.Renderer)
 	settingsHandler := handlers.NewSettingsHandler(a.Config, a.Renderer)
 	backupHandler := handlers.NewBackupHandler(a.Config, a.Database)
 
@@ -137,11 +136,12 @@ func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc
 
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.RequireAuth)
-		r.Get("/{locale}/", libraryHandler.Dashboard)
+		r.Get("/{locale}/", libraryHandler.LibraryPage)
 		r.Get("/{locale}/catalog", libraryHandler.Catalog)
 		r.Get("/{locale}/wishlist", libraryHandler.Wishlist)
 		r.Get("/{locale}/search", searchHandler.Page)
-		r.Get("/{locale}/scan", scanHandler.ScanPage)
+		r.Get("/{locale}/search/details", mediaHandler.Preview)
+		r.Get("/{locale}/scan", handlers.LegacyScanPage)
 		r.Get("/{locale}/settings", settingsHandler.Page)
 		r.Post("/settings/backup/export", backupHandler.ExportSubmit)
 		r.Post("/settings/backup/import", backupHandler.ImportSubmit)

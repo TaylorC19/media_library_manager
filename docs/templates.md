@@ -27,11 +27,11 @@ Rules that do not change:
 
 - Default navigation is **server-rendered** pages.
 - **htmx** is an enhancement, not the core architecture.
-- **JavaScript** is allowed and used where it materially improves UX (especially the scan page).
+- **JavaScript** is allowed and used where it materially improves UX (especially barcode scanning within Search).
 
 ## htmx (typical uses in this repo)
 
-- Search: replace results region on query changes (GET same URL; fragment response when `HX-Request` is set).
+- Search: standard GET forms and pagination; fragment responses remain available when `HX-Request` is set.
 - Catalog / wishlist: filter changes and pagination without a full reload.
 - Inline notices: import feedback, media refresh feedback.
 
@@ -39,7 +39,7 @@ Vendored **htmx** is loaded from [`layout/app_shell.html`](../internal/views/tem
 
 ## Vanilla JS (typical uses)
 
-- **Scan page** — camera lifecycle, ZXing-based decoding, calling `/barcode/lookup` and rendering candidates; user must still confirm save via normal app actions.
+- **Search barcode section** — camera lifecycle, ZXing-based decoding, calling `/barcode/lookup` and rendering candidates; user must still confirm save via normal app actions.
 - Optional small helpers under `internal/static/public/js/` as needed.
 
 ## Forms
@@ -69,17 +69,25 @@ internal/views/templates/
     render_content.html
     search_result_card.html
     search_results.html
+    scan.html
   pages/
-    dashboard.html
     home.html
     library_detail.html
     library_form.html
     library_list.html
     login.html
     register.html
-    scan.html
     search.html
+    search_detail.html
     settings.html
 ```
 
 Partials are composed by layouts and `render_content` / page templates as needed.
+
+## Workspace navigation
+
+My Library is the default page, with Collection and Wishlist as local views and counts. Both support cover images and List/Grid layouts, preserved through filters and pagination. Add item opens Search. Search combines title lookup with a collapsible barcode input/camera section and a shared media type. Clicking a result opens full metadata in a native dialog, where Collection and Wishlist save actions are offered separately. Manual creation is a fallback within this flow. Settings lives in the header.
+
+`scan.js` owns barcode candidates and camera cleanup (including closing the disclosure). `search.js` handles read-only preview loading, dialog cancellation/retry, focus restoration, and manual creation links. Preview links support full-page navigation without JavaScript. Both English and Japanese use the same page structure.
+
+Run the UI behavior checks with `node --test scripts/search-ui.test.cjs`; Go template and redirect checks run with `go test ./...`.

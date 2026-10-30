@@ -90,7 +90,7 @@
     {{ if .IsEdit }}
     <a class="button-link" href="/{{ .Locale }}/library/{{ .EntryID }}">{{ t . "library.form.cancelToDetail" }}</a>
     {{ else }}
-    <a class="button-link" href="/{{ .Locale }}/catalog">{{ t . "library.form.cancelToCatalog" }}</a>
+    <a class="button-link" href="/{{ .Locale }}/search?bucket={{ .Values.bucket }}&amp;media_type={{ .Values.media_type }}&amp;q={{ .Values.title }}">{{ t . "library.form.cancelToCatalog" }}</a>
     {{ end }}
   </p>
 </form>

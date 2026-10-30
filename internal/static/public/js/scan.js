@@ -37,7 +37,9 @@
   const scanStatus = document.getElementById("scan-status");
   const resultsEl = document.getElementById("scan-results");
   const input = document.getElementById("scan-barcode-input");
-  const preferred = document.getElementById("scan-preferred-type");
+  const preferred = document.getElementById("media_type");
+  const disclosure = document.getElementById("barcode-search");
+  let lastResponse = null;
   const btnLookup = document.getElementById("scan-lookup-btn");
   const btnStart = document.getElementById("scan-start-cam");
   const btnStop = document.getElementById("scan-stop-cam");
@@ -46,8 +48,9 @@
   const fallbackLink = document.getElementById("scan-fallback-search");
 
   let mediaStream = null;
-  let zxingReader = null;
+  let zxingControls = null;
   let detectorLoop = 0;
+  let cameraRequest = 0;
   let decodeMode = "none"; // none | zxing | detector
   let lastResolved = "";
   let lastLookupNorm = "";
@@ -59,14 +62,10 @@
   }
 
   function stopCamera() {
-    if (zxingReader) {
-      try {
-        zxingReader.stopContinuousDecode();
-        zxingReader.reset();
-      } catch {
-        void 0;
-      }
-      zxingReader = null;
+    cameraRequest++;
+    if (zxingControls) {
+      zxingControls.stop();
+      zxingControls = null;
     }
     if (detectorLoop) {
       cancelAnimationFrame(detectorLoop);
@@ -107,8 +106,10 @@
       formats: ["ean_13", "ean_8", "upc_a", "upc_e"],
     });
 
+    const request = cameraRequest;
     const tick = async () => {
-      if (decodeMode !== "detector" || !video || video.readyState < 2) {
+      if (decodeMode !== "detector" || request !== cameraRequest) return;
+      if (!video || video.readyState < 2) {
         detectorLoop = requestAnimationFrame(tick);
         return;
       }
@@ -117,7 +118,9 @@
       }
       try {
         const bmp = await createImageBitmap(video);
-        const codes = await detector.detect(bmp);
+        let codes;
+        try { codes = await detector.detect(bmp); } finally { bmp.close(); }
+        if (decodeMode !== "detector" || request !== cameraRequest) return;
         if (codes && codes[0] && codes[0].rawValue) {
           onBarcodeLine(codes[0].rawValue);
           return;
@@ -125,12 +128,12 @@
       } catch {
         void 0;
       }
-      detectorLoop = requestAnimationFrame(tick);
+      if (decodeMode === "detector" && request === cameraRequest) detectorLoop = requestAnimationFrame(tick);
     };
     detectorLoop = requestAnimationFrame(tick);
   }
 
-  function startZxing() {
+  async function startZxing(request) {
     const ZB = window.ZXingBrowser;
     if (!ZB || !ZB.BrowserMultiFormatReader) {
       setHintText(str("str-no-zxing"));
@@ -138,16 +141,19 @@
     }
     const BF = ZB.BarcodeFormat;
     const hints = new Map();
-    const fmts = [BF.EAN_13, BF.EAN_8, BF.UPC_A, BF.UPC_E].filter(Boolean);
+    const fmts = [BF.EAN_13, BF.EAN_8, BF.UPC_A, BF.UPC_E];
     hints.set(2, fmts);
-    zxingReader = new ZB.BrowserMultiFormatReader(hints, 300);
-    zxingReader.decodeFromVideoElementContinuously(video, (result, err) => {
+    const reader = new ZB.BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 300 });
+    const controls = await reader.decodeFromVideoElement(video, (result, err) => {
+      if (request !== cameraRequest) return;
       if (blockedAfterRead) return;
       if (err) return;
       if (result && result.getText) {
         onBarcodeLine(result.getText());
       }
     });
+    if (request !== cameraRequest) controls.stop();
+    else zxingControls = controls;
   }
 
   function setHintText(t) {
@@ -175,14 +181,20 @@
     blockedAfterRead = false;
     lastResolved = "";
     if (btnAgain) btnAgain.disabled = true;
+    const request = cameraRequest;
     try {
-      mediaStream = await navigator.mediaDevices.getUserMedia({
+      const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: "environment" } },
         audio: false,
       });
+      if (request !== cameraRequest) { stream.getTracks().forEach((t) => t.stop()); return; }
+      mediaStream = stream;
       video.srcObject = mediaStream;
       await video.play();
+      if (request !== cameraRequest) return;
     } catch (e) {
+      if (request !== cameraRequest) return;
+      stopCamera();
       if (e && e.name === "NotAllowedError") {
         setHintText(str("str-camera-denied"));
       } else {
@@ -191,12 +203,19 @@
       return;
     }
     if (btnStop) btnStop.disabled = false;
-    if ("BarcodeDetector" in window) {
-      decodeMode = "detector";
-      runDetectorLoop();
-    } else {
-      decodeMode = "zxing";
-      startZxing();
+    try {
+      if ("BarcodeDetector" in window) {
+        decodeMode = "detector";
+        runDetectorLoop();
+      } else {
+        decodeMode = "zxing";
+        await startZxing(request);
+      }
+    } catch {
+      if (request === cameraRequest) {
+        stopCamera();
+        setHintText(str("str-no-decoder"));
+      }
     }
   }
 
@@ -217,6 +236,7 @@
       lastResolved = "";
       if (btnAgain) btnAgain.disabled = true;
       if (input) input.value = "";
+      lastResponse = null;
       clearResults();
       setStatus("");
     });
@@ -245,6 +265,8 @@
       return;
     }
     lookupInFlight = true;
+    lastResponse = null;
+    clearResults();
     setStatus("…");
     const pref = preferred && preferred.value ? preferred.value : "";
     fetch("/barcode/lookup", {
@@ -264,8 +286,9 @@
         return res.json();
       })
       .then(function (data) {
-        if (!data) return;
+        if (!data || (preferred ? preferred.value : "") !== pref) return;
         lastLookupNorm = norm;
+        lastResponse = { data, norm, raw };
         renderResponse(data, norm, raw);
         updateFallbackLink(data);
       })
@@ -280,20 +303,15 @@
   function updateFallbackLink(data) {
     if (!fallbackLink || !data) return;
     const u = new URL("/" + locale + "/search", window.location.origin);
-    u.search = "";
+    if (preferred && preferred.value) u.searchParams.set("media_type", preferred.value);
+    const query = document.getElementById("q");
+    if (query && query.value) u.searchParams.set("q", query.value);
     if (data.fallback) {
       const f = data.fallback;
       if (f.manualQuery) u.searchParams.set("q", f.manualQuery);
-      if (f.mediaType) u.searchParams.set("media_type", f.mediaType);
+      if ((!preferred || !preferred.value) && f.mediaType) u.searchParams.set("media_type", f.mediaType);
     }
     fallbackLink.href = u.pathname + (u.search ? u.search : "");
-  }
-
-  function hasBucket(links, bucket) {
-    if (!links) return false;
-    return links.some(function (L) {
-      return L.bucket === bucket;
-    });
   }
 
   function renderResponse(data, norm, raw) {
@@ -364,67 +382,35 @@
     }
     body.appendChild(src);
 
-    const actions = el("div", "search-hit__actions", "");
-
-    if (c.source === "provider" && c.provider && c.providerId) {
-      actions.appendChild(buildImportForm("catalog", c));
-      actions.appendChild(buildImportForm("wishlist", c));
-    } else if (c.source === "local" && c.mediaRecordId) {
-      (c.linkedLibraryEntries || []).forEach(function (L) {
-        const a = el("a", "button-link", str("str-view-entry-short") + " (" + L.bucket + ")");
-        a.href = "/" + locale + "/library/" + L.entryId;
-        actions.appendChild(a);
-      });
-      if (!hasBucket(c.linkedLibraryEntries, "catalog")) {
-        actions.appendChild(buildAttachForm("catalog", c.mediaRecordId, scanned));
+    const link = el("a", "search-hit__preview", "");
+    link.setAttribute("data-search-detail", "");
+    const supported = ["tmdb", "musicbrainz", "openlibrary", "open_library", "rawg"].includes(c.provider);
+    let url;
+    if (c.source === "local" || supported) {
+      url = new URL("/" + locale + "/search/details", window.location.origin);
+      if (c.source === "local") url.searchParams.set("media_record_id", c.mediaRecordId);
+      else {
+        url.searchParams.set("provider", c.provider === "openlibrary" ? "open_library" : c.provider);
+        url.searchParams.set("external_id", c.providerId);
+        url.searchParams.set("media_type", c.mediaType);
+        if (c.provider === "tmdb") url.searchParams.set("tmdb_kind", c.mediaType);
       }
-      if (!hasBucket(c.linkedLibraryEntries, "wishlist")) {
-        actions.appendChild(buildAttachForm("wishlist", c.mediaRecordId, scanned));
-      }
+    } else {
+      url = new URL("/" + locale + "/library/new", window.location.origin);
+      url.searchParams.set("q", c.title || "");
+      url.searchParams.set("media_type", c.mediaType || "");
+      link.setAttribute("data-manual-preview", "");
+      link.dataset.previewTitle = c.title || "";
+      link.dataset.previewCreator = c.creatorLine || "";
+      link.dataset.previewImage = c.imageUrl || "";
     }
-
-    body.appendChild(actions);
-    card.appendChild(media);
-    card.appendChild(body);
+    url.searchParams.set("barcode", scanned);
+    link.href = url.pathname + url.search;
+    link.appendChild(media);
+    body.appendChild(el("span", "preview-prompt", str("str-view-details")));
+    link.appendChild(body);
+    card.appendChild(link);
     return card;
-  }
-
-  function buildImportForm(bucket, c) {
-    const form = el("form", "inline-form", "");
-    form.method = "post";
-    form.action = "/media/import";
-    form.appendChild(hidden("locale", locale));
-    form.appendChild(hidden("bucket", bucket));
-    form.appendChild(hidden("media_type", c.mediaType || ""));
-    form.appendChild(hidden("provider", c.provider || ""));
-    form.appendChild(hidden("external_id", c.providerId || ""));
-    form.appendChild(hidden("tmdb_kind", ""));
-    const b = el("button", null, bucket === "catalog" ? str("str-add-catalog") : str("str-add-wishlist"));
-    b.type = "submit";
-    form.appendChild(b);
-    return form;
-  }
-
-  function buildAttachForm(bucket, mediaRecordId, scanned) {
-    const form = el("form", "inline-form", "");
-    form.method = "post";
-    form.action = "/library/attach";
-    form.appendChild(hidden("locale", locale));
-    form.appendChild(hidden("media_record_id", mediaRecordId));
-    form.appendChild(hidden("bucket", bucket));
-    form.appendChild(hidden("barcode", scanned));
-    const b = el("button", null, bucket === "catalog" ? str("str-add-catalog") : str("str-add-wishlist"));
-    b.type = "submit";
-    form.appendChild(b);
-    return form;
-  }
-
-  function hidden(name, value) {
-    const i = document.createElement("input");
-    i.type = "hidden";
-    i.name = name;
-    i.value = value;
-    return i;
   }
 
   if (btnLookup) {
@@ -442,6 +428,20 @@
     });
   }
 
+  if (preferred) preferred.addEventListener("change", function () {
+    lastLookupNorm = "";
+    lastResponse = null;
+    clearResults();
+    setStatus("");
+    updateFallbackLink({});
+  });
+  const queryInput = document.getElementById("q");
+  if (queryInput) queryInput.addEventListener("input", function () {
+    updateFallbackLink(lastResponse ? lastResponse.data : {});
+  });
+  if (disclosure) disclosure.addEventListener("toggle", function () {
+    if (!disclosure.open) stopCamera();
+  });
   window.addEventListener("pagehide", stopCamera);
   window.addEventListener("beforeunload", stopCamera);
   document.addEventListener("visibilitychange", function () {

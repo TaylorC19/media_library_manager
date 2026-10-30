@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"io"
 	"io/fs"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -194,19 +195,27 @@ func swapLocalePath(path, target string) string {
 		return "/" + target + "/"
 	}
 
-	trimmed := strings.Trim(path, "/")
-	if trimmed == "" {
+	parsed, err := url.ParseRequestURI(path)
+	if err != nil {
 		return "/" + target + "/"
+	}
+	suffix := ""
+	if parsed.RawQuery != "" {
+		suffix = "?" + parsed.RawQuery
+	}
+	trimmed := strings.Trim(parsed.Path, "/")
+	if trimmed == "" {
+		return "/" + target + "/" + suffix
 	}
 
 	parts := strings.Split(trimmed, "/")
 	if len(parts) > 0 && (parts[0] == "en" || parts[0] == "ja") {
 		if len(parts) == 1 {
-			return "/" + target + "/"
+			return "/" + target + "/" + suffix
 		}
 		parts[0] = target
-		return "/" + strings.Join(parts, "/")
+		return "/" + strings.Join(parts, "/") + suffix
 	}
 
-	return "/" + target + "/" + trimmed
+	return "/" + target + "/" + trimmed + suffix
 }

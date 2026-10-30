@@ -1,21 +1,17 @@
-{{ define "pages/catalog.content" }}
-<h2>{{ t . "library.catalog.title" }}</h2>
-<p class="actions"><a class="button-link primary" href="/{{ .Locale }}/library/new?bucket=catalog">{{ t . "library.list.addToCatalog" }}</a></p>
+{{ define "partials/library_workspace" }}
+<div class="page-heading">
+  <h2>{{ t . "library.title" }}</h2>
+  <a class="button-link primary" href="/{{ .Locale }}/search?media_type={{ .Values.media_type }}">{{ t . "library.nav.add" }}</a>
+</div>
+<nav class="section-tabs" aria-label="{{ t . "library.views" }}">
+  <a href="/{{ .Locale }}/?view={{ .View }}" {{ if eq .Bucket "catalog" }}aria-current="page"{{ end }}>{{ t . "library.nav.catalog" }} <span class="count">{{ .CatalogCount }}</span></a>
+  <a href="/{{ .Locale }}/wishlist?view={{ .View }}" {{ if eq .Bucket "wishlist" }}aria-current="page"{{ end }}>{{ t . "library.nav.wishlist" }} <span class="count">{{ .WishlistCount }}</span></a>
+</nav>
 {{ template "partials/library_filters" . }}
 <div id="library-list-section" class="results-region" aria-live="polite">
   {{ template "partials/library_list_section" . }}
 </div>
 {{ end }}
-
-{{ define "pages/wishlist.content" }}
-<h2>{{ t . "library.wishlist.title" }}</h2>
-<p class="actions"><a class="button-link primary" href="/{{ .Locale }}/library/new?bucket=wishlist">{{ t . "library.list.addToWishlist" }}</a></p>
-{{ template "partials/library_filters" . }}
-<div id="library-list-section" class="results-region" aria-live="polite">
-  {{ template "partials/library_list_section" . }}
-</div>
-{{ end }}
-
-{{ define "pages/library_list.html" }}
-{{ template "layout/app_shell" . }}
-{{ end }}
+{{ define "pages/catalog.content" }}{{ template "partials/library_workspace" . }}{{ end }}
+{{ define "pages/wishlist.content" }}{{ template "partials/library_workspace" . }}{{ end }}
+{{ define "pages/library_list.html" }}{{ template "layout/app_shell" . }}{{ end }}

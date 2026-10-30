@@ -27,6 +27,7 @@ Locales are `en` or `ja`.
 | GET | `/{locale}/catalog` |
 | GET | `/{locale}/wishlist` |
 | GET | `/{locale}/search` |
+| GET | `/{locale}/search/details` |
 | GET | `/{locale}/library/new` |
 | GET | `/{locale}/library/{entryId}` |
 | GET | `/{locale}/library/{entryId}/edit` |
@@ -48,7 +49,9 @@ Locales are `en` or `ja`.
 | POST | `/settings/backup/export` |
 | POST | `/settings/backup/import` |
 
-Barcode lookup returns JSON for the scan page script; it does **not** create library entries without an explicit user action elsewhere.
+The legacy `/{locale}/scan` page redirects to `/{locale}/search?mode=barcode`, preserving query parameters.
+
+Barcode lookup returns JSON for the barcode section in Search; it does **not** create library entries without an explicit user action elsewhere.
 
 Backup export returns `application/gzip` with a `.mlm-backup.json.gz` attachment. Import expects `multipart/form-data` with fields `backup` (file) and `confirm` (must equal `MONGODB_DATABASE`). See [`docs/backup.md`](backup.md).
 

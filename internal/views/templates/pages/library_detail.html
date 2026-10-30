@@ -57,8 +57,7 @@
 </section>
 
 <p class="actions detail-actions">
-  <a class="button-link" href="/{{ .Locale }}/catalog">{{ t . "library.nav.catalog" }}</a>
-  <a class="button-link" href="/{{ .Locale }}/wishlist">{{ t . "library.nav.wishlist" }}</a>
+  <a class="button-link" href="/{{ .Locale }}/{{ if eq .Detail.Entry.Bucket "wishlist" }}wishlist{{ end }}">{{ t . "library.title" }}</a>
   <a class="button-link primary" href="/{{ .Locale }}/library/{{ .Detail.Entry.ID.Hex }}/edit">{{ t . "common.actions.edit" }}</a>
 </p>
 

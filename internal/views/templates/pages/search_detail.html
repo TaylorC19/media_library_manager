@@ -1,0 +1,38 @@
+{{ define "pages/search_detail.content" }}
+<article class="media-preview">
+  <h2 id="search-detail-title" tabindex="-1">{{ .Record.Title }}</h2>
+  <div class="media-preview__layout">
+    <div>
+      {{ if .Record.ImageURL }}<img class="media-preview__cover" src="{{ .Record.ImageURL }}" alt="" width="180" loading="lazy" />
+      {{ else }}<div class="entry-cover entry-cover--missing">{{ t . "library.list.noCover" }}</div>{{ end }}
+    </div>
+    <div>
+      <p class="muted">{{ t . (printf "library.mediatype.%s" .Record.MediaType) }}{{ if .Record.Year }} · {{ .Record.Year }}{{ end }}</p>
+      {{ if .Record.Summary }}<p class="media-preview__summary">{{ .Record.Summary }}</p>{{ else }}<p class="muted">{{ t . "search.dialog.noSummary" }}</p>{{ end }}
+      <dl class="detail-dl">
+        {{ range .Fields }}<dt>{{ t $ (printf "search.details.%s" .Key) }}</dt><dd>{{ .Value }}</dd>{{ end }}
+        {{ if .Import.Provider }}<dt>{{ t . "search.dialog.source" }}</dt><dd>{{ t . (printf "search.provider.%s" .Import.Provider) }}</dd>{{ end }}
+      </dl>
+    </div>
+  </div>
+  <div class="actions media-preview__actions">
+    {{ range .Buckets }}
+    <form class="inline-form" method="post" action="{{ if $.LocalID }}/library/attach{{ else }}/media/import{{ end }}">
+      <input type="hidden" name="locale" value="{{ $.Locale }}" />
+      <input type="hidden" name="bucket" value="{{ . }}" />
+      {{ if $.LocalID }}
+      <input type="hidden" name="media_record_id" value="{{ $.LocalID }}" />
+      <input type="hidden" name="barcode" value="{{ $.Barcode }}" />
+      {{ else }}
+      <input type="hidden" name="provider" value="{{ $.Import.Provider }}" />
+      <input type="hidden" name="external_id" value="{{ $.Import.ExternalID }}" />
+      <input type="hidden" name="media_type" value="{{ $.Import.MediaType }}" />
+      <input type="hidden" name="tmdb_kind" value="{{ $.Import.TMDBKind }}" />
+      {{ end }}
+      <button type="submit" {{ if eq . "catalog" }}class="button-primary"{{ end }}>{{ if eq . "catalog" }}{{ t $ "search.actions.addCatalog" }}{{ else }}{{ t $ "search.actions.addWishlist" }}{{ end }}</button>
+    </form>
+    {{ end }}
+  </div>
+</article>
+{{ end }}
+{{ define "pages/search_detail.html" }}{{ template "layout/app_shell" . }}{{ end }}

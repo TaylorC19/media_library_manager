@@ -14,7 +14,8 @@
       "save": "保存",
       "edit": "編集",
       "delete": "削除",
-      "view": "詳細を見る"
+      "view": "詳細を見る",
+      "close": "閉じる"
     },
     "status": {
       "signedIn": "ログイン中"
@@ -67,7 +68,7 @@
     "nav": {
       "aria": "メイン",
       "dashboard": "ホーム",
-      "catalog": "カタログ",
+      "catalog": "コレクション",
       "wishlist": "ウィッシュリスト",
       "search": "検索",
       "scan": "スキャン",
@@ -75,7 +76,7 @@
       "add": "追加"
     },
     "catalog": {
-      "title": "カタログ"
+      "title": "コレクション"
     },
     "wishlist": {
       "title": "ウィッシュリスト"
@@ -84,7 +85,11 @@
       "empty": "まだありません。",
       "addToCatalog": "カタログに追加",
       "addToWishlist": "ウィッシュリストに追加",
-      "summary": "表示中"
+      "summary": "表示中",
+      "noCover": "画像なし",
+      "layout": "表示形式",
+      "listView": "リスト",
+      "gridView": "グリッド"
     },
     "detail": {
       "myCopy": "マイコピー",
@@ -92,7 +97,7 @@
       "missingMedia": "関連するメディアレコードがありません。"
     },
     "fields": {
-      "bucket": "バケット",
+      "bucket": "保存先",
       "mediaType": "メディア種別",
       "format": "フォーマット",
       "barcode": "バーコード",
@@ -105,14 +110,14 @@
       "source": "ソース"
     },
     "form": {
-      "newTitle": "アイテムを追加",
+      "newTitle": "手動で登録",
       "editTitle": "アイテムを編集",
       "mediaReadOnly": "このアイテムはプロバイダー由来のメタデータに紐づいています。ここでは所有情報のみ編集できます。",
       "cancelToDetail": "詳細に戻る",
       "cancelToCatalog": "キャンセル"
     },
     "filters": {
-      "query": "タイトルで絞り込む",
+      "query": "ライブラリ内を検索",
       "anyMediaType": "すべてのメディア種別",
       "anyFormat": "すべてのフォーマット",
       "apply": "絞り込む",
@@ -137,7 +142,7 @@
       "addedToLibrary": "ライブラリに追加しました。"
     },
     "bucket": {
-      "catalog": "カタログ",
+      "catalog": "コレクション",
       "wishlist": "ウィッシュリスト"
     },
     "source": {
@@ -166,7 +171,9 @@
       "xbox": "Xbox",
       "digital": "デジタル",
       "other": "その他"
-    }
+    },
+    "title": "マイライブラリ",
+    "views": "ライブラリの表示"
   },
   "scan": {
     "title": "バーコードスキャン",
@@ -232,13 +239,13 @@
   "search": {
     "title": "検索",
     "fields": {
-      "query": "検索キーワード",
+      "query": "タイトル・キーワード",
       "mediaType": "メディア種別",
-      "mediaTypePlaceholder": "種別を選ぶ…"
+      "mediaTypePlaceholder": "タイトル検索の種類を選択…"
     },
     "actions": {
       "submit": "検索",
-      "addCatalog": "カタログに追加",
+      "addCatalog": "コレクションに追加",
       "addWishlist": "ウィッシュリストに追加"
     },
     "results": {
@@ -278,6 +285,39 @@
     "refresh": {
       "providerRefUnavailable": "このメディアレコードには更新可能なプロバイダー参照がまだありません。",
       "notImplemented": "更新の土台は追加しましたが、プロバイダーからの更新処理はまだ未実装です。"
+    },
+    "intro": "コレクションやウィッシュリストに追加する作品を探します。タイトル検索、バーコード入力、カメラでのスキャンが使えます。",
+    "barcodeMethod": "バーコードを入力・カメラでスキャン",
+    "createManually": "見つかりませんか？ 手動で登録",
+    "dialog": {
+      "loading": "詳細を読み込み中…",
+      "error": "詳細を読み込めませんでした。もう一度お試しください。",
+      "viewDetails": "詳細を見る",
+      "title": "作品の詳細",
+      "noSummary": "説明はありません。",
+      "retry": "再試行",
+      "source": "情報元",
+      "manualCatalog": "コレクションに手動登録",
+      "manualWishlist": "ウィッシュリストに手動登録"
+    },
+    "details": {
+      "directors": "監督",
+      "cast": "出演",
+      "genres": "ジャンル",
+      "runtimeMinutes": "上映時間（分）",
+      "creators": "制作者",
+      "seasons": "シーズン数",
+      "episodes": "エピソード数",
+      "artists": "アーティスト",
+      "label": "レーベル",
+      "catalogNumber": "カタログ番号",
+      "releaseCountry": "発売国",
+      "trackCount": "収録曲数",
+      "authors": "著者",
+      "developers": "開発元",
+      "publishers": "発売元",
+      "platforms": "プラットフォーム",
+      "releaseDate": "発売日"
     }
   }
 }

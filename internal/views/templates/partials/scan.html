@@ -1,6 +1,5 @@
-{{ define "pages/scan.content" }}
+{{ define "partials/scan" }}
 <section class="scan-page" id="scan-root" data-locale="{{ .Locale }}">
-  <h2>{{ t . "scan.title" }}</h2>
   <p class="muted scan-intro">{{ t . "scan.intro" }}</p>
 
   <div class="is-hidden" id="scan-i18n" aria-hidden="true">
@@ -19,6 +18,9 @@
     <span id="str-camera-denied">{{ t . "scan.cameraDenied" }}</span>
     <span id="str-source-local">{{ t . "scan.sourceLocal" }}</span>
     <span id="str-source-provider">{{ t . "scan.sourceProvider" }}</span>
+    <span id="str-bucket-catalog">{{ t . "library.nav.catalog" }}</span>
+    <span id="str-bucket-wishlist">{{ t . "library.nav.wishlist" }}</span>
+    <span id="str-view-details">{{ t . "search.dialog.viewDetails" }}</span>
     <span id="str-add-catalog">{{ t . "search.actions.addCatalog" }}</span>
     <span id="str-add-wishlist">{{ t . "search.actions.addWishlist" }}</span>
     {{ range .MediaTypes }}
@@ -31,18 +33,6 @@
     <span id="str-provider-discogs">{{ t . "search.provider.discogs" }}</span>
     <span id="str-provider-rawg">{{ t . "search.provider.rawg" }}</span>
   </div>
-
-  <form class="scan-controls scan-row" id="scan-pref-form" action="#" onsubmit="return false;">
-    <div class="field">
-      <label for="scan-preferred-type">{{ t . "scan.preferredType" }}</label>
-      <select id="scan-preferred-type" name="preferred_type">
-        <option value="">{{ t . "scan.preferredAny" }}</option>
-        {{ range .MediaTypes }}
-        <option value="{{ . }}">{{ t $ (printf "library.mediatype.%s" .) }}</option>
-        {{ end }}
-      </select>
-    </div>
-  </form>
 
   <div class="scan-manual scan-row" id="scan-manual-block">
     <div class="field grow">
@@ -69,13 +59,10 @@
   <p class="scan-status" id="scan-status" role="status" aria-live="polite"></p>
 
   <p class="scan-fallback-link-wrap">
-    <a class="button-link" id="scan-fallback-search" href="/{{ .Locale }}/search">{{ t . "scan.fallbackIntro" }}</a>
+    <a class="button-link" id="scan-fallback-search" href="/{{ .Locale }}/search?media_type={{ .Values.media_type }}&amp;q={{ .Values.q }}">{{ t . "scan.fallbackIntro" }}</a>
   </p>
 
   <div id="scan-results" class="scan-results" aria-live="polite"></div>
 </section>
 {{ end }}
 
-{{ define "pages/scan.html" }}
-{{ template "layout/app_shell" . }}
-{{ end }}

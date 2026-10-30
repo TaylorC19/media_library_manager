@@ -29,10 +29,11 @@
       {{ end }}
     </select>
   </div>
+  <input id="library-view" type="hidden" name="view" value="{{ .View }}" />
   <input type="hidden" name="page_size" value="{{ .Values.page_size }}" />
   <div class="actions">
     <button type="submit" class="button-primary">{{ t . "library.filters.apply" }}</button>
-    <a class="button-link" href="{{ .ListPath }}">{{ t . "library.filters.clear" }}</a>
+    <a class="button-link" href="{{ .ListPath }}?view={{ .View }}">{{ t . "library.filters.clear" }}</a>
   </div>
 </form>
 {{ end }}
