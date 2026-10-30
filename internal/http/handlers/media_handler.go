@@ -51,6 +51,14 @@ func (h *MediaHandler) ImportSubmit(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		return
 	}
+	if !user.CanWrite() || !sameSettingsOrigin(r) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+	if dialogSaveRequest(r) {
+		w.Header().Set("Cache-Control", "private, no-store")
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "invalid form", http.StatusBadRequest)
 		return
@@ -70,8 +78,23 @@ func (h *MediaHandler) ImportSubmit(w http.ResponseWriter, r *http.Request) {
 		TMDBKind:   r.FormValue("tmdb_kind"),
 	}
 
+	if dialogSaveRequest(r) && form.Bucket != "catalog" && form.Bucket != "wishlist" {
+		http.Error(w, "Invalid destination", http.StatusBadRequest)
+		return
+	}
 	outcome, formErrs, err := h.media.Import(r.Context(), user.ID, form)
 	if err != nil {
+		if dialogSaveRequest(r) {
+			status := http.StatusInternalServerError
+			if errors.Is(err, mediasvc.ErrValidation) {
+				status = http.StatusBadRequest
+			}
+			if errors.Is(err, mediasvc.ErrNotFound) {
+				status = http.StatusNotFound
+			}
+			http.Error(w, "Could not save item", status)
+			return
+		}
 		switch {
 		case errors.Is(err, mediasvc.ErrValidation):
 			if isHTMX(r) {
@@ -105,6 +128,10 @@ func (h *MediaHandler) ImportSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if outcome.LibraryEntry != nil {
+		if dialogSaveRequest(r) {
+			writeDialogSave(w, outcome.LibraryEntry.ID, outcome.LibraryEntry.Bucket, locale, outcome.WasExistingLibraryEntry)
+			return
+		}
 		target := fmt.Sprintf("/%s/library/%s", locale, outcome.LibraryEntry.ID.Hex())
 		flashKey := "search.flash.imported"
 		if outcome.WasExistingLibraryEntry {

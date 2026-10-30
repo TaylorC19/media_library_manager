@@ -165,6 +165,7 @@ func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc
 		r.With(middleware.RequireWritable, middleware.WithProviderKeys(keyStore)).Post("/media/refresh/{mediaRecordId}", mediaHandler.RefreshSubmit)
 		r.With(middleware.RequireWritable).Get("/{locale}/library/new", libraryHandler.NewForm)
 		r.With(middleware.RequireWritable).Get("/{locale}/library/{entryId}/edit", libraryHandler.EditForm)
+		r.With(middleware.RequireWritable).Get("/{locale}/library/{entryId}/delete", libraryHandler.DeleteConfirmation)
 		r.Get("/{locale}/library/{entryId}", libraryHandler.Detail)
 		r.With(middleware.RequireWritable).Post("/library", libraryHandler.CreateSubmit)
 		r.With(middleware.RequireWritable).Post("/library/attach", libraryHandler.AttachSubmit)

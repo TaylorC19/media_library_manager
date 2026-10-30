@@ -9,7 +9,7 @@
 >
   <div class="field">
     <label for="list-q">{{ t . "library.filters.query" }}</label>
-    <input id="list-q" name="q" type="search" value="{{ .Values.q }}" autocomplete="off" />
+    <input id="list-q" name="q" type="search" value="{{ .Values.q }}" placeholder="{{ t . "library.filters.queryHint" }}" autocomplete="off" />
   </div>
   <div class="field">
     <label for="list-media-type">{{ t . "library.fields.mediaType" }}</label>
@@ -29,11 +29,29 @@
       {{ end }}
     </select>
   </div>
+  <div class="field">
+    <label for="list-tag">{{ t . "library.filters.tag" }}</label>
+    <select id="list-tag" name="tag">
+      <option value="">{{ t . "library.filters.anyTag" }}</option>
+      {{ if .SelectedTagMissing }}<option value="{{ .Values.tag }}" selected>{{ .Values.tag }}</option>{{ end }}
+      {{ range .TagOptions }}<option value="{{ .Value }}" {{ if eq $.Values.tag .Value }}selected{{ end }}>{{ .Label }}</option>{{ end }}
+    </select>
+  </div>
+  <div class="field">
+    <label for="list-sort">{{ t . "library.filters.sort" }}</label>
+    <select id="list-sort" name="sort">
+      {{ range .SortOrders }}<option value="{{ . }}" {{ if eq $.Values.sort . }}selected{{ end }}>{{ t $ (printf "library.sort.%s" .) }}</option>{{ end }}
+    </select>
+  </div>
   <input id="library-view" type="hidden" name="view" value="{{ .View }}" />
   <input type="hidden" name="page_size" value="{{ .Values.page_size }}" />
   <div class="actions">
     <button type="submit" class="button-primary">{{ t . "library.filters.apply" }}</button>
-    <a class="button-link" href="{{ .ListPath }}?q=&amp;media_type=&amp;format=&amp;view={{ .View }}&amp;page_size={{ .Values.page_size }}">{{ t . "library.filters.clear" }}</a>
+    {{ template "partials/library_clear_filters" . }}
   </div>
 </form>
+{{ end }}
+
+{{ define "partials/library_clear_filters" }}
+<a id="library-clear-filters" {{ if .ClearOOB }}hx-swap-oob="outerHTML"{{ end }} class="button-link" href="{{ .ListPath }}?q=&amp;media_type=&amp;format=&amp;view={{ .View }}&amp;page_size={{ .Values.page_size }}&amp;tag=&amp;sort={{ .Values.sort }}">{{ t . "library.filters.clear" }}</a>
 {{ end }}

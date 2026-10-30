@@ -1,0 +1,23 @@
+{{ define "pages/library_delete.content" }}
+<section class="card detail-section">
+  <h2>{{ t . "library.delete.heading" }}</h2>
+  <p>{{ t . "library.delete.intro" }}</p>
+  <h3>{{ .Detail.Media.Title }}</h3>
+  <dl class="detail-dl">
+    <dt>{{ t . "library.delete.location" }}</dt><dd>{{ t . (printf "library.bucket.%s" .Detail.Entry.Bucket) }}</dd>
+    <dt>{{ t . "library.fields.mediaType" }}</dt><dd>{{ t . (printf "library.mediatype.%s" .Detail.Entry.MediaType) }}</dd>
+    {{ if .Detail.Media.Year }}<dt>{{ t . "library.fields.year" }}</dt><dd>{{ .Detail.Media.Year }}</dd>{{ end }}
+    <dt>{{ t . "library.fields.format" }}</dt><dd>{{ $format := libraryFormatKey .Detail.Entry.Format }}{{ if $format }}{{ t . $format }}{{ else }}—{{ end }}</dd>
+    {{ if .Detail.Entry.Barcode }}<dt>{{ t . "library.fields.barcode" }}</dt><dd>{{ .Detail.Entry.Barcode }}</dd>{{ end }}
+  </dl>
+  <p class="inline-notice">{{ t . "library.delete.effect" }}</p>
+  {{ if .DeleteError }}<p class="form-error" role="alert">{{ t . .DeleteError }}</p>{{ end }}
+  <form method="post" action="/library/{{ .Detail.Entry.ID.Hex }}/delete" class="inline-form">
+    <input type="hidden" name="locale" value="{{ .Locale }}" />
+    <input type="hidden" name="confirm" value="delete" />
+    <a class="button-link" href="/{{ .Locale }}/library/{{ .Detail.Entry.ID.Hex }}">{{ t . "library.delete.cancel" }}</a>
+    <button type="submit" class="button-danger">{{ t . "library.delete.confirm" }}</button>
+  </form>
+</section>
+{{ end }}
+{{ define "pages/library_delete.html" }}{{ template "layout/app_shell" . }}{{ end }}

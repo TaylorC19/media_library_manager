@@ -10,8 +10,8 @@
       <span class="search-hit__title">{{ $hit.Title }}</span>
       {{ if or $hit.InCollection $hit.InWishlist }}
       <span class="saved-badges">
-        {{ if $hit.InCollection }}<span class="saved-badge saved-badge--collection">{{ t $page "search.results.inCollection" }}</span>{{ end }}
-        {{ if $hit.InWishlist }}<span class="saved-badge saved-badge--wishlist">{{ t $page "search.results.inWishlist" }}</span>{{ end }}
+        {{ if $hit.InCollection }}<span class="saved-badge saved-badge--collection" data-saved-bucket="catalog">{{ t $page "search.results.inCollection" }}</span>{{ end }}
+        {{ if $hit.InWishlist }}<span class="saved-badge saved-badge--wishlist" data-saved-bucket="wishlist">{{ t $page "search.results.inWishlist" }}</span>{{ end }}
       </span>
       {{ end }}
       {{ if $hit.Subtitle }}<span class="search-hit__subtitle muted">{{ $hit.Subtitle }}</span>{{ end }}

@@ -203,9 +203,9 @@ Tracked improvements; completed items are checked below. User management is also
 Live browser review: [2026-10-30 report and screenshots](docs/qa/2026-10-30/report.md). Confirmed defects are separate from improvement suggestions; destructive and account-changing flows were not submitted.
 
 - [x] **BQA-01 — Responsive detail layout:** stack cover/metadata by component width and stack metadata labels/values on narrow cards; verified in the browser at 390, 515, and 1280 px.
-- [ ] **I-01 — Save and continue browsing:** save inside the search dialog, update badges immediately, and offer Open saved item for existing saves.
-- [ ] **I-02 — Safer deletion:** add an item-specific confirmation; consider Trash/Undo afterward.
-- [ ] **I-03 — Sorting and discovery:** title/year/recently-added sorting, tag filters, and creator/tag search.
+- [x] **I-01 — Save and continue browsing:** save inside the search dialog, update badges immediately, and offer Open saved item for existing saves.
+- [x] **I-02 — Deletion confirmation:** show the exact item title and copy details before deleting, with Cancel and server-enforced confirmation. Trash/Undo remains a possible future improvement.
+- [x] **I-03 — Sorting and discovery:** title/year/recently-added sorting, private tag filters, clickable tags, and creator/tag search.
 - [ ] **I-04 — Better copy details:** media-appropriate formats and optional format/notes when saving from Search.
 - [ ] **I-05 — Rich manual entries:** editable covers, descriptions, and creators for manually entered items.
 - [ ] **I-06 — Personal import/export:** account-scoped CSV/JSON export and import with a preview and duplicate handling.

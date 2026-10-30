@@ -98,6 +98,15 @@
       "listView": "List",
       "gridView": "Grid"
     },
+    "delete": {
+      "location": "Location",
+      "heading": "Delete this saved item?",
+      "intro": "Review the item below before deleting it.",
+      "effect": "This removes this saved copy, including its notes, tags, and purchase details. Other saved copies are kept. This cannot be undone.",
+      "confirm": "Delete this item",
+      "cancel": "Cancel — keep this item",
+      "confirmRequired": "Please review the item and use the confirmation button to delete it."
+    },
     "detail": {
       "backCollection": "Back to Collection",
       "backWishlist": "Back to Wishlist",
@@ -127,7 +136,18 @@
       "cancelToDetail": "Back to detail",
       "cancelToCatalog": "Cancel"
     },
+    "sort": {
+      "recent": "Recently added",
+      "title_asc": "Title: A–Z",
+      "title_desc": "Title: Z–A",
+      "year_desc": "Year: newest first",
+      "year_asc": "Year: oldest first"
+    },
     "filters": {
+      "tag": "Tag",
+      "anyTag": "Any tag",
+      "sort": "Sort by",
+      "queryHint": "Titles, creators, tags, descriptions, or notes",
       "query": "Search your library",
       "anyMediaType": "Any media type",
       "anyFormat": "Any format",
@@ -363,6 +383,11 @@
     "barcodeMethod": "Search by barcode or scan with your camera",
     "createManually": "Can’t find it? Create manually",
     "dialog": {
+      "saving": "Saving…",
+      "saveError": "Could not save this item. Please try again.",
+      "saved": "Saved to your library.",
+      "existing": "This item is already saved in your library.",
+      "openSaved": "Open saved item",
       "loading": "Loading details…",
       "error": "Could not load details. Please try again.",
       "viewDetails": "View details",

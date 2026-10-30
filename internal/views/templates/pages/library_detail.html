@@ -65,7 +65,7 @@
     <dt>{{ t . "library.fields.notes" }}</dt>
     <dd>{{ if .Detail.Entry.Notes }}{{ .Detail.Entry.Notes }}{{ else }}—{{ end }}</dd>
     <dt>{{ t . "library.fields.tags" }}</dt>
-    <dd>{{ if .Detail.Entry.Tags }}{{ range $i, $t := .Detail.Entry.Tags }}{{ if $i }}, {{ end }}{{ $t }}{{ end }}{{ else }}—{{ end }}</dd>
+    <dd>{{ if .Detail.Entry.Tags }}{{ range $i, $t := .Detail.Entry.Tags }}{{ if $i }}, {{ end }}<a href="/{{ $.Locale }}/{{ if eq $.Detail.Entry.Bucket "wishlist" }}wishlist{{ end }}?tag={{ $t }}&amp;q=&amp;media_type=&amp;format=">{{ $t }}</a>{{ end }}{{ else }}—{{ end }}</dd>
   </dl>
 </section>
 
@@ -74,10 +74,9 @@
   {{ if .User.CanWrite }}<a class="button-link primary" href="/{{ .Locale }}/library/{{ .Detail.Entry.ID.Hex }}/edit">{{ t . "common.actions.edit" }}</a>{{ end }}
 </p>
 
-{{ if .User.CanWrite }}<form method="post" action="/library/{{ .Detail.Entry.ID.Hex }}/delete" class="danger-zone">
-  <input type="hidden" name="locale" value="{{ .Locale }}" />
-  <button type="submit" class="button-danger">{{ t . "common.actions.delete" }}</button>
-</form>{{ end }}
+{{ if .User.CanWrite }}<p class="danger-zone">
+  <a class="button-link delete-review" href="/{{ .Locale }}/library/{{ .Detail.Entry.ID.Hex }}/delete">{{ t . "common.actions.delete" }}</a>
+</p>{{ end }}
 {{ end }}
 
 {{ define "pages/library_detail.html" }}

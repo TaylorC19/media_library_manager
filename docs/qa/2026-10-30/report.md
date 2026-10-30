@@ -83,3 +83,20 @@ Not exercised end to end: saving/importing a result, duplicate-save handling, Wi
 2. I-01: duplicate-aware dialog actions and save-and-continue browsing.
 3. I-02 and I-10: deletion confirmation and unsaved-edit protection.
 4. I-03 and I-04: sorting/tag filters and media-appropriate copy details.
+
+
+## I-01 implementation follow-up
+
+Search dialogs now load personal saved-copy links. The live Avatar preview was checked after reload: it offers Open saved item · Collection for the existing copy and Add to wishlist for the other bucket. [Browser evidence](dialog-open-saved-item.jpg). The Open saved item link was followed to the owned saved-copy page and Search was restored afterward. No existing user data was changed for this browser check. Isolated MongoDB fixtures verify JSON saves without redirects, repeat-save behavior, per-account saved links, both provider/local attachment paths, writable-role/origin checks, and normal-form fallback. JavaScript regressions verify immediate badge updates, duplicate-submit suppression, error retry, and pending saves completing after dialog closure or switching items.
+
+
+## I-02 implementation follow-up
+
+Delete now opens a read-only confirmation page displaying the saved item’s title, location, and identifying copy details. The final POST requires `confirm=delete`, writable access, same-origin submission, and ownership. Integration fixtures exercise both Collection and Wishlist: unconfirmed requests leave notes intact, unauthorized requests fail, confirmed requests delete only the selected fixture entry, and other users’ copies and shared metadata remain intact. The live Avatar confirmation and Cancel navigation were checked without submitting the final delete. [Confirmation evidence](delete-confirmation.jpg). Trash/Undo remains a future enhancement.
+
+
+## I-03 implementation follow-up
+
+My Library now offers Recently added, Title A–Z/Z–A, and Year newest/oldest sorting; unknown years sort last. A tag dropdown uses only the current account and bucket’s tags, and saved-item tags link to filtered lists. The text filter also searches creators and tags. Choices are preserved through layout changes, pagination, languages, and browser preferences.
+
+Live browser checks confirmed Title A–Z put Avatar ahead of Cyberpunk, creator search for James Cameron found Avatar, and Year oldest first ordered the two saved examples correctly. Clear preserved the selected year sort after an HTMX update. Existing records were not edited or tagged for testing. Isolated fixtures cover tags and creator fields across media, case-insensitive exact-tag filtering combined with text search, sorting before pagination, missing years, tag privacy, preference restoration, and HTMX context. [Browser evidence](library-creator-search.jpg).

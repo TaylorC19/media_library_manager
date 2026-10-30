@@ -115,12 +115,18 @@ func (h *LibraryHandler) listBucket(w http.ResponseWriter, r *http.Request, buck
 	page := parsePage(r.URL.Query().Get("page"))
 	pageSize := parsePageSize(r.URL.Query().Get("page_size"))
 	filters := libsvc.ListBucketFilters{
+		Tag:       strings.ToLower(strings.TrimSpace(r.URL.Query().Get("tag"))),
+		Sort:      strings.TrimSpace(r.URL.Query().Get("sort")),
 		MediaType: strings.TrimSpace(r.URL.Query().Get("media_type")),
 		Format:    strings.TrimSpace(r.URL.Query().Get("format")),
 		Query:     strings.TrimSpace(r.URL.Query().Get("q")),
 	}
 	result, err := h.library.ListBucket(r.Context(), user.ID, bucket, filters, page, pageSize)
 	if err != nil {
+		if errors.Is(err, libsvc.ErrValidation) {
+			http.Error(w, "Invalid library filters", http.StatusBadRequest)
+			return
+		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -142,11 +148,21 @@ func (h *LibraryHandler) listBucket(w http.ResponseWriter, r *http.Request, buck
 	data["ListTotal"] = result.TotalItems
 	data["Bucket"] = bucket
 	data["ListPath"] = listPath
+	data["TagOptions"] = result.Tags
+	data["SortOrders"] = domainlib.SortOrders
+	data["SelectedTagMissing"] = filters.Tag != ""
+	for _, tag := range result.Tags {
+		if tag.Value == filters.Tag {
+			data["SelectedTagMissing"] = false
+		}
+	}
 	view := libraryView(r)
 	values := bucketValues(filters)
 	values.Set("q", filters.Query)
 	values.Set("media_type", filters.MediaType)
 	values.Set("format", filters.Format)
+	values.Set("tag", filters.Tag)
+	values.Set("sort", filters.Sort)
 	values.Set("view", view)
 	data["View"] = view
 	data["ViewURLs"] = map[string]string{
@@ -159,6 +175,8 @@ func (h *LibraryHandler) listBucket(w http.ResponseWriter, r *http.Request, buck
 		"media_type": filters.MediaType,
 		"format":     filters.Format,
 		"page_size":  strconv.Itoa(pageSize),
+		"tag":        filters.Tag,
+		"sort":       filters.Sort,
 	}
 	h.renderBucketResponse(w, r, data)
 }
@@ -304,6 +322,14 @@ func (h *LibraryHandler) AttachSubmit(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		return
 	}
+	if !user.CanWrite() || !sameSettingsOrigin(r) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+	if dialogSaveRequest(r) {
+		w.Header().Set("Cache-Control", "private, no-store")
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "invalid form", http.StatusBadRequest)
 		return
@@ -314,11 +340,19 @@ func (h *LibraryHandler) AttachSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 	raw := strings.TrimSpace(r.FormValue("media_record_id"))
 	if len(raw) != 24 {
+		if dialogSaveRequest(r) {
+			http.Error(w, "Invalid media record", http.StatusBadRequest)
+			return
+		}
 		h.setFlashRedirect(w, r, "/"+locale+"/scan", "common.flash.error", "library.errors.invalidMediaRecordId")
 		return
 	}
 	mediaRecordID, err := primitive.ObjectIDFromHex(raw)
 	if err != nil {
+		if dialogSaveRequest(r) {
+			http.Error(w, "Invalid media record", http.StatusBadRequest)
+			return
+		}
 		h.setFlashRedirect(w, r, "/"+locale+"/scan", "common.flash.error", "library.errors.invalidMediaRecordId")
 		return
 	}
@@ -327,6 +361,17 @@ func (h *LibraryHandler) AttachSubmit(w http.ResponseWriter, r *http.Request) {
 
 	entryID, wasExisting, formErrs, err := h.library.AttachFromMediaRecord(r.Context(), user.ID, mediaRecordID, bucket, barcode)
 	if err != nil {
+		if dialogSaveRequest(r) {
+			status := http.StatusInternalServerError
+			if errors.Is(err, libsvc.ErrValidation) {
+				status = http.StatusBadRequest
+			}
+			if errors.Is(err, libsvc.ErrNotFound) {
+				status = http.StatusNotFound
+			}
+			http.Error(w, "Could not save item", status)
+			return
+		}
 		if errors.Is(err, libsvc.ErrValidation) {
 			msgKey := "common.flash.serverError"
 			if len(formErrs) > 0 {
@@ -336,6 +381,10 @@ func (h *LibraryHandler) AttachSubmit(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if dialogSaveRequest(r) {
+		writeDialogSave(w, entryID, bucket, locale, wasExisting)
 		return
 	}
 	flashKey := "library.flash.addedToLibrary"
@@ -400,12 +449,18 @@ func (h *LibraryHandler) DeleteSubmit(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		return
 	}
+	if !user.CanWrite() || !sameSettingsOrigin(r) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+	w.Header().Set("Cache-Control", "private, no-store")
+	r.Body = http.MaxBytesReader(w, r.Body, 4096)
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	locale := strings.TrimSpace(r.FormValue("locale"))
-	if locale == "" {
+	if locale != "en" && locale != "ja" {
 		locale = middleware.LocaleFromContext(r.Context())
 	}
 	entryID, ok := parseObjectIDParam(w, r, chi.URLParam(r, "entryId"))
@@ -419,6 +474,10 @@ func (h *LibraryHandler) DeleteSubmit(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, "Could not load item", http.StatusInternalServerError)
 		}
+		return
+	}
+	if r.PostForm.Get("confirm") != "delete" {
+		h.renderDeleteConfirmation(w, r, detail, locale, "library.delete.confirmRequired", http.StatusBadRequest)
 		return
 	}
 	if err := h.library.DeleteEntry(r.Context(), user.ID, entryID); err != nil {
@@ -461,7 +520,9 @@ func (h *LibraryHandler) renderFormErrors(w http.ResponseWriter, r *http.Request
 
 func (h *LibraryHandler) renderBucketResponse(w http.ResponseWriter, r *http.Request, data map[string]any) {
 	if isHTMX(r) {
+		data["ClearOOB"] = true
 		h.renderPage(w, "partials/library_list_section", data)
+		h.renderPage(w, "partials/library_clear_filters", data)
 		return
 	}
 	h.consumeFlash(w, r, data)
