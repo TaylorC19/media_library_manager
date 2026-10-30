@@ -31,6 +31,10 @@ func (h *BackupHandler) ExportSubmit(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "administrator access required", http.StatusForbidden)
 		return
 	}
+	if !sameSettingsOrigin(r) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
 	if !h.cfg.BackupEnabled {
 		http.Error(w, "backup disabled", http.StatusForbidden)
 		return
@@ -61,6 +65,10 @@ func (h *BackupHandler) ImportSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 	if !middleware.CurrentUser(r.Context()).IsAdmin() {
 		http.Error(w, "administrator access required", http.StatusForbidden)
+		return
+	}
+	if !sameSettingsOrigin(r) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 	if !h.cfg.BackupEnabled {

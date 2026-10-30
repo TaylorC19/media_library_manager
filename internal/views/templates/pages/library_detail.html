@@ -34,7 +34,7 @@
     <dt>{{ t . "library.fields.source" }}</dt>
     <dd>{{ t . (printf "library.source.%s" .Detail.Media.Source) }}</dd>
   </dl>
-  {{ if eq .Detail.Media.Source "provider" }}
+  {{ if and (eq .Detail.Media.Source "provider") .User.CanWrite }}
   <div class="detail-refresh">
     <form
       method="post"
@@ -58,13 +58,13 @@
 
 <p class="actions detail-actions">
   <a class="button-link" href="/{{ .Locale }}/{{ if eq .Detail.Entry.Bucket "wishlist" }}wishlist{{ end }}">{{ t . "library.title" }}</a>
-  <a class="button-link primary" href="/{{ .Locale }}/library/{{ .Detail.Entry.ID.Hex }}/edit">{{ t . "common.actions.edit" }}</a>
+  {{ if .User.CanWrite }}<a class="button-link primary" href="/{{ .Locale }}/library/{{ .Detail.Entry.ID.Hex }}/edit">{{ t . "common.actions.edit" }}</a>{{ end }}
 </p>
 
-<form method="post" action="/library/{{ .Detail.Entry.ID.Hex }}/delete" class="danger-zone">
+{{ if .User.CanWrite }}<form method="post" action="/library/{{ .Detail.Entry.ID.Hex }}/delete" class="danger-zone">
   <input type="hidden" name="locale" value="{{ .Locale }}" />
   <button type="submit" class="button-danger">{{ t . "common.actions.delete" }}</button>
-</form>
+</form>{{ end }}
 {{ end }}
 
 {{ define "pages/library_detail.html" }}

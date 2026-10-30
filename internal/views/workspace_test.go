@@ -119,7 +119,7 @@ func TestPreviewHasDetailsAndBothExplicitSaveActions(t *testing.T) {
 	for _, locale := range []string{"en", "ja"} {
 		for _, localID := range []string{"", "012345678901234567890123"} {
 			data := map[string]any{
-				"Locale": locale, "Record": &domainlib.MediaRecord{Title: "A&B", MediaType: "book", Summary: &description, Details: bson.M{}},
+				"User": &domainauth.User{Username: "test"}, "Locale": locale, "Record": &domainlib.MediaRecord{Title: "A&B", MediaType: "book", Summary: &description, Details: bson.M{}},
 				"Import":  mediasvc.ImportForm{Provider: "open_library", ExternalID: "OL1W", MediaType: "book"},
 				"LocalID": localID, "Buckets": domainlib.Buckets,
 				"Fields": []map[string]string{{"Key": "authors", "Value": "Test Author"}},
@@ -128,7 +128,7 @@ func TestPreviewHasDetailsAndBothExplicitSaveActions(t *testing.T) {
 			if err := renderer.Render(&out, "pages/search_detail.content", data); err != nil {
 				t.Fatal(err)
 			}
-			for _, want := range []string{`id="search-detail-title"`, `name="bucket" value="catalog"`, `name="bucket" value="wishlist"`, "Test Author", "Full description"} {
+			for _, want := range []string{`id="search-detail-title"`, `name="bucket" value="catalog"`, `name="bucket" value="wishlist"`, `name="barcode"`, "Test Author", "Full description"} {
 				if !strings.Contains(out.String(), want) {
 					t.Errorf("missing %q", want)
 				}
@@ -249,5 +249,20 @@ func TestSettingsProviderKeysNeverPopulateSecrets(t *testing.T) {
 		if strings.Contains(html, "test-secret-do-not-render") {
 			t.Error("settings leaked a key")
 		}
+	}
+}
+
+func TestReadOnlyPreviewHidesBothWriteActions(t *testing.T) {
+	renderer, err := NewRenderer(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data := map[string]any{"Locale": "en", "User": &domainauth.User{Role: domainauth.RoleDemo}, "Record": &domainlib.MediaRecord{Title: "Read-only preview", MediaType: "book"}, "Import": mediasvc.ImportForm{Provider: "open_library", MediaType: "book", ExternalID: "OL1W"}, "Buckets": domainlib.Buckets}
+	var out bytes.Buffer
+	if err := renderer.Render(&out, "pages/search_detail.content", data); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(out.String(), "<form") || !strings.Contains(out.String(), "read-only") {
+		t.Error("demo previews must explain read-only access and expose no saving forms")
 	}
 }

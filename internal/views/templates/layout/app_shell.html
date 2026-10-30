@@ -9,6 +9,7 @@
     <title>{{ $pageTitle }} · {{ t . "common.appName" }}</title>
     <link rel="stylesheet" href="/static/css/base.css" />
     <script src="/static/js/htmx.min.js" defer></script>
+    <script src="/static/js/navigation.js" defer></script>
   </head>
   <body>
     <header class="container header-bar">
@@ -26,6 +27,7 @@
       {{ template "partials/nav" . }}
     </header>
     <main class="container">
+      {{ if not .User.CanWrite }}<p class="inline-notice" role="status">{{ t . "auth.readOnly" }}</p>{{ end }}
       {{ template "partials/flash" . }}
       {{ template "partials/render_content" . }}
     </main>

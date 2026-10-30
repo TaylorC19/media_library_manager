@@ -151,7 +151,9 @@ func (s *Service) Lookup(ctx context.Context, userID primitive.ObjectID, req bdo
 		Fallback:   fb,
 	}
 
-	s.logScan(ctx, userID, norm, out)
+	if !req.ReadOnly {
+		s.logScan(ctx, userID, norm, out)
+	}
 
 	return resp, nil
 }
@@ -168,6 +170,27 @@ func (s *Service) buildLocalCandidates(ctx context.Context, userID primitive.Obj
 	recs, err := s.media.FindByBarcodeCandidate(ctx, norm, mediaType)
 	if err != nil {
 		return nil, err
+	}
+	ownEntries, err := s.lib.FindByUserAndBarcode(ctx, userID, norm, mediaType)
+	if err != nil {
+		return nil, err
+	}
+	seen := map[primitive.ObjectID]bool{}
+	for _, rec := range recs {
+		seen[rec.ID] = true
+	}
+	for _, entry := range ownEntries {
+		if seen[entry.MediaRecordID] {
+			continue
+		}
+		rec, err := s.media.FindByID(ctx, entry.MediaRecordID)
+		if err != nil {
+			return nil, err
+		}
+		if rec != nil {
+			recs = append(recs, *rec)
+			seen[rec.ID] = true
+		}
 	}
 	if len(recs) == 0 {
 		return nil, nil

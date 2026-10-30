@@ -56,6 +56,7 @@ function setup(options = {}) {
     navigator: { mediaDevices: { getUserMedia: options.getUserMedia || (async () => stream) } },
     fetch: async (url, init) => {
       requests.push({url, body:JSON.parse(init.body)});
+      if (options.fetch) return options.fetch(url, init);
       return { ok:true, json: async () => options.response || {
         barcode:'9781234567897',
         candidates:[{source:'provider',provider:'open_library',providerId:'OL1W',mediaType:'book',title:'Test Book'}],
@@ -68,7 +69,7 @@ function setup(options = {}) {
       BarcodeFormat:{EAN_13:7,EAN_8:6,UPC_A:14,UPC_E:15},
       BrowserMultiFormatReader: class {
         // Match the API exported by the bundled ZXing browser library.
-        async decodeFromVideoElement(video, callback) { decodes++; return controls; }
+        async decodeFromVideoElement(video, callback) { decodes++; controls.callback = callback; return controls; }
       },
     },
   };
@@ -183,4 +184,31 @@ test('manual fallback retains the current query and type without a search destin
   assert.equal(url.searchParams.get('q'),'A/B & C');
   assert.equal(url.searchParams.get('media_type'),'book');
   assert.equal(url.searchParams.get('bucket'),null);
+});
+
+test('Scan again restarts the camera and decoder after a successful read', async () => {
+  const {ids,controls,decodes}=setup();
+  ids['scan-start-cam'].emit('click'); await flush();
+  controls.callback({getText:()=> '9781234567897'},null); await flush();
+  assert.equal(ids['scan-video'].srcObject,null);
+  assert.equal(ids['scan-again-btn'].disabled,false);
+  ids['scan-again-btn'].emit('click'); await flush();
+  assert.equal(decodes(),2);
+  assert.notEqual(ids['scan-video'].srcObject,null);
+});
+
+test('Scan again ignores an older lookup that finishes after the new scan', async () => {
+  const pending=[];
+  const {ids,controls,requests}=setup({fetch:()=>new Promise(resolve=>pending.push(resolve))});
+  ids['scan-start-cam'].emit('click'); await flush();
+  controls.callback({getText:()=> '9781234567897'},null); await flush();
+  ids['scan-again-btn'].emit('click'); await flush();
+  controls.callback({getText:()=> '9787654321098'},null); await flush();
+  assert.equal(requests.length,2);
+  const response=title=>({ok:true,json:async()=>({barcode:'9787654321098',candidates:[{source:'provider',provider:'open_library',providerId:'OL1W',mediaType:'book',title}]})});
+  pending[1](response('New scan')); await flush();
+  pending[0](response('Old scan')); await flush();
+  const titles=descendants(ids['scan-results'],'h3').map(element=>element.textContent);
+  assert.equal(titles.includes('New scan'),true);
+  assert.equal(titles.includes('Old scan'),false);
 });

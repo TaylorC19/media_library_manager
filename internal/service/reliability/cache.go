@@ -38,6 +38,9 @@ func Wrap[T any](ctx context.Context, c *Cache, operation Operation, provider, c
 		return loader(ctx)
 	}
 
+	if fresh, _ := ctx.Value(forceRefreshKey{}).(bool); fresh {
+		return loadAndStore(ctx, c, operation, provider, cacheKey, loader)
+	}
 	cached, err := c.repo.FindActive(ctx, provider, cacheKey)
 	if err != nil {
 		return zero, err
@@ -63,22 +66,7 @@ func Wrap[T any](ctx context.Context, c *Cache, operation Operation, provider, c
 
 	defer c.inFlight.Delete(flightKey)
 
-	value, err := loader(ctx)
-	if err == nil {
-		payload, marshalErr := json.Marshal(value)
-		if marshalErr != nil {
-			err = fmt.Errorf("encode provider cache: %w", marshalErr)
-		} else {
-			policy := c.reliability.CachePolicy(operation)
-			ttl := policy.TTL
-			if c.reliability.IsNegativeCacheEligible(operation, value) {
-				ttl = policy.NegativeTTL
-			}
-			if setErr := c.repo.Set(ctx, provider, cacheKey, payload, time.Now().UTC().Add(ttl)); setErr != nil {
-				err = setErr
-			}
-		}
-	}
+	value, err := loadAndStore(ctx, c, operation, provider, cacheKey, loader)
 
 	f.value = value
 	f.err = err
@@ -105,4 +93,33 @@ func awaitFlight[T any](ctx context.Context, f *flight) (T, error) {
 		}
 		return value, nil
 	}
+}
+
+type forceRefreshKey struct{}
+
+// ForceRefresh bypasses cached and in-flight values and replaces the cached
+// metadata only after the provider returns a successful fresh response.
+func ForceRefresh(ctx context.Context) context.Context {
+	return context.WithValue(ctx, forceRefreshKey{}, true)
+}
+
+func loadAndStore[T any](ctx context.Context, c *Cache, operation Operation, provider, cacheKey string, loader func(context.Context) (T, error)) (T, error) {
+	value, err := loader(ctx)
+	if err == nil {
+		payload, marshalErr := json.Marshal(value)
+		if marshalErr != nil {
+			err = fmt.Errorf("encode provider cache: %w", marshalErr)
+		} else {
+			policy := c.reliability.CachePolicy(operation)
+			ttl := policy.TTL
+			if c.reliability.IsNegativeCacheEligible(operation, value) {
+				ttl = policy.NegativeTTL
+			}
+			if setErr := c.repo.Set(ctx, provider, cacheKey, payload, time.Now().UTC().Add(ttl)); setErr != nil {
+				err = setErr
+			}
+		}
+	}
+
+	return value, err
 }

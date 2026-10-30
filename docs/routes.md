@@ -99,3 +99,9 @@ Exact attributes live in templates under [`internal/views/templates/`](../intern
 - After save/import: typically `/{locale}/library/{entryId}` (see handlers)  
 
 Locale switching preserves path where the language switcher replaces the first path segment.
+
+## Role permissions
+
+All protected routes require authentication. Full-database export/restore additionally require an admin role and reject cross-origin browser submissions. Library creation/attachment/editing/deletion, provider imports, metadata refresh, and provider-key saving require a writable account (admin or general); demo accounts receive HTTP 403. New/edit form pages are restricted in the same way. Public registration always creates general users; role changes are available only through the server-side `cmd/users` command. Accounts without a stored role are general.
+
+Pagination clamps an out-of-range page to the same last page for both data slicing and footer labels. Provider-import forms retain scanned barcodes on the user's copy, and local lookup checks that account's saved barcodes. Refresh verifies ownership, fetches uncached provider details, replaces cached details after success, and updates the stored metadata. Deletion returns to the entry's original bucket. Language-switch links are updated from the live URL after HTMX filtering/pagination and history navigation.

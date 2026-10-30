@@ -56,6 +56,7 @@
     const description = document.createElement("p");
     description.textContent = link.dataset.previewCreator || "";
     content.appendChild(description);
+    if (dialog.dataset.canWrite === "false") return;
     for (const bucket of ["catalog", "wishlist"]) {
       const action = document.createElement("a");
       const url = new URL(link.href, window.location.origin);
@@ -93,6 +94,7 @@
   const mediaType = document.getElementById("media_type");
   const query = document.getElementById("q");
   function updateManualLink() {
+    if (!manual) return;
     const url = new URL(manual.href);
     url.searchParams.set("media_type", mediaType.value);
     url.searchParams.set("q", query.value);

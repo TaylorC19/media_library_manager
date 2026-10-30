@@ -205,3 +205,25 @@ func (r *LibraryEntriesRepository) DeleteByIDAndUser(ctx context.Context, id, us
 	}
 	return nil
 }
+
+func (r *LibraryEntriesRepository) FindByUserAndBarcode(ctx context.Context, userID primitive.ObjectID, barcode string, mediaType *string) ([]domainlib.LibraryEntry, error) {
+	query := bson.M{"userId": userID, "barcode": barcode}
+	if mediaType != nil && *mediaType != "" {
+		query["mediaType"] = *mediaType
+	}
+	cur, err := r.coll.Find(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+	var entries []domainlib.LibraryEntry
+	if err := cur.All(ctx, &entries); err != nil {
+		return nil, err
+	}
+	return entries, nil
+}
+
+func (r *LibraryEntriesRepository) SetBarcodeIfMissing(ctx context.Context, userID, entryID primitive.ObjectID, barcode string) error {
+	_, err := r.coll.UpdateOne(ctx, bson.M{"_id": entryID, "userId": userID, "$or": bson.A{bson.M{"barcode": nil}, bson.M{"barcode": ""}}}, bson.M{"$set": bson.M{"barcode": barcode, "updatedAt": time.Now().UTC()}})
+	return err
+}

@@ -75,10 +75,11 @@ func pageBounds(totalItems, page, pageSize int) (int, int) {
 	if pageSize <= 0 {
 		pageSize = defaultPageSize
 	}
-	start := (page - 1) * pageSize
-	if start >= totalItems {
-		return totalItems, totalItems
+	lastPage := (totalItems-1)/pageSize + 1
+	if page > lastPage {
+		page = lastPage
 	}
+	start := (page - 1) * pageSize
 	end := start + pageSize
 	if end > totalItems {
 		end = totalItems

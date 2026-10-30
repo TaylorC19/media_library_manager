@@ -158,3 +158,7 @@ flowchart LR
 ## Type definitions in code
 
 Domain shapes for the Go app live under [`internal/domain`](../internal/domain) and repository documents under [`internal/repository`](../internal/repository). MongoDB stores the canonical documents described throughout this doc.
+
+## User roles
+
+`users.role` is `admin`, `general`, or `demo`. Missing values on legacy accounts mean general access; unknown values have no write/admin privileges. Registration explicitly sets `general`. Roles are loaded from MongoDB on each authenticated request, so trusted server-side updates also apply to existing sessions. See the README for `cmd/users` usage.

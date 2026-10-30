@@ -8,6 +8,8 @@
     <dl class="detail-dl">
       <dt>{{ t . "settings.account.username" }}</dt>
       <dd>{{ .User.Username }}</dd>
+      <dt>{{ t . "settings.account.role" }}</dt>
+      <dd>{{ t . (printf "auth.roles.%s" .User.EffectiveRole) }}</dd>
       <dt>{{ t . "settings.account.displayName" }}</dt>
       <dd>{{ if .User.DisplayName }}{{ .User.ShowName }}{{ else }}—{{ end }}</dd>
     </dl>
@@ -35,18 +37,18 @@
         <p class="muted">{{ t $ (printf "settings.providers.uses.%s" .ID) }}</p>
         <label for="provider-{{ .ID }}">{{ t $ "settings.providers.newKey" }}</label>
         <div class="provider-key-input">
-          <input id="provider-{{ .ID }}" name="{{ .ID }}" type="password" autocomplete="new-password" maxlength="512" spellcheck="false" aria-describedby="provider-key-hint" />
+          <input id="provider-{{ .ID }}" name="{{ .ID }}" {{ if not $.User.CanWrite }}disabled{{ end }} type="password" autocomplete="new-password" maxlength="512" spellcheck="false" aria-describedby="provider-key-hint" />
           <button type="button" data-test-provider="{{ .ID }}" data-test-url="/{{ $.Locale }}/settings/providers/test" aria-label="{{ t $ "settings.providers.test" }} {{ .Name }}" aria-controls="provider-test-{{ .ID }}">{{ t $ "settings.providers.test" }}</button>
         </div>
         <p id="provider-test-{{ .ID }}" class="provider-test-result" role="status" aria-live="polite" data-testing="{{ t $ "settings.providers.testing" }}" data-error="{{ t $ "settings.providers.testResults.unavailable" }}"></p>
-        {{ if .Personal }}
+        {{ if and .Personal $.User.CanWrite }}
         <label class="provider-key-remove"><input type="checkbox" name="remove_{{ .ID }}" /> {{ t $ "settings.providers.remove" }}</label>
         {{ end }}
       </fieldset>
       {{ end }}
       <p class="muted">{{ t . "settings.providers.testHint" }}</p>
       <p id="provider-key-hint" class="muted">{{ t . "settings.providers.keepHint" }}</p>
-      <button class="button-primary" type="submit">{{ t . "settings.providers.save" }}</button>
+      {{ if .User.CanWrite }}<button class="button-primary" type="submit">{{ t . "settings.providers.save" }}</button>{{ end }}
     </form>
 
     <section class="form-fieldset provider-info" aria-labelledby="provider-musicbrainz-heading">

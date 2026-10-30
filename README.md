@@ -22,6 +22,7 @@ In v1, every item lives in one of two buckets:
 
 - Private, login-first application
 - Username/password auth with HTTP-only session cookies
+- Admin, general, and demo/read-only roles; full-database backups require admin access
 - My Library landing page with Collection and Wishlist views
 - Movies, TV, albums, books, and games
 - Manual entry creation when provider data is missing or incomplete
@@ -163,3 +164,21 @@ docker-compose.yml mongo only (local dev DB); docker-compose.prod.yml Go app + o
 - deeper edition and release modeling for physical media
 - background metadata refresh
 - replace [`docs/screenshots/README.md`](docs/screenshots/README.md) placeholders with real captures; more deployment examples
+
+## Account roles
+
+Public registration creates **general** accounts. Existing accounts without a role also remain general; none are automatically promoted. **Admin** can use full-database backup/restore and manage their own library. **General** can manage their own library and provider keys. **Demo** can browse, search, and test provider connections, but cannot save library/settings changes, refresh metadata, or use database backups. Demo barcode lookups do not create scan-log records.
+
+Promote an existing account using trusted server access:
+
+```bash
+go run ./cmd/users -username YOUR_USERNAME -role admin
+```
+
+Production Compose includes the same management command:
+
+```bash
+docker compose -f docker-compose.prod.yml exec app ./users -username YOUR_USERNAME -role admin
+```
+
+Use `-role general` or `-role demo` to change access later. Changes apply on the next authenticated request, including existing sessions. There is no public role-selection or self-promotion endpoint. Older database backups without roles restore accounts with general access; use the command again to promote the intended administrator.

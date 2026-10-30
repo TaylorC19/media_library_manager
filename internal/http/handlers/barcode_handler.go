@@ -38,6 +38,7 @@ func (h *BarcodeHandler) Lookup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	req.ReadOnly = !user.CanWrite()
 	out, err := h.svc.Lookup(r.Context(), user.ID, req)
 	if err != nil {
 		if err == barcodesvc.ErrInvalidBarcode {
