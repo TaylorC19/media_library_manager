@@ -15,6 +15,7 @@
     </dl>
   </section>
 
+  {{ if .User.IsAdmin }}<p><a class="button-link" href="/{{ .Locale }}/admin/users">{{ t . "users.title" }}</a></p>{{ end }}
   <section class="card detail-section">
     <h3>{{ t . "settings.language.heading" }}</h3>
     <p><strong>{{ t . "settings.language.current" }}</strong>: {{ t . .CurrentLanguageKey }}</p>

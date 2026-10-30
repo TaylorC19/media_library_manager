@@ -161,4 +161,4 @@ Domain shapes for the Go app live under [`internal/domain`](../internal/domain) 
 
 ## User roles
 
-`users.role` is `admin`, `general`, or `demo`. Missing values on legacy accounts mean general access; unknown values have no write/admin privileges. Registration explicitly sets `general`. Roles are loaded from MongoDB on each authenticated request, so trusted server-side updates also apply to existing sessions. See the README for `cmd/users` usage.
+`users.role` is `admin`, `general`, or `demo`. Missing values on legacy accounts mean general access; unknown values have no write/admin privileges. Registration explicitly sets `general`. Roles are loaded from MongoDB on each authenticated request, so trusted server-side updates also apply to existing sessions. Admins can manage accounts in the admin-only User management page. The server-side `cmd/users` command remains the bootstrap/recovery mechanism; see the README.

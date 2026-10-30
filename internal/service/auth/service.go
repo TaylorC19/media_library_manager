@@ -39,27 +39,8 @@ func NewService(usersRepo *repository.UsersRepository, sessionsRepo *repository.
 }
 
 func (s *Service) Register(ctx context.Context, username, password string) (*domainauth.User, string, error) {
-	username = strings.TrimSpace(strings.ToLower(username))
-	if username == "" || len(password) < 8 {
-		return nil, "", ErrInvalidInput
-	}
-
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	user, err := s.CreateAccount(ctx, username, password, "", domainauth.RoleGeneral)
 	if err != nil {
-		return nil, "", fmt.Errorf("hash password: %w", err)
-	}
-
-	dn := username
-	user := &domainauth.User{
-		Role:         domainauth.RoleGeneral,
-		Username:     username,
-		PasswordHash: string(hash),
-		DisplayName:  &dn,
-	}
-	if err := s.usersRepo.Create(ctx, user); err != nil {
-		if errors.Is(err, repository.ErrUsernameTaken) {
-			return nil, "", ErrUsernameTaken
-		}
 		return nil, "", err
 	}
 

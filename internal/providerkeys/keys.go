@@ -104,3 +104,27 @@ func (s *Store) Update(userID primitive.ObjectID, changes Keys) error {
 	}
 	return nil
 }
+
+// Status exposes only configuration flags, never the saved credential values.
+func (s *Store) Status(userID primitive.ObjectID) (map[string]bool, error) {
+	keys, err := s.Get(userID)
+	if err != nil {
+		return nil, err
+	}
+	status := map[string]bool{}
+	for _, provider := range Providers {
+		status[provider] = strings.TrimSpace(keys[provider]) != ""
+	}
+	return status, nil
+}
+
+// Clear removes only a personal override. Server defaults and other providers
+// are untouched; Update uses the same lock/atomic write path as owner settings.
+func (s *Store) Clear(userID primitive.ObjectID, provider string) error {
+	for _, known := range Providers {
+		if provider == known {
+			return s.Update(userID, Keys{provider: ""})
+		}
+	}
+	return errors.New("unsupported provider")
+}

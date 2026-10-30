@@ -382,5 +382,50 @@
       "book": "Books",
       "game": "Games"
     }
+  },
+  "users": {
+    "title": "User management",
+    "intro": "Create accounts and manage access. Role changes apply on the next request, including existing sessions.",
+    "search": "Search usernames or display names",
+    "searchAction": "Find users",
+    "accounts": "Accounts",
+    "you": "you",
+    "selfHint": "Your own admin role cannot be changed here.",
+    "roleHint": "Administrators can use database backups. General users manage their own libraries and keys. Demo accounts can browse and search without saving changes.",
+    "empty": "No accounts match this search.",
+    "create": "Create account",
+    "saved": "User role updated.",
+    "created": "Account created. You remain signed in as yourself.",
+    "errors": {
+      "save": "Could not save the change. Please try again.",
+      "selfDemotion": "You cannot remove your own administrator access.",
+      "notFound": "This account no longer exists.",
+      "invalid": "Check the username, password, display name, and role. Passwords must be at least 8 characters and no more than 72 bytes.",
+      "usernameTaken": "That username is already registered."
+    },
+    "allRoles": "All roles",
+    "keys": {
+      "title": "Saved API keys",
+      "manage": "Manage saved keys",
+      "intro": "Only saved-key status is shown. Key values are never displayed. Choose a provider to review before clearing its personal key.",
+      "provider": "Provider",
+      "status": "Status",
+      "action": "Action",
+      "saved": "Personal key saved",
+      "missing": "No personal key saved",
+      "review": "Clear saved key…",
+      "back": "Back to user management",
+      "effect": "Clearing removes only this account’s saved key for the selected provider. The account will use the server default; if no default is configured, that provider will be unconfigured.",
+      "noRevoke": "This does not revoke the key at the provider or change other users’ keys.",
+      "confirmTitle": "Confirm clearing saved API key",
+      "confirm": "I confirm clearing this saved key for the account and provider shown above.",
+      "clear": "Clear this saved key",
+      "cancel": "Cancel",
+      "cleared": "The selected personal API key has been cleared.",
+      "errors": {
+        "confirm": "Confirm the account and provider by selecting the checkbox before clearing.",
+        "save": "Could not clear the saved key. Please try again."
+      }
+    }
   }
 }

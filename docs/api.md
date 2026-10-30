@@ -33,7 +33,14 @@ Locales are `en` or `ja`.
 | GET | `/{locale}/library/{entryId}/edit` |
 | GET | `/{locale}/scan` |
 | GET | `/{locale}/settings` |
+| GET | `/{locale}/admin/users` |
+| GET | `/{locale}/admin/users/{userId}/keys` |
+| GET | `/{locale}/admin/users/{userId}/keys/clear` |
 | POST | `/{locale}/logout` |
+
+Admin-only account actions are `POST /{locale}/admin/users` (create) and `POST /{locale}/admin/users/{userId}/role` (change role). These routes require a current administrator, reject cross-origin submissions, and never return passwords or password hashes. Self-demotion is blocked.
+
+Admins can inspect personal-key status and open a confirmation page with `?provider=tmdb|rawg|discogs`. `POST /{locale}/admin/users/{userId}/keys/clear` requires a provider and `confirm=clear`. It rechecks current administrator access, rejects cross-origin submissions, and clears only that account’s selected personal override. Key values are never returned; the server default applies afterward if configured. This does not revoke the key with the provider.
 
 ## Actions (non-locale POST routes)
 
