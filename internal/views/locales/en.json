@@ -55,6 +55,12 @@
     "flash": {
       "loggedOut": "Logged out.",
       "registered": "Account created. Welcome!"
+    },
+    "readOnly": "This account is read-only. You can browse and search, but cannot save changes.",
+    "roles": {
+      "admin": "Administrator",
+      "general": "General",
+      "demo": "Demo / read-only"
     }
   },
   "dashboard": {
@@ -209,7 +215,8 @@
     "account": {
       "heading": "Account",
       "username": "Username",
-      "displayName": "Display name"
+      "displayName": "Display name",
+      "role": "Role"
     },
     "language": {
       "heading": "Language",
@@ -328,7 +335,8 @@
     },
     "flash": {
       "imported": "Added to your library.",
-      "existingEntry": "That item is already in your library."
+      "existingEntry": "That item is already in your library.",
+      "refreshed": "Media details refreshed."
     },
     "refresh": {
       "providerRefUnavailable": "This media record does not have a refreshable provider reference yet.",

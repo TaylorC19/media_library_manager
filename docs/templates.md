@@ -91,3 +91,5 @@ My Library is the default page, with Collection and Wishlist as local views and 
 `scan.js` owns barcode candidates and camera cleanup (including closing the disclosure). `search.js` handles read-only preview loading, dialog cancellation/retry, focus restoration, and manual creation links. Preview links support full-page navigation without JavaScript. Both English and Japanese use the same page structure.
 
 Run the UI behavior checks with `node --test scripts/search-ui.test.cjs`; Go template and redirect checks run with `go test ./...`.
+
+`navigation.js` keeps header language links synchronized with the live URL after HTMX changes and history restoration. Role checks hide write actions from demo users; the server independently enforces the permissions. Full-database backup controls are prepared only for admin users. Search detail previews remain readable for demo accounts and show a read-only notice instead of save actions.

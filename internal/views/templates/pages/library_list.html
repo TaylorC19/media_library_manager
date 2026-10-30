@@ -1,7 +1,7 @@
 {{ define "partials/library_workspace" }}
 <div class="page-heading">
   <h2>{{ t . "library.title" }}</h2>
-  <a class="button-link primary" href="/{{ .Locale }}/search?media_type={{ .Values.media_type }}">{{ t . "library.nav.add" }}</a>
+  {{ if .User.CanWrite }}<a class="button-link primary" href="/{{ .Locale }}/search?media_type={{ .Values.media_type }}">{{ t . "library.nav.add" }}</a>{{ end }}
 </div>
 <nav class="section-tabs" aria-label="{{ t . "library.views" }}">
   <a href="/{{ .Locale }}/?view={{ .View }}" {{ if eq .Bucket "catalog" }}aria-current="page"{{ end }}>{{ t . "library.nav.catalog" }} <span class="count">{{ .CatalogCount }}</span></a>

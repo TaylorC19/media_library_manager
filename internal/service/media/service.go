@@ -27,9 +27,24 @@ var (
 	ErrNotFound   = errors.New("not found")
 )
 
+type mediaRepository interface {
+	FindByID(context.Context, primitive.ObjectID) (*domainlib.MediaRecord, error)
+	FindByProviderImportRef(context.Context, string, string, string) (*domainlib.MediaRecord, error)
+	FindByAnyBarcodeCandidates(context.Context, string, []string) ([]domainlib.MediaRecord, error)
+	FindLooseTitleYear(context.Context, string, string, *int32) ([]domainlib.MediaRecord, error)
+	Insert(context.Context, *domainlib.MediaRecord) error
+	UpdateProviderData(context.Context, *domainlib.MediaRecord) error
+}
+type entryRepository interface {
+	FindByUserMediaBucketAndFormat(context.Context, primitive.ObjectID, primitive.ObjectID, string, *string) (*domainlib.LibraryEntry, error)
+	FindByUserAndMediaRecordIDs(context.Context, primitive.ObjectID, []primitive.ObjectID) ([]domainlib.LibraryEntry, error)
+	Insert(context.Context, *domainlib.LibraryEntry) error
+	SetBarcodeIfMissing(context.Context, primitive.ObjectID, primitive.ObjectID, string) error
+}
+
 type Service struct {
-	media       *repository.MediaRecordsRepository
-	entries     *repository.LibraryEntriesRepository
+	media       mediaRepository
+	entries     entryRepository
 	cache       *reliability.Cache
 	reliability *reliability.Service
 	tmdb        *tmdb.Client
@@ -39,6 +54,7 @@ type Service struct {
 }
 
 type ImportForm struct {
+	Barcode    string
 	Bucket     string
 	MediaType  string
 	Provider   string
@@ -88,6 +104,7 @@ func (s *Service) Import(ctx context.Context, userID primitive.ObjectID, form Im
 	form.ExternalID = strings.TrimSpace(form.ExternalID)
 	form.MediaType = strings.TrimSpace(form.MediaType)
 	form.Bucket = strings.TrimSpace(form.Bucket)
+	form.Barcode = strings.TrimSpace(form.Barcode)
 	form.TMDBKind = strings.TrimSpace(form.TMDBKind)
 
 	errs := validateImportForm(form)
@@ -100,7 +117,7 @@ func (s *Service) Import(ctx context.Context, userID primitive.ObjectID, form Im
 		return nil, nil, err
 	}
 	if existingByProviderRef != nil {
-		return s.attachLibraryEntry(ctx, userID, existingByProviderRef, form.Bucket, true)
+		return s.attachLibraryEntry(ctx, userID, existingByProviderRef, form.Bucket, form.Barcode, true)
 	}
 
 	normalized, err := s.fetchNormalizedRecord(ctx, form)
@@ -117,17 +134,24 @@ func (s *Service) Import(ctx context.Context, userID primitive.ObjectID, form Im
 		if err := s.media.Insert(ctx, normalized); err != nil {
 			return nil, nil, err
 		}
-		return s.attachLibraryEntry(ctx, userID, normalized, form.Bucket, false)
+		return s.attachLibraryEntry(ctx, userID, normalized, form.Bucket, form.Barcode, false)
 	}
 
 	merged := mergeProviderData(reusable, normalized)
 	if err := s.media.UpdateProviderData(ctx, merged); err != nil {
 		return nil, nil, err
 	}
-	return s.attachLibraryEntry(ctx, userID, merged, form.Bucket, true)
+	return s.attachLibraryEntry(ctx, userID, merged, form.Bucket, form.Barcode, true)
 }
 
-func (s *Service) RefreshScaffold(ctx context.Context, mediaRecordID primitive.ObjectID) (*RefreshOutcome, error) {
+func (s *Service) Refresh(ctx context.Context, userID, mediaRecordID primitive.ObjectID) (*RefreshOutcome, error) {
+	owned, err := s.entries.FindByUserAndMediaRecordIDs(ctx, userID, []primitive.ObjectID{mediaRecordID})
+	if err != nil {
+		return nil, err
+	}
+	if len(owned) == 0 {
+		return nil, ErrNotFound
+	}
 	rec, err := s.media.FindByID(ctx, mediaRecordID)
 	if err != nil {
 		return nil, err
@@ -135,25 +159,29 @@ func (s *Service) RefreshScaffold(ctx context.Context, mediaRecordID primitive.O
 	if rec == nil {
 		return nil, ErrNotFound
 	}
-
-	provider, providerID := refreshProviderRef(rec)
-	if provider == "" || providerID == "" {
-		return &RefreshOutcome{
-			MediaRecord:       rec,
-			WasRefreshed:      false,
-			UnavailableReason: "provider_ref_unavailable",
-		}, nil
+	provider, id := refreshProviderRef(rec)
+	if provider == "" || id == "" || rec.Source != domainlib.SourceProvider {
+		return &RefreshOutcome{MediaRecord: rec, UnavailableReason: "provider_ref_unavailable"}, nil
 	}
-
-	return &RefreshOutcome{
-		MediaRecord:           rec,
-		WasRefreshed:          false,
-		RefreshedFromProvider: provider,
-		UnavailableReason:     "refresh_not_implemented",
-	}, nil
+	form := ImportForm{Provider: provider, ExternalID: id, MediaType: rec.MediaType}
+	if provider == "tmdb" {
+		form.TMDBKind = rec.MediaType
+	}
+	if len(validateImportForm(form)) > 0 {
+		return nil, ErrValidation
+	}
+	fresh, err := s.fetchNormalizedRecord(reliability.ForceRefresh(ctx), form)
+	if err != nil {
+		return nil, err
+	}
+	merged := mergeProviderData(rec, fresh)
+	if err := s.media.UpdateProviderData(ctx, merged); err != nil {
+		return nil, err
+	}
+	return &RefreshOutcome{MediaRecord: merged, WasRefreshed: true, RefreshedFromProvider: provider}, nil
 }
 
-func (s *Service) attachLibraryEntry(ctx context.Context, userID primitive.ObjectID, mediaRec *domainlib.MediaRecord, bucket string, wasExistingMediaRecord bool) (*ImportOutcome, []string, error) {
+func (s *Service) attachLibraryEntry(ctx context.Context, userID primitive.ObjectID, mediaRec *domainlib.MediaRecord, bucket, barcode string, wasExistingMediaRecord bool) (*ImportOutcome, []string, error) {
 	outcome := &ImportOutcome{
 		MediaRecord:            mediaRec,
 		WasExistingMediaRecord: wasExistingMediaRecord,
@@ -168,12 +196,16 @@ func (s *Service) attachLibraryEntry(ctx context.Context, userID primitive.Objec
 		return nil, nil, err
 	}
 	if entry != nil {
+		if err := s.retainBarcode(ctx, userID, entry, barcode); err != nil {
+			return nil, nil, err
+		}
 		outcome.LibraryEntry = entry
 		outcome.WasExistingLibraryEntry = true
 		return outcome, nil, nil
 	}
 
 	entry = &domainlib.LibraryEntry{
+		Barcode:       trimmedPtr(barcode),
 		UserID:        userID,
 		MediaRecordID: mediaRec.ID,
 		Bucket:        bucket,
@@ -186,6 +218,9 @@ func (s *Service) attachLibraryEntry(ctx context.Context, userID primitive.Objec
 				return nil, nil, lookupErr
 			}
 			if existing != nil {
+				if err := s.retainBarcode(ctx, userID, existing, barcode); err != nil {
+					return nil, nil, err
+				}
 				outcome.LibraryEntry = existing
 				outcome.WasExistingLibraryEntry = true
 				return outcome, nil, nil
@@ -727,4 +762,15 @@ func stringMapValue(m bson.M, key string) string {
 		return value
 	}
 	return ""
+}
+
+func (s *Service) retainBarcode(ctx context.Context, userID primitive.ObjectID, entry *domainlib.LibraryEntry, barcode string) error {
+	if barcode == "" || (entry.Barcode != nil && *entry.Barcode != "") {
+		return nil
+	}
+	if err := s.entries.SetBarcodeIfMissing(ctx, userID, entry.ID, barcode); err != nil {
+		return err
+	}
+	entry.Barcode = &barcode
+	return nil
 }

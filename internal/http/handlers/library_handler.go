@@ -405,6 +405,15 @@ func (h *LibraryHandler) DeleteSubmit(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	detail, err := h.library.GetEntryDetail(r.Context(), user.ID, entryID)
+	if err != nil {
+		if errors.Is(err, libsvc.ErrNotFound) {
+			http.NotFound(w, r)
+		} else {
+			http.Error(w, "Could not load item", http.StatusInternalServerError)
+		}
+		return
+	}
 	if err := h.library.DeleteEntry(r.Context(), user.ID, entryID); err != nil {
 		if errors.Is(err, libsvc.ErrNotFound) {
 			http.NotFound(w, r)
@@ -413,7 +422,7 @@ func (h *LibraryHandler) DeleteSubmit(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	target := fmt.Sprintf("/%s/catalog", locale)
+	target := libraryBucketPath(locale, detail.Entry.Bucket)
 	h.setFlashRedirect(w, r, target, "common.flash.info", "library.flash.deleted")
 }
 
@@ -552,4 +561,11 @@ func libraryViewURL(r *http.Request, path, view string) string {
 	values := r.URL.Query()
 	values.Set("view", view)
 	return path + "?" + values.Encode()
+}
+
+func libraryBucketPath(locale, bucket string) string {
+	if bucket == domainlib.BucketWishlist {
+		return "/" + locale + "/wishlist"
+	}
+	return "/" + locale + "/"
 }

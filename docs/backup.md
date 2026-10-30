@@ -24,7 +24,8 @@ Personal API keys configured in Settings are stored outside MongoDB, in `PROVIDE
 
 ## Settings UI
 
-1. Sign in and open **Settings**.
+1. Sign in as an **admin** and open **Settings**. General and demo accounts cannot access full-database export or restore, including direct requests.
+   Promote the intended account using the server-side `cmd/users` command documented in the README.
 2. **Download backup** — exports the full database as a gzip file.
 3. **Restore from backup** — choose a `.mlm-backup.json.gz` file and type the database name (`MONGODB_DATABASE`, shown on the form) to confirm.
 

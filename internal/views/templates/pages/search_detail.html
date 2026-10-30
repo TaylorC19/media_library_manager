@@ -15,7 +15,7 @@
       </dl>
     </div>
   </div>
-  <div class="actions media-preview__actions">
+  {{ if .User.CanWrite }}<div class="actions media-preview__actions">
     {{ range .Buckets }}
     <form class="inline-form" method="post" action="{{ if $.LocalID }}/library/attach{{ else }}/media/import{{ end }}">
       <input type="hidden" name="locale" value="{{ $.Locale }}" />
@@ -24,6 +24,7 @@
       <input type="hidden" name="media_record_id" value="{{ $.LocalID }}" />
       <input type="hidden" name="barcode" value="{{ $.Barcode }}" />
       {{ else }}
+      <input type="hidden" name="barcode" value="{{ $.Barcode }}" />
       <input type="hidden" name="provider" value="{{ $.Import.Provider }}" />
       <input type="hidden" name="external_id" value="{{ $.Import.ExternalID }}" />
       <input type="hidden" name="media_type" value="{{ $.Import.MediaType }}" />
@@ -32,7 +33,7 @@
       <button type="submit" {{ if eq . "catalog" }}class="button-primary"{{ end }}>{{ if eq . "catalog" }}{{ t $ "search.actions.addCatalog" }}{{ else }}{{ t $ "search.actions.addWishlist" }}{{ end }}</button>
     </form>
     {{ end }}
-  </div>
+  </div>{{ else }}<p class="muted">{{ t . "auth.readOnly" }}</p>{{ end }}
 </article>
 {{ end }}
 {{ define "pages/search_detail.html" }}{{ template "layout/app_shell" . }}{{ end }}

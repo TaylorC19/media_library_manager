@@ -30,9 +30,9 @@
     <summary>{{ t . "search.barcodeMethod" }}</summary>
     {{ template "partials/scan" . }}
   </details>
-  <p><a id="create-manually" href="/{{ .Locale }}/library/new?media_type={{ .Values.media_type }}&amp;q={{ .Values.q }}">{{ t . "search.createManually" }}</a></p>
+  {{ if .User.CanWrite }}<p><a id="create-manually" href="/{{ .Locale }}/library/new?media_type={{ .Values.media_type }}&amp;q={{ .Values.q }}">{{ t . "search.createManually" }}</a></p>{{ end }}
 
-  <dialog id="search-detail-dialog" aria-labelledby="search-detail-title" data-loading="{{ t . "search.dialog.loading" }}" data-error="{{ t . "search.dialog.error" }}" data-retry="{{ t . "search.dialog.retry" }}" data-manual-catalog="{{ t . "search.dialog.manualCatalog" }}" data-manual-wishlist="{{ t . "search.dialog.manualWishlist" }}">
+  <dialog data-can-write="{{ .User.CanWrite }}" id="search-detail-dialog" aria-labelledby="search-detail-title" data-loading="{{ t . "search.dialog.loading" }}" data-error="{{ t . "search.dialog.error" }}" data-retry="{{ t . "search.dialog.retry" }}" data-manual-catalog="{{ t . "search.dialog.manualCatalog" }}" data-manual-wishlist="{{ t . "search.dialog.manualWishlist" }}">
     <div class="dialog-toolbar"><button type="button" id="search-detail-close" autofocus>{{ t . "common.actions.close" }}</button></div>
     <div id="search-detail-content" aria-live="polite"></div>
   </dialog>

@@ -9,6 +9,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"media_library_manager/internal/config"
+	domainauth "media_library_manager/internal/domain/auth"
 	"media_library_manager/internal/http/middleware"
 	"media_library_manager/internal/providerkeys"
 	"media_library_manager/internal/views"
@@ -91,6 +92,18 @@ func TestProviderSettingsRejectCrossOriginAndInvalidChanges(t *testing.T) {
 		}
 		if strings.Contains(w.Body.String(), "secret") || strings.Contains(w.Body.String(), "invalid key") {
 			t.Error("error response echoed input")
+		}
+	}
+}
+
+func TestBackupSettingsVisibleOnlyToAdmin(t *testing.T) {
+	handler := NewSettingsHandler(config.Config{BackupEnabled: true}, nil, &keyStoreFake{}, nil)
+	for _, role := range []string{"admin", "general", "demo", ""} {
+		r := httptest.NewRequest(http.MethodGet, "/en/settings", nil)
+		r = r.WithContext(middleware.WithUser(r.Context(), &domainauth.User{Role: role}))
+		data := handler.settingsData(r)
+		if data["BackupEnabled"] != (role == "admin") {
+			t.Errorf("incorrect backup visibility for %q", role)
 		}
 	}
 }

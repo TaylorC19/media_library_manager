@@ -22,7 +22,7 @@ func WithAuthSession(service *authsvc.Service, cookieName string) func(http.Hand
 			if err == nil && cookie.Value != "" {
 				user, session, resolveErr := service.ResolveSession(r.Context(), cookie.Value)
 				if resolveErr == nil && user != nil && session != nil {
-					ctx := context.WithValue(r.Context(), authUserKey, user)
+					ctx := WithUser(r.Context(), user)
 					ctx = context.WithValue(ctx, authSessionKey, session)
 					r = r.WithContext(ctx)
 				}
@@ -66,4 +66,9 @@ func RequireWritable(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// WithUser attaches an already-authenticated user in trusted server code.
+func WithUser(ctx context.Context, user *domainauth.User) context.Context {
+	return context.WithValue(ctx, authUserKey, user)
 }

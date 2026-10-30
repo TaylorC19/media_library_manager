@@ -18,7 +18,7 @@
   </p>
 {{ end }}
 {{ template "partials/library_entry_list" . }}
-{{ if eq .ListTotal 0 }}
+{{ if and (eq .ListTotal 0) .User.CanWrite }}
 <p><a href="/{{ .Locale }}/search?media_type={{ .Values.media_type }}">{{ t . "library.nav.add" }}</a></p>
 {{ end }}
 {{ template "partials/pagination" (dict "Page" . "Pagination" .Pagination) }}

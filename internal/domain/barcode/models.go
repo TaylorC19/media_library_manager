@@ -2,11 +2,11 @@ package barcode
 
 // JSON provider keys align with @media-library/types `providerNames`.
 const (
-	ProviderTmdb         = "tmdb"
-	ProviderMusicBrainz  = "musicbrainz"
-	ProviderDiscogs      = "discogs"
-	ProviderOpenLibrary  = "openlibrary"
-	ProviderRAWG         = "rawg"
+	ProviderTmdb        = "tmdb"
+	ProviderMusicBrainz = "musicbrainz"
+	ProviderDiscogs     = "discogs"
+	ProviderOpenLibrary = "openlibrary"
+	ProviderRAWG        = "rawg"
 )
 
 // FailureCode values match BarcodeLookupFailureCode in types.
@@ -27,6 +27,7 @@ const (
 
 // Request is the decoded POST body for /barcode/lookup.
 type Request struct {
+	ReadOnly           bool // Set only by the server for demo accounts.
 	Barcode            string
 	PreferredMediaType string
 }
@@ -39,17 +40,17 @@ type LinkedEntry struct {
 
 // Candidate is a normalized local or provider result (source discriminates: "local" | "provider").
 type Candidate struct {
-	Source                string         `json:"source"`
-	MediaRecordID         string         `json:"mediaRecordId,omitempty"`
-	MediaType             string         `json:"mediaType"`
-	Title                 string         `json:"title"`
-	Year                  *int32         `json:"year,omitempty"`
-	ImageURL              *string        `json:"imageUrl"`
-	CreatorLine           *string        `json:"creatorLine"`
-	HasLinkedLibraryEntry bool           `json:"hasLinkedLibraryEntry,omitempty"`
-	LinkedLibraryEntries  []LinkedEntry  `json:"linkedLibraryEntries,omitempty"`
-	Provider              string         `json:"provider,omitempty"`
-	ProviderID            string         `json:"providerId,omitempty"`
+	Source                string        `json:"source"`
+	MediaRecordID         string        `json:"mediaRecordId,omitempty"`
+	MediaType             string        `json:"mediaType"`
+	Title                 string        `json:"title"`
+	Year                  *int32        `json:"year,omitempty"`
+	ImageURL              *string       `json:"imageUrl"`
+	CreatorLine           *string       `json:"creatorLine"`
+	HasLinkedLibraryEntry bool          `json:"hasLinkedLibraryEntry,omitempty"`
+	LinkedLibraryEntries  []LinkedEntry `json:"linkedLibraryEntries,omitempty"`
+	Provider              string        `json:"provider,omitempty"`
+	ProviderID            string        `json:"providerId,omitempty"`
 }
 
 // Failure records a per-provider error without aborting the whole lookup.

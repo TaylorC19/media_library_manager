@@ -63,6 +63,7 @@ func (h *MediaHandler) ImportSubmit(w http.ResponseWriter, r *http.Request) {
 
 	form := mediasvc.ImportForm{
 		Bucket:     r.FormValue("bucket"),
+		Barcode:    r.FormValue("barcode"),
 		MediaType:  r.FormValue("media_type"),
 		Provider:   r.FormValue("provider"),
 		ExternalID: r.FormValue("external_id"),
@@ -159,7 +160,7 @@ func (h *MediaHandler) RefreshSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	outcome, err := h.media.RefreshScaffold(r.Context(), mediaRecordID)
+	outcome, err := h.media.Refresh(r.Context(), user.ID, mediaRecordID)
 	if err != nil {
 		if errors.Is(err, mediasvc.ErrNotFound) {
 			http.NotFound(w, r)
@@ -206,6 +207,9 @@ func firstNoticeKey(keys []string, fallback string) string {
 func refreshNoticeKey(outcome *mediasvc.RefreshOutcome) string {
 	if outcome == nil {
 		return "common.flash.serverError"
+	}
+	if outcome.WasRefreshed {
+		return "search.flash.refreshed"
 	}
 	switch outcome.UnavailableReason {
 	case "provider_ref_unavailable":

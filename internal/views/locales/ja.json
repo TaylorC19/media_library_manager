@@ -55,6 +55,12 @@
     "flash": {
       "loggedOut": "ログアウトしました。",
       "registered": "アカウントを作成しました。ようこそ！"
+    },
+    "readOnly": "このアカウントは閲覧専用です。閲覧と検索はできますが、変更は保存できません。",
+    "roles": {
+      "admin": "管理者",
+      "general": "一般ユーザー",
+      "demo": "デモ・閲覧専用"
     }
   },
   "dashboard": {
@@ -209,7 +215,8 @@
     "account": {
       "heading": "アカウント",
       "username": "ユーザー名",
-      "displayName": "表示名"
+      "displayName": "表示名",
+      "role": "権限"
     },
     "language": {
       "heading": "言語",
@@ -328,7 +335,8 @@
     },
     "flash": {
       "imported": "ライブラリに追加しました。",
-      "existingEntry": "このアイテムは既にライブラリにあります。"
+      "existingEntry": "このアイテムは既にライブラリにあります。",
+      "refreshed": "作品情報を更新しました。"
     },
     "refresh": {
       "providerRefUnavailable": "このメディアレコードには更新可能なプロバイダー参照がまだありません。",

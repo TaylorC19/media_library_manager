@@ -55,6 +55,7 @@
   let lastResolved = "";
   let lastLookupNorm = "";
   let lookupInFlight = false;
+  let lookupGeneration = 0;
   let blockedAfterRead = false;
 
   function setStatus(msg) {
@@ -232,6 +233,8 @@
   }
   if (btnAgain) {
     btnAgain.addEventListener("click", function () {
+      lookupGeneration++;
+      lookupInFlight = false;
       blockedAfterRead = false;
       lastResolved = "";
       if (btnAgain) btnAgain.disabled = true;
@@ -239,6 +242,7 @@
       lastResponse = null;
       clearResults();
       setStatus("");
+      startCamera();
     });
   }
 
@@ -265,6 +269,7 @@
       return;
     }
     lookupInFlight = true;
+    const generation = ++lookupGeneration;
     lastResponse = null;
     clearResults();
     setStatus("…");
@@ -286,17 +291,18 @@
         return res.json();
       })
       .then(function (data) {
-        if (!data || (preferred ? preferred.value : "") !== pref) return;
+        if (generation !== lookupGeneration || !data || (preferred ? preferred.value : "") !== pref) return;
         lastLookupNorm = norm;
         lastResponse = { data, norm, raw };
         renderResponse(data, norm, raw);
         updateFallbackLink(data);
       })
       .catch(function () {
+        if (generation !== lookupGeneration) return;
         setStatus(str("str-lookup-failed"));
       })
       .finally(function () {
-        lookupInFlight = false;
+        if (generation === lookupGeneration) lookupInFlight = false;
       });
   }
 
@@ -429,6 +435,8 @@
   }
 
   if (preferred) preferred.addEventListener("change", function () {
+    lookupGeneration++;
+    lookupInFlight = false;
     lastLookupNorm = "";
     lastResponse = null;
     clearResults();

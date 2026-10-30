@@ -129,3 +129,25 @@ func TestSearchLayoutDefaultAndPagination(t *testing.T) {
 		}
 	}
 }
+
+func TestOutOfRangePagesShowTheSameLastPageAsTheFooter(t *testing.T) {
+	for _, page := range []int{2, 3, 999} {
+		start, end := pageBounds(15, page, 10)
+		pagination := buildPagination("/en/search", nil, page, 10, 15)
+		if start != 10 || end != 15 || pagination.Page != 2 || pagination.StartItem != start+1 || pagination.EndItem != end {
+			t.Errorf("page %d: slice/footer disagree", page)
+		}
+	}
+	if start, end := pageBounds(0, 999, 10); start != 0 || end != 0 {
+		t.Error("empty pagination must remain empty")
+	}
+}
+
+func TestDeleteReturnsToTheOriginalBucket(t *testing.T) {
+	if libraryBucketPath("en", "catalog") != "/en/" {
+		t.Error("collection delete should return to My Library")
+	}
+	if libraryBucketPath("ja", "wishlist") != "/ja/wishlist" {
+		t.Error("wishlist delete should stay in Wishlist")
+	}
+}
