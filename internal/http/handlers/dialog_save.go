@@ -9,7 +9,7 @@ import (
 
 func dialogSaveRequest(r *http.Request) bool { return r.Header.Get("X-Search-Dialog") == "1" }
 
-func writeDialogSave(w http.ResponseWriter, entryID primitive.ObjectID, bucket, locale string, existing bool) {
+func writeDialogSave(w http.ResponseWriter, entryID primitive.ObjectID, bucket, locale string, existing bool, format string) {
 	if locale != "en" && locale != "ja" {
 		locale = "en"
 	}
@@ -20,5 +20,6 @@ func writeDialogSave(w http.ResponseWriter, entryID primitive.ObjectID, bucket, 
 		Bucket   string `json:"bucket"`
 		URL      string `json:"url"`
 		Existing bool   `json:"existing"`
-	}{entryID.Hex(), bucket, "/" + locale + "/library/" + entryID.Hex(), existing})
+		Format   string `json:"format"`
+	}{entryID.Hex(), bucket, "/" + locale + "/library/" + entryID.Hex(), existing, format})
 }

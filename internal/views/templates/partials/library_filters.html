@@ -22,7 +22,7 @@
   </div>
   <div class="field">
     <label for="list-format">{{ t . "library.fields.format" }}</label>
-    <select id="list-format" name="format">
+    <select id="list-format" name="format" data-media-format data-legacy-format="{{ .LegacyFormat }}" data-legacy-media-type="{{ .LegacyMediaType }}">
       <option value="">{{ t . "library.filters.anyFormat" }}</option>
       {{ range .Formats }}
         <option value="{{ . }}" {{ if eq $.Values.format . }}selected{{ end }}>{{ t $ (printf "library.format.%s" .) }}</option>
@@ -43,6 +43,7 @@
       {{ range .SortOrders }}<option value="{{ . }}" {{ if eq $.Values.sort . }}selected{{ end }}>{{ t $ (printf "library.sort.%s" .) }}</option>{{ end }}
     </select>
   </div>
+  {{ template "partials/format_options" . }}
   <input id="library-view" type="hidden" name="view" value="{{ .View }}" />
   <input type="hidden" name="page_size" value="{{ .Values.page_size }}" />
   <div class="actions">

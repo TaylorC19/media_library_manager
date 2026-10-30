@@ -97,7 +97,7 @@ func TestDialogSaveResponsesStayPersonalAndIdempotent(t *testing.T) {
 	preview = preview.WithContext(middleware.WithUser(preview.Context(), &domainauth.User{ID: owner, Role: "general"}))
 	w = httptest.NewRecorder()
 	mh.Preview(w, preview)
-	if w.Code != 200 || strings.Count(w.Body.String(), "Open saved item") != 2 || strings.Contains(w.Body.String(), `<form`) || strings.Contains(w.Body.String(), otherCopy.ID.Hex()) {
+	if w.Code != 200 || strings.Count(w.Body.String(), "Open saved item") != 2 || strings.Count(w.Body.String(), `<form`) != 1 || strings.Contains(w.Body.String(), otherCopy.ID.Hex()) {
 		t.Fatalf("preview did not reflect personal saves: %d %s", w.Code, w.Body.String())
 	}
 	// Normal forms remain functional when JavaScript is unavailable.

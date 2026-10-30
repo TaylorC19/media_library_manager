@@ -140,8 +140,8 @@ func TestPreviewHasDetailsAndBothExplicitSaveActions(t *testing.T) {
 			if localID != "" {
 				action = "/library/attach"
 			}
-			if strings.Count(out.String(), `action="`+action+`"`) != 2 {
-				t.Error("both destinations need an explicit save form")
+			if strings.Count(out.String(), `action="`+action+`"`) != 1 {
+				t.Error("both destinations should share the copy-details form")
 			}
 		}
 	}

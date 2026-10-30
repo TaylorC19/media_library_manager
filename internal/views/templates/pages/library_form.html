@@ -18,7 +18,7 @@
 
     <label class="field">
       <span>{{ t . "library.fields.format" }}</span>
-      <select name="format">
+      <select name="format" data-media-format data-legacy-format="{{ .LegacyFormat }}" data-legacy-media-type="{{ .LegacyMediaType }}">
         <option value="">{{ t . "library.format.unset" }}</option>
         {{ range .Formats }}
         <option value="{{ . }}" {{ if eq . (index $.Values "format") }}selected{{ end }}>{{ t $ (libraryFormatKey .) }}</option>
@@ -26,6 +26,8 @@
       </select>
     </label>
 
+    {{ template "partials/format_options" . }}
+    {{ if .LegacyFormat }}<p class="muted">{{ t . "library.form.legacyFormat" }}</p>{{ end }}
     <label class="field">
       <span>{{ t . "library.fields.barcode" }}</span>
       <input type="text" name="barcode" value="{{ index .Values "barcode" }}" autocomplete="off" />

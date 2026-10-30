@@ -130,6 +130,7 @@
       "source": "Source"
     },
     "form": {
+      "legacyFormat": "This copy uses a previously saved format. You can keep it or choose a format relevant to this media type.",
       "newTitle": "Create manually",
       "editTitle": "Edit item",
       "mediaReadOnly": "This item is linked to provider metadata. Only your copy fields are editable here.",
@@ -383,10 +384,13 @@
     "barcodeMethod": "Search by barcode or scan with your camera",
     "createManually": "Can’t find it? Create manually",
     "dialog": {
+      "copyDetails": "Copy details (optional)",
+      "anotherCopy": "Save another copy",
+      "copyHint": "Choose a format and add notes before saving. An existing copy with the same format is kept, including its notes.",
       "saving": "Saving…",
       "saveError": "Could not save this item. Please try again.",
       "saved": "Saved to your library.",
-      "existing": "This item is already saved in your library.",
+      "existing": "This format is already saved. Your existing notes and copy details were kept.",
       "openSaved": "Open saved item",
       "loading": "Loading details…",
       "error": "Could not load details. Please try again.",

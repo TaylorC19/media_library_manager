@@ -1,0 +1,5 @@
+{{ define "partials/format_options" }}
+<template data-format-options>
+  {{ range .AllFormats }}<option value="{{ . }}" data-media-types="{{ formatMediaTypes . }}">{{ t $ (libraryFormatKey .) }}</option>{{ end }}
+</template>
+{{ end }}

@@ -105,7 +105,7 @@ func validateCore(mediaType, bucket, format string) []string {
 	if !domainlib.IsBucket(bucket) {
 		errs = append(errs, "library.errors.invalidBucket")
 	}
-	if format != "" && !domainlib.IsFormat(format) {
+	if !domainlib.IsFormatForMediaType(mediaType, format) {
 		errs = append(errs, "library.errors.invalidFormat")
 	}
 	return errs
@@ -335,10 +335,16 @@ func (s *Service) CreateManual(ctx context.Context, userID primitive.ObjectID, f
 }
 
 // AttachFromMediaRecord creates a library entry for an existing media record (e.g. local barcode match), or
-// returns the existing entry id for the same user, media, and bucket. Optional barcode is stored on a newly inserted entry.
-// wasExisting is true when a row for that user, media, and bucket was already present.
-func (s *Service) AttachFromMediaRecord(ctx context.Context, userID, mediaRecordID primitive.ObjectID, bucket, barcode string) (entryID primitive.ObjectID, wasExisting bool, formErrs []string, err error) {
+// returns the existing entry id for the same user, media, bucket, and format.
+// Optional copy details and barcode apply only to a newly inserted entry.
+func (s *Service) AttachFromMediaRecord(ctx context.Context, userID, mediaRecordID primitive.ObjectID, bucket, barcode string, copyDetails ...domainlib.CopyDetails) (entryID primitive.ObjectID, wasExisting bool, formErrs []string, err error) {
 	bucket = strings.TrimSpace(bucket)
+	details := domainlib.CopyDetails{}
+	if len(copyDetails) > 0 {
+		details = copyDetails[0]
+	}
+	details.Format = strings.TrimSpace(details.Format)
+	formatPtr := optionalString(details.Format)
 	mediaRec, err := s.media.FindByID(ctx, mediaRecordID)
 	if err != nil {
 		return primitive.NilObjectID, false, nil, err
@@ -348,12 +354,12 @@ func (s *Service) AttachFromMediaRecord(ctx context.Context, userID, mediaRecord
 	}
 
 	var errs []string
-	errs = append(errs, validateCore(mediaRec.MediaType, bucket, "")...)
+	errs = append(errs, validateCore(mediaRec.MediaType, bucket, details.Format)...)
 	if len(errs) > 0 {
 		return primitive.NilObjectID, false, errs, ErrValidation
 	}
 
-	entry, err := s.entries.FindByUserMediaBucketAndFormat(ctx, userID, mediaRecordID, bucket, nil)
+	entry, err := s.entries.FindByUserMediaBucketAndFormat(ctx, userID, mediaRecordID, bucket, formatPtr)
 	if err != nil {
 		return primitive.NilObjectID, false, nil, err
 	}
@@ -367,10 +373,12 @@ func (s *Service) AttachFromMediaRecord(ctx context.Context, userID, mediaRecord
 		Bucket:        bucket,
 		MediaType:     mediaRec.MediaType,
 		Barcode:       optionalString(barcode),
+		Format:        formatPtr,
+		Notes:         optionalString(details.Notes),
 	}
 	if err := s.entries.Insert(ctx, libEntry); err != nil {
 		if mongo.IsDuplicateKeyError(err) {
-			existing, lookupErr := s.entries.FindByUserMediaBucketAndFormat(ctx, userID, mediaRecordID, bucket, nil)
+			existing, lookupErr := s.entries.FindByUserMediaBucketAndFormat(ctx, userID, mediaRecordID, bucket, formatPtr)
 			if lookupErr != nil {
 				return primitive.NilObjectID, false, nil, lookupErr
 			}
@@ -401,14 +409,18 @@ func (s *Service) UpdateEntry(ctx context.Context, userID, entryID primitive.Obj
 		return nil, ErrNotFound
 	}
 
+	validateFormat := strings.TrimSpace(f.Format)
+	if validateFormat == stringValue(entry.Format) && (mediaRec.Source != domainlib.SourceManual || f.MediaType == mediaRec.MediaType) {
+		validateFormat = ""
+	}
 	var errs []string
 	if mediaRec.Source == domainlib.SourceManual {
 		if strings.TrimSpace(f.Title) == "" {
 			errs = append(errs, "library.errors.titleRequired")
 		}
-		errs = append(errs, validateCore(f.MediaType, f.Bucket, f.Format)...)
+		errs = append(errs, validateCore(f.MediaType, f.Bucket, validateFormat)...)
 	} else {
-		errs = append(errs, validateCore(mediaRec.MediaType, f.Bucket, f.Format)...)
+		errs = append(errs, validateCore(mediaRec.MediaType, f.Bucket, validateFormat)...)
 	}
 	if len(errs) > 0 {
 		return errs, ErrValidation

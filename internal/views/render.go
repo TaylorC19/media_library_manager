@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"io"
 	"io/fs"
+	domainlib "media_library_manager/internal/domain/library"
 	"net/url"
 	"os"
 	"strings"
@@ -43,6 +44,7 @@ func NewRenderer(useEmbedded bool) (*Renderer, error) {
 	}
 
 	funcs := template.FuncMap{
+		"formatMediaTypes": domainlib.FormatMediaTypes,
 		"dict": func(pairs ...any) (map[string]any, error) {
 			if len(pairs)%2 != 0 {
 				return nil, fmt.Errorf("dict expects an even number of arguments")

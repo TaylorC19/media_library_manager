@@ -70,6 +70,7 @@ func (h *MediaHandler) ImportSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := mediasvc.ImportForm{
+		Format: r.FormValue("format"), Notes: r.FormValue("notes"),
 		Bucket:     r.FormValue("bucket"),
 		Barcode:    r.FormValue("barcode"),
 		MediaType:  r.FormValue("media_type"),
@@ -129,7 +130,7 @@ func (h *MediaHandler) ImportSubmit(w http.ResponseWriter, r *http.Request) {
 
 	if outcome.LibraryEntry != nil {
 		if dialogSaveRequest(r) {
-			writeDialogSave(w, outcome.LibraryEntry.ID, outcome.LibraryEntry.Bucket, locale, outcome.WasExistingLibraryEntry)
+			writeDialogSave(w, outcome.LibraryEntry.ID, outcome.LibraryEntry.Bucket, locale, outcome.WasExistingLibraryEntry, stringVal(outcome.LibraryEntry.Format))
 			return
 		}
 		target := fmt.Sprintf("/%s/library/%s", locale, outcome.LibraryEntry.ID.Hex())

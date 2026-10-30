@@ -726,3 +726,9 @@ main.container .user-role-form button:disabled { cursor: default; opacity: 0.6; 
 
 .delete-review { color: #a22; border-color: #a22; }
 @media (prefers-color-scheme: dark) { .delete-review { color: #ffb4b4; border-color: #d58b8b; } }
+
+.dialog-copy-details { padding-top: 0.75rem; }
+.dialog-copy-details summary { cursor: pointer; font-weight: 600; }
+.dialog-copy-details .field { margin: 0.75rem 0; }
+.dialog-copy-details .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.media-preview__actions > [data-save-bucket] { display: flex; flex-wrap: wrap; gap: 0.5rem; }

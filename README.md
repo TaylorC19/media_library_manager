@@ -206,7 +206,7 @@ Live browser review: [2026-10-30 report and screenshots](docs/qa/2026-10-30/repo
 - [x] **I-01 — Save and continue browsing:** save inside the search dialog, update badges immediately, and offer Open saved item for existing saves.
 - [x] **I-02 — Deletion confirmation:** show the exact item title and copy details before deleting, with Cancel and server-enforced confirmation. Trash/Undo remains a possible future improvement.
 - [x] **I-03 — Sorting and discovery:** title/year/recently-added sorting, private tag filters, clickable tags, and creator/tag search.
-- [ ] **I-04 — Better copy details:** media-appropriate formats and optional format/notes when saving from Search.
+- [x] **I-04 — Better copy details:** media-appropriate formats in forms/filters, optional format and notes when saving from Search, and preservation of existing copies and legacy formats.
 - [ ] **I-05 — Rich manual entries:** editable covers, descriptions, and creators for manually entered items.
 - [ ] **I-06 — Personal import/export:** account-scoped CSV/JSON export and import with a preview and duplicate handling.
 - [ ] **I-07 — Bulk actions:** select multiple items to tag, update formats, or move to Collection, with per-item conflict reporting.

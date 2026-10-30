@@ -97,7 +97,7 @@ Writable accounts see **Move to Collection** near the top of Wishlist item detai
 
 ### Search detail previews
 
-`GET /{locale}/search/details` accepts `provider`, `external_id`, `media_type`, and `tmdb_kind` for provider results, or `media_record_id` for shared local metadata. It fetches full metadata without importing records or creating entries. Personal saved copies are looked up separately from shared metadata and never cached in provider responses. Each preview offers Open saved item links for existing Collection/Wishlist copies (including their formats); unsaved buckets offer separate POST actions. The native dialog supports Escape, close, focus restoration, loading errors, and retry. Links navigate to a full detail page when JavaScript is unavailable. Barcode-only sources without an import adapter offer manual creation.
+`GET /{locale}/search/details` accepts `provider`, `external_id`, `media_type`, and `tmdb_kind` for provider results, or `media_record_id` for shared local metadata. It fetches full metadata without importing records or creating entries. Personal saved copies are looked up separately from shared metadata and never cached in provider responses. Each preview offers Open saved item links for existing Collection/Wishlist copies (including their formats); a shared optional copy-details form offers explicit Collection/Wishlist submit buttons. The native dialog supports Escape, close, focus restoration, loading errors, and retry. Links navigate to a full detail page when JavaScript is unavailable. Barcode-only sources without an import adapter offer manual creation.
 
 ## Actions (POST, mostly non-locale)
 
@@ -145,7 +145,7 @@ Pagination clamps an out-of-range page to the same last page for both data slici
 
 ### Saving from search dialogs
 
-JavaScript intercepts the dialog’s import/attach forms and submits to the existing `/media/import` or `/library/attach` endpoint with `X-Search-Dialog: 1`. Success returns JSON containing only the saved `entryId`, `bucket`, a local `url`, and an `existing` flag. It does not redirect or set a success flash cookie. The dialog stays open, announces success, and replaces the saved bucket’s action with Open saved item. Matching visible result cards gain the corresponding badge immediately, preserving the search URL, page, layout, and scroll position.
+JavaScript intercepts the dialog’s import/attach forms and submits to the existing `/media/import` or `/library/attach` endpoint with `X-Search-Dialog: 1`. Success returns JSON containing only the saved `entryId`, `bucket`, a local `url`, and an `existing` flag. It does not redirect or set a success flash cookie. The dialog stays open, announces success, and adds an Open saved item link for the saved copy while preserving links for other formats. Matching visible result cards gain the corresponding badge immediately, preserving the search URL, page, layout, and scroll position.
 
 Save buttons are disabled while a request is pending. Failed requests leave the form available for retry and never add a badge. Closing a dialog does not cancel an in-flight write: its acknowledgement can update the matching visible badge without reopening the dialog or overwriting a different item’s preview. A preview that was already loading when a save completed reconciles that acknowledgement before displaying its actions.
 
@@ -155,3 +155,19 @@ Both save endpoints enforce writable accounts and same-origin submissions. Norma
 ### Deletion confirmation
 
 Delete on an item’s detail page opens `/{locale}/library/{entryId}/delete`. This read-only page shows its title, Collection/Wishlist location, media type, year, format, and barcode when available. Cancel returns to that same item. The final POST requires `confirm=delete`; missing or invalid confirmation re-renders the review page with HTTP 400 and leaves the item unchanged. Both the confirmation GET and deletion POST enforce writable access and ownership; the POST also checks origin. A confirmed deletion removes only the selected saved copy and returns to its original bucket. The page explains that deletion cannot be undone; Trash/Undo is not implemented.
+
+
+### Copy formats and notes
+
+Search previews have one optional Format/Notes editor shared by the Collection/Wishlist submit buttons. Existing saves retain their Open saved item links and expose a collapsed Save another copy editor; new items show the editor open. `/media/import` and `/library/attach` accept optional `format` and `notes` fields. Notes are used only when creating a new saved copy. The duplicate identity is account + media record + bucket + format: selecting another format creates another copy, while repeating the same-format save returns the original entry without overwriting its notes. Dialog JSON also reports the saved format for its link label.
+
+Relevant formats are enforced server-side for new saves and manual creation:
+
+| Media type | Formats |
+| --- | --- |
+| Movie / TV | Blu-ray, DVD, VHS, Digital, Other |
+| Album | CD, Vinyl, Cassette, Digital, Other |
+| Book | Hardcover, Paperback, Digital, Other |
+| Game | Nintendo Switch, PlayStation 5, Xbox, Blu-ray, DVD, CD, Digital, Other |
+
+Not set remains valid for every type. Library filters and manual/edit forms update format choices immediately when media type changes. Any media type exposes all formats. An existing legacy format can remain unchanged when editing the same media type; new unrelated choices are rejected. Filter URLs can still target legacy formats. Without JavaScript, forms retain server-rendered choices and ordinary form submission works; changing a manual media type may require submitting and choosing a relevant format after validation.
