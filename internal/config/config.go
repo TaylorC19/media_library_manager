@@ -35,6 +35,9 @@ type Config struct {
 	MusicBrainzMinInterval       time.Duration
 	MusicBrainzRateLimitCooldown time.Duration
 	MusicBrainzRetryableCooldown time.Duration
+
+	BackupEnabled         bool
+	BackupMaxUploadBytes  int64
 }
 
 func Load() (Config, error) {
@@ -65,6 +68,8 @@ func Load() (Config, error) {
 		MusicBrainzMinInterval:       getEnvDurationMS("MUSICBRAINZ_MIN_INTERVAL_MS", 1100*time.Millisecond),
 		MusicBrainzRateLimitCooldown: getEnvDurationMS("MUSICBRAINZ_RATE_LIMIT_COOLDOWN_MS", 5*time.Second),
 		MusicBrainzRetryableCooldown: getEnvDurationMS("MUSICBRAINZ_RETRYABLE_COOLDOWN_MS", 2*time.Second),
+		BackupEnabled:                getEnvBool("BACKUP_ENABLED", true),
+		BackupMaxUploadBytes:         getEnvInt64("BACKUP_MAX_UPLOAD_BYTES", 100*1024*1024),
 	}
 
 	if cfg.MongoDatabase == "" {
@@ -111,6 +116,9 @@ func Load() (Config, error) {
 	if cfg.MusicBrainzRetryableCooldown < 0 {
 		return Config{}, fmt.Errorf("MUSICBRAINZ_RETRYABLE_COOLDOWN_MS must be >= 0")
 	}
+	if cfg.BackupMaxUploadBytes <= 0 {
+		return Config{}, fmt.Errorf("BACKUP_MAX_UPLOAD_BYTES must be > 0")
+	}
 
 	return cfg, nil
 }
@@ -145,6 +153,18 @@ func getEnvWithAliases(keys []string, fallback string) string {
 		}
 	}
 	return fallback
+}
+
+func getEnvInt64(key string, fallback int64) int64 {
+	value := getEnv(key, "")
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		return fallback
+	}
+	return parsed
 }
 
 func getEnvInt(key string, fallback int) int {

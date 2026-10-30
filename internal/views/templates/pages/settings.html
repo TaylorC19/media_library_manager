@@ -21,6 +21,29 @@
       {{ template "partials/language_switcher" . }}
     </div>
   </section>
+
+  {{ if .BackupEnabled }}
+  <section class="card detail-section">
+    <h3>{{ t . "settings.backup.heading" }}</h3>
+    <p class="muted">{{ t . "settings.backup.intro" }}</p>
+    <p class="muted">{{ t . "settings.backup.warning" }}</p>
+
+    <form method="post" action="/settings/backup/export" class="stack-form">
+      <button type="submit" class="button-primary">{{ t . "settings.backup.export" }}</button>
+    </form>
+
+    <form method="post" action="/settings/backup/import" enctype="multipart/form-data" class="stack-form">
+      <label for="backup-file">{{ t . "settings.backup.fileLabel" }}</label>
+      <input id="backup-file" type="file" name="backup" accept=".gz,application/gzip" required>
+
+      <label for="backup-confirm">{{ t . "settings.backup.confirmLabel" }}</label>
+      <input id="backup-confirm" type="text" name="confirm" placeholder="{{ .DatabaseName }}" autocomplete="off" required>
+      <p class="muted">{{ t . "settings.backup.confirmHint" }} <code>{{ .DatabaseName }}</code></p>
+
+      <button type="submit" class="button-danger">{{ t . "settings.backup.import" }}</button>
+    </form>
+  </section>
+  {{ end }}
 </section>
 {{ end }}
 
