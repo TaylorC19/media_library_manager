@@ -1,9 +1,25 @@
 {{ define "partials/library_list_section" }}
+<nav class="view-switch" aria-label="{{ t . "library.list.layout" }}">
+  {{ if ne .View "grid" }}
+  <button type="button" class="button-link" aria-current="true" disabled>{{ t . "library.list.listView" }}</button>
+  {{ else }}
+  <a class="button-link" href="{{ .ViewURLs.list }}">{{ t . "library.list.listView" }}</a>
+  {{ end }}
+  {{ if eq .View "grid" }}
+  <button type="button" class="button-link" aria-current="true" disabled>{{ t . "library.list.gridView" }}</button>
+  {{ else }}
+  <a class="button-link" href="{{ .ViewURLs.grid }}">{{ t . "library.list.gridView" }}</a>
+  {{ end }}
+</nav>
+
 {{ if gt .ListTotal 0 }}
   <p class="muted results-summary">
     {{ t . "library.list.summary" }}: {{ .Pagination.StartItem }}-{{ .Pagination.EndItem }} / {{ .Pagination.TotalItems }}
   </p>
 {{ end }}
 {{ template "partials/library_entry_list" . }}
+{{ if eq .ListTotal 0 }}
+<p><a href="/{{ .Locale }}/search?media_type={{ .Values.media_type }}">{{ t . "library.nav.add" }}</a></p>
+{{ end }}
 {{ template "partials/pagination" (dict "Page" . "Pagination" .Pagination) }}
 {{ end }}

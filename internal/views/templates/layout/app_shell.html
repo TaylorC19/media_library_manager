@@ -15,6 +15,7 @@
       <div class="header-top">
         <h1>{{ t . "common.appName" }}</h1>
         <div class="header-actions">
+          <a href="/{{ .Locale }}/settings">{{ t . "library.nav.settings" }}</a>
           {{ template "partials/language_switcher" . }}
           <form method="post" action="/{{ .Locale }}/logout" class="logout-form">
             <button type="submit">{{ t . "common.actions.logout" }}</button>

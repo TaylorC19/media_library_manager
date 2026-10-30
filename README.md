@@ -22,11 +22,11 @@ In v1, every item lives in one of two buckets:
 
 - Private, login-first application
 - Username/password auth with HTTP-only session cookies
-- Catalog and wishlist workflows
+- My Library landing page with Collection and Wishlist views
 - Movies, TV, albums, books, and games
 - Manual entry creation when provider data is missing or incomplete
 - Provider-backed search with normalized results
-- Barcode-assisted lookup with confirmation-first matching
+- Search with title lookup, barcode entry, and camera scanning, with explicit confirmation before saving
 - English and Japanese UI support
 - Docker Compose for local **MongoDB** only; production Go image via `docker-compose.prod.yml`
 - `GET /health` for readiness and container health checks

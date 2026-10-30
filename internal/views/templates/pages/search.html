@@ -1,14 +1,12 @@
 {{ define "pages/search.content" }}
 <section class="search-page">
   <h2>{{ t . "search.title" }}</h2>
+  <p class="muted">{{ t . "search.intro" }}</p>
 
   <form
     class="search-form"
     method="get"
     action="/{{ .Locale }}/search"
-    hx-get="/{{ .Locale }}/search"
-    hx-target="#search-results"
-    hx-push-url="true"
   >
     <div class="field">
       <label for="q">{{ t . "search.fields.query" }}</label>
@@ -16,7 +14,7 @@
     </div>
     <div class="field">
       <label for="media_type">{{ t . "search.fields.mediaType" }}</label>
-      <select id="media_type" name="media_type" required>
+      <select id="media_type" name="media_type">
         <option value="" {{ if eq .Values.media_type "" }}selected{{ end }}>{{ t . "search.fields.mediaTypePlaceholder" }}</option>
         {{ range .MediaTypes }}
         <option value="{{ . }}" {{ if eq $.Values.media_type . }}selected{{ end }}>{{ t $ (printf "library.mediatype.%s" .) }}</option>
@@ -27,6 +25,16 @@
     <button class="button-primary" type="submit">{{ t . "search.actions.submit" }}</button>
   </form>
 
+  <details id="barcode-search" class="barcode-search" {{ if .ScanOpen }}open{{ end }}>
+    <summary>{{ t . "search.barcodeMethod" }}</summary>
+    {{ template "partials/scan" . }}
+  </details>
+  <p><a id="create-manually" href="/{{ .Locale }}/library/new?media_type={{ .Values.media_type }}&amp;q={{ .Values.q }}">{{ t . "search.createManually" }}</a></p>
+
+  <dialog id="search-detail-dialog" aria-labelledby="search-detail-title" data-loading="{{ t . "search.dialog.loading" }}" data-error="{{ t . "search.dialog.error" }}" data-retry="{{ t . "search.dialog.retry" }}" data-manual-catalog="{{ t . "search.dialog.manualCatalog" }}" data-manual-wishlist="{{ t . "search.dialog.manualWishlist" }}">
+    <div class="dialog-toolbar"><button type="button" id="search-detail-close" autofocus>{{ t . "common.actions.close" }}</button></div>
+    <div id="search-detail-content" aria-live="polite"></div>
+  </dialog>
   <div id="search-results" class="results-region" aria-live="polite">
     {{ template "partials/search_results" . }}
   </div>

@@ -29,6 +29,7 @@ func (h *SearchHandler) baseAppData(r *http.Request, titleKey string) map[string
 		"TitleKey":        titleKey,
 		"Locale":          locale,
 		"Path":            r.URL.Path,
+		"LocalePath":      r.URL.RequestURI(),
 		"User":            user,
 		"MediaTypes":      domainlib.MediaTypes,
 		"Buckets":         domainlib.Buckets,
@@ -100,6 +101,9 @@ func (h *SearchHandler) Page(w http.ResponseWriter, r *http.Request) {
 
 	data := h.baseAppData(r, "search.title")
 	data["ContentTemplate"] = "pages/search.content"
+	scanOpen := r.URL.Query().Get("mode") == "barcode"
+	data["ScanOpen"] = scanOpen
+	data["PageScripts"] = []string{"/static/js/vendor/zxing-browser.min.js", "/static/js/scan.js", "/static/js/search.js"}
 	data["Query"] = q
 	data["Hits"] = []domainsearch.Hit{}
 	data["SearchWarnings"] = []string{}
@@ -112,10 +116,10 @@ func (h *SearchHandler) Page(w http.ResponseWriter, r *http.Request) {
 	data["Pagination"] = buildPagination(basePath, searchValues(q, mediaType), page, pageSize, 0)
 	data["SearchPath"] = basePath
 
-	if q != "" && mediaType == "" {
+	if !scanOpen && q != "" && mediaType == "" {
 		data["SearchError"] = "search.errors.mediaTypeRequired"
 	}
-	if q == "" {
+	if q == "" || scanOpen {
 		h.renderSearchResponse(w, r, data)
 		return
 	}

@@ -2,14 +2,23 @@
 {{ if not .List }}
 <p class="empty-state">{{ t . "library.list.empty" }}</p>
 {{ else }}
-<ul class="entry-list">
+<ul class="entry-list {{ if eq .View "grid" }}entry-list--grid{{ end }}">
   {{ range .List }}
   <li class="entry-list__item">
-    <a href="/{{ $.Locale }}/library/{{ .Entry.ID.Hex }}">{{ if .Media }}{{ .Media.Title }}{{ else }}—{{ end }}</a>
+    <a class="entry-list__link" href="/{{ $.Locale }}/library/{{ .Entry.ID.Hex }}">
+      {{ if and .Media .Media.ImageURL }}
+      <img class="entry-cover" src="{{ .Media.ImageURL }}" alt="" width="72" height="108" loading="lazy" />
+      {{ else }}
+      <span class="entry-cover entry-cover--missing" role="img" aria-label="{{ t $ "library.list.noCover" }}">{{ t $ "library.list.noCover" }}</span>
+      {{ end }}
+      <span class="entry-list__body">
+        <span class="entry-list__title">{{ if .Media }}{{ .Media.Title }}{{ else }}—{{ end }}</span>
     <span class="muted entry-list__meta">
       {{ t $ (printf "library.mediatype.%s" .Entry.MediaType) }}
       {{ if and .Media .Media.Year }} · {{ .Media.Year }}{{ end }}
     </span>
+      </span>
+    </a>
   </li>
   {{ end }}
 </ul>

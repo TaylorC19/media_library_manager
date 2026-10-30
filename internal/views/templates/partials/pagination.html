@@ -5,9 +5,9 @@
     <a
       class="button-link"
       href="{{ .Pagination.PrevURL }}"
-      hx-get="{{ .Pagination.PrevURL }}"
-      hx-target="#{{ if .Page.ListPath }}library-list-section{{ else }}search-results{{ end }}"
-      hx-push-url="true"
+      {{ if .Page.ListPath }}hx-get="{{ .Pagination.PrevURL }}"
+      hx-target="#library-list-section"
+      hx-push-url="true"{{ end }}
     >{{ t .Page "common.pagination.previous" }}</a>
   {{ end }}
 
@@ -16,9 +16,9 @@
       <a
         class="button-link {{ if .Current }}is-current{{ end }}"
         href="{{ .URL }}"
-        hx-get="{{ .URL }}"
-        hx-target="#{{ if $.Page.ListPath }}library-list-section{{ else }}search-results{{ end }}"
-        hx-push-url="true"
+        {{ if $.Page.ListPath }}hx-get="{{ .URL }}"
+        hx-target="#library-list-section"
+        hx-push-url="true"{{ end }}
         {{ if .Current }}aria-current="page"{{ end }}
       >{{ .Label }}</a>
     {{ end }}
@@ -28,9 +28,9 @@
     <a
       class="button-link"
       href="{{ .Pagination.NextURL }}"
-      hx-get="{{ .Pagination.NextURL }}"
-      hx-target="#{{ if .Page.ListPath }}library-list-section{{ else }}search-results{{ end }}"
-      hx-push-url="true"
+      {{ if .Page.ListPath }}hx-get="{{ .Pagination.NextURL }}"
+      hx-target="#library-list-section"
+      hx-push-url="true"{{ end }}
     >{{ t .Page "common.pagination.next" }}</a>
   {{ end }}
 </nav>

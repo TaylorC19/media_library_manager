@@ -14,7 +14,8 @@
       "save": "Save",
       "edit": "Edit",
       "delete": "Delete",
-      "view": "View item"
+      "view": "View item",
+      "close": "Close"
     },
     "status": {
       "signedIn": "Signed in"
@@ -67,7 +68,7 @@
     "nav": {
       "aria": "Main",
       "dashboard": "Home",
-      "catalog": "Catalog",
+      "catalog": "Collection",
       "wishlist": "Wishlist",
       "search": "Search",
       "scan": "Scan",
@@ -75,7 +76,7 @@
       "add": "Add item"
     },
     "catalog": {
-      "title": "Catalog"
+      "title": "Collection"
     },
     "wishlist": {
       "title": "Wishlist"
@@ -84,7 +85,11 @@
       "empty": "Nothing here yet.",
       "addToCatalog": "Add to catalog",
       "addToWishlist": "Add to wishlist",
-      "summary": "Showing"
+      "summary": "Showing",
+      "noCover": "No cover",
+      "layout": "Library layout",
+      "listView": "List",
+      "gridView": "Grid"
     },
     "detail": {
       "myCopy": "My copy",
@@ -92,7 +97,7 @@
       "missingMedia": "Linked media record is missing."
     },
     "fields": {
-      "bucket": "Bucket",
+      "bucket": "Save to",
       "mediaType": "Media type",
       "format": "Format",
       "barcode": "Barcode",
@@ -105,14 +110,14 @@
       "source": "Source"
     },
     "form": {
-      "newTitle": "Add item",
+      "newTitle": "Create manually",
       "editTitle": "Edit item",
       "mediaReadOnly": "This item is linked to provider metadata. Only your copy fields are editable here.",
       "cancelToDetail": "Back to detail",
       "cancelToCatalog": "Cancel"
     },
     "filters": {
-      "query": "Filter titles",
+      "query": "Search your library",
       "anyMediaType": "Any media type",
       "anyFormat": "Any format",
       "apply": "Apply filters",
@@ -137,7 +142,7 @@
       "addedToLibrary": "Added to your library."
     },
     "bucket": {
-      "catalog": "Catalog",
+      "catalog": "Collection",
       "wishlist": "Wishlist"
     },
     "source": {
@@ -166,7 +171,9 @@
       "xbox": "Xbox",
       "digital": "Digital",
       "other": "Other"
-    }
+    },
+    "title": "My Library",
+    "views": "Library views"
   },
   "scan": {
     "title": "Scan barcode",
@@ -232,13 +239,13 @@
   "search": {
     "title": "Search",
     "fields": {
-      "query": "Search",
+      "query": "Title or keywords",
       "mediaType": "Media type",
-      "mediaTypePlaceholder": "Choose a type…"
+      "mediaTypePlaceholder": "Choose a type for title search…"
     },
     "actions": {
       "submit": "Search",
-      "addCatalog": "Add to catalog",
+      "addCatalog": "Add to collection",
       "addWishlist": "Add to wishlist"
     },
     "results": {
@@ -278,6 +285,39 @@
     "refresh": {
       "providerRefUnavailable": "This media record does not have a refreshable provider reference yet.",
       "notImplemented": "Refresh scaffolding is in place, but provider refresh updates are not implemented yet."
+    },
+    "intro": "Find something to add to your collection or wishlist. Search by title, enter a barcode, or use your camera.",
+    "barcodeMethod": "Search by barcode or scan with your camera",
+    "createManually": "Can’t find it? Create manually",
+    "dialog": {
+      "loading": "Loading details…",
+      "error": "Could not load details. Please try again.",
+      "viewDetails": "View details",
+      "title": "Item details",
+      "noSummary": "No description available.",
+      "retry": "Try again",
+      "source": "Source",
+      "manualCatalog": "Create manually in Collection",
+      "manualWishlist": "Create manually in Wishlist"
+    },
+    "details": {
+      "directors": "Directors",
+      "cast": "Cast",
+      "genres": "Genres",
+      "runtimeMinutes": "Runtime (minutes)",
+      "creators": "Creators",
+      "seasons": "Seasons",
+      "episodes": "Episodes",
+      "artists": "Artists",
+      "label": "Label",
+      "catalogNumber": "Catalog number",
+      "releaseCountry": "Release country",
+      "trackCount": "Tracks",
+      "authors": "Authors",
+      "developers": "Developers",
+      "publishers": "Publishers",
+      "platforms": "Platforms",
+      "releaseDate": "Release date"
     }
   }
 }

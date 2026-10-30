@@ -34,6 +34,7 @@ func (h *LibraryHandler) baseAppData(r *http.Request, titleKey string) map[strin
 		"TitleKey":        titleKey,
 		"Locale":          locale,
 		"Path":            r.URL.Path,
+		"LocalePath":      r.URL.RequestURI(),
 		"User":            user,
 		"MediaTypes":      domainlib.MediaTypes,
 		"Buckets":         domainlib.Buckets,
@@ -90,35 +91,19 @@ func (h *LibraryHandler) requireUser(w http.ResponseWriter, r *http.Request) *do
 	return user
 }
 
-func (h *LibraryHandler) Dashboard(w http.ResponseWriter, r *http.Request) {
-	user := h.requireUser(w, r)
-	if user == nil {
-		return
-	}
-
-	catalogCount, wishlistCount, err := h.library.DashboardStats(r.Context(), user.ID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	data := h.baseAppData(r, "dashboard.title")
-	data["ContentTemplate"] = "pages/dashboard.content"
-	data["CatalogCount"] = catalogCount
-	data["WishlistCount"] = wishlistCount
-	h.consumeFlash(w, r, data)
-	h.renderPage(w, "pages/dashboard.html", data)
+func (h *LibraryHandler) LibraryPage(w http.ResponseWriter, r *http.Request) {
+	h.Catalog(w, r)
 }
 
 func (h *LibraryHandler) Catalog(w http.ResponseWriter, r *http.Request) {
-	h.listBucket(w, r, domainlib.BucketCatalog, "library.catalog.title", "pages/catalog.content")
+	h.listBucket(w, r, domainlib.BucketCatalog, "pages/catalog.content")
 }
 
 func (h *LibraryHandler) Wishlist(w http.ResponseWriter, r *http.Request) {
-	h.listBucket(w, r, domainlib.BucketWishlist, "library.wishlist.title", "pages/wishlist.content")
+	h.listBucket(w, r, domainlib.BucketWishlist, "pages/wishlist.content")
 }
 
-func (h *LibraryHandler) listBucket(w http.ResponseWriter, r *http.Request, bucket, titleKey, contentTpl string) {
+func (h *LibraryHandler) listBucket(w http.ResponseWriter, r *http.Request, bucket, contentTpl string) {
 	user := h.requireUser(w, r)
 	if user == nil {
 		return
@@ -138,13 +123,31 @@ func (h *LibraryHandler) listBucket(w http.ResponseWriter, r *http.Request, buck
 	}
 
 	listPath := "/" + locale + "/" + bucket
-	data := h.baseAppData(r, titleKey)
+	if bucket == domainlib.BucketCatalog {
+		listPath = "/" + locale + "/"
+	}
+	data := h.baseAppData(r, "library.title")
+	catalogCount, wishlistCount, err := h.library.DashboardStats(r.Context(), user.ID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	data["CatalogCount"] = catalogCount
+	data["WishlistCount"] = wishlistCount
 	data["ContentTemplate"] = contentTpl
 	data["List"] = result.Items
 	data["ListTotal"] = result.TotalItems
 	data["Bucket"] = bucket
 	data["ListPath"] = listPath
-	data["Pagination"] = buildPagination(listPath, bucketValues(filters), page, pageSize, result.TotalItems)
+	view := libraryView(r)
+	values := bucketValues(filters)
+	values.Set("view", view)
+	data["View"] = view
+	data["ViewURLs"] = map[string]string{
+		"list": libraryViewURL(r, listPath, "list"),
+		"grid": libraryViewURL(r, listPath, "grid"),
+	}
+	data["Pagination"] = buildPagination(listPath, values, page, pageSize, result.TotalItems)
 	data["Values"] = map[string]string{
 		"q":          filters.Query,
 		"media_type": filters.MediaType,
@@ -199,7 +202,7 @@ func (h *LibraryHandler) NewForm(w http.ResponseWriter, r *http.Request) {
 	if !domainlib.IsBucket(bucket) {
 		bucket = domainlib.BucketCatalog
 	}
-	data["Values"] = map[string]string{"bucket": bucket}
+	data["Values"] = map[string]string{"bucket": bucket, "title": r.URL.Query().Get("q"), "media_type": r.URL.Query().Get("media_type"), "barcode": r.URL.Query().Get("barcode")}
 	data["CanEditMedia"] = true
 	h.consumeFlash(w, r, data)
 	h.renderPage(w, "pages/library_form.html", data)
@@ -536,4 +539,17 @@ func stringVal(p *string) string {
 		return ""
 	}
 	return *p
+}
+
+func libraryView(r *http.Request) string {
+	if r.URL.Query().Get("view") == "grid" {
+		return "grid"
+	}
+	return "list"
+}
+
+func libraryViewURL(r *http.Request, path, view string) string {
+	values := r.URL.Query()
+	values.Set("view", view)
+	return path + "?" + values.Encode()
 }
