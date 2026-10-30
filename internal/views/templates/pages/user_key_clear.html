@@ -1,0 +1,25 @@
+{{ define "pages/user_key_clear.content" }}
+<section class="card">
+  <h2>{{ t . "users.keys.confirmTitle" }}</h2>
+  <dl class="detail-dl">
+    <dt>{{ t . "settings.account.username" }}</dt><dd>{{ .Overview.Username }}</dd>
+    <dt>{{ t . "users.keys.provider" }}</dt><dd>{{ .Provider.Name }}</dd>
+  </dl>
+  <p>{{ t . "users.keys.effect" }}</p>
+  <p class="muted">{{ t . "users.keys.noRevoke" }}</p>
+  {{ if .ErrorKey }}<p class="form-error" role="alert">{{ t . .ErrorKey }}</p>{{ end }}
+  {{ if .Provider.Saved }}
+  <form class="stack-form" method="post" action="/{{ .Locale }}/admin/users/{{ .Overview.UserID.Hex }}/keys/clear">
+    <input type="hidden" name="provider" value="{{ .Provider.ID }}" />
+    <input type="hidden" name="q" value="{{ .ListValues.Get "q" }}" />
+    <input type="hidden" name="filter_role" value="{{ .ListValues.Get "role" }}" />
+    <input type="hidden" name="page" value="{{ .ListValues.Get "page" }}" />
+    <label class="provider-key-remove"><input type="checkbox" name="confirm" value="clear" required /> {{ t . "users.keys.confirm" }}</label>
+    <div class="actions"><button class="button-danger" type="submit">{{ t . "users.keys.clear" }}</button><a class="button-link" href="{{ .KeysURL }}">{{ t . "users.keys.cancel" }}</a></div>
+  </form>
+  {{ else }}
+  <p>{{ t . "users.keys.missing" }}</p><a class="button-link" href="{{ .KeysURL }}">{{ t . "users.keys.cancel" }}</a>
+  {{ end }}
+</section>
+{{ end }}
+{{ define "pages/user_key_clear.html" }}{{ template "layout/app_shell" . }}{{ end }}

@@ -17,6 +17,12 @@
   {{ template "pages/search_detail.content" . }}
 {{ else if eq .ContentTemplate "pages/search.content" }}
   {{ template "pages/search.content" . }}
+{{ else if eq .ContentTemplate "pages/user_keys.content" }}
+  {{ template "pages/user_keys.content" . }}
+{{ else if eq .ContentTemplate "pages/user_key_clear.content" }}
+  {{ template "pages/user_key_clear.content" . }}
+{{ else if eq .ContentTemplate "pages/users.content" }}
+  {{ template "pages/users.content" . }}
 {{ else if eq .ContentTemplate "pages/settings.content" }}
   {{ template "pages/settings.content" . }}
 {{ end }}

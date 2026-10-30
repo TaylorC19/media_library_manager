@@ -1,0 +1,63 @@
+{{ define "pages/users.content" }}
+<section class="users-page">
+  <h2>{{ t . "users.title" }}</h2>
+  <p class="muted">{{ t . "users.intro" }}</p>
+  {{ if .ErrorKey }}<p class="form-error" role="alert">{{ t . .ErrorKey }}</p>{{ end }}
+  <form class="users-filter" method="get" action="/{{ .Locale }}/admin/users">
+    <label for="users-role">{{ t . "settings.account.role" }}</label>
+    <select id="users-role" name="role">
+      <option value="" {{ if eq .RoleFilter "" }}selected{{ end }}>{{ t . "users.allRoles" }}</option>
+      {{ range .RoleOptions }}<option value="{{ . }}" {{ if eq . $.RoleFilter }}selected{{ end }}>{{ t $ (printf "auth.roles.%s" .) }}</option>{{ end }}
+    </select>
+    <label for="users-q">{{ t . "users.search" }}</label>
+    <input id="users-q" name="q" type="search" value="{{ .Query }}" maxlength="200" />
+    <div class="actions"><button type="submit">{{ t . "users.searchAction" }}</button><a href="/{{ .Locale }}/admin/users">{{ t . "library.filters.clear" }}</a></div>
+  </form>
+  <div class="users-table-wrap">
+    <table class="users-table">
+      <caption>{{ t . "users.accounts" }} ({{ .Pagination.TotalItems }})</caption>
+      <thead><tr><th scope="col">{{ t . "settings.account.username" }}</th><th scope="col">{{ t . "settings.account.displayName" }}</th><th scope="col">{{ t . "settings.account.role" }}</th><th scope="col">{{ t . "users.keys.title" }}</th></tr></thead>
+      <tbody>
+        {{ range .ManagedUsers }}
+        {{ $self := eq .ID $.User.ID }}
+        <tr>
+          <th scope="row">{{ .Username }} {{ if $self }}<span class="muted">({{ t $ "users.you" }})</span>{{ end }}</th>
+          <td>{{ .ShowName }}</td>
+          <td>
+            <form class="user-role-form" method="post" action="/{{ $.Locale }}/admin/users/{{ .ID.Hex }}/role">
+              <input type="hidden" name="filter_role" value="{{ $.RoleFilter }}" /><input type="hidden" name="q" value="{{ $.Query }}" /><input type="hidden" name="page" value="{{ $.Pagination.Page }}" />
+              <label class="is-hidden" for="role-{{ .ID.Hex }}">{{ t $ "settings.account.role" }}: {{ .Username }}</label>
+              {{ $current := .EffectiveRole }}
+              <select id="role-{{ .ID.Hex }}" name="role" {{ if $self }}disabled{{ end }}>
+                {{ range $.RoleOptions }}<option value="{{ . }}" {{ if eq . $current }}selected{{ end }}>{{ t $ (printf "auth.roles.%s" .) }}</option>{{ end }}
+              </select>
+              <button type="submit" {{ if $self }}disabled{{ end }}>{{ t $ "common.actions.save" }}</button>
+            </form>
+            {{ if $self }}<p class="muted">{{ t $ "users.selfHint" }}</p>{{ end }}
+          </td>
+          <td><a class="button-link" href="/{{ $.Locale }}/admin/users/{{ .ID.Hex }}/keys?q={{ $.Query }}&amp;role={{ $.RoleFilter }}&amp;page={{ $.Pagination.Page }}">{{ t $ "users.keys.manage" }}</a></td>
+        </tr>
+        {{ else }}<tr><td colspan="4">{{ t . "users.empty" }}</td></tr>{{ end }}
+      </tbody>
+    </table>
+  </div>
+  {{ template "partials/pagination" (dict "Page" . "Pagination" .Pagination) }}
+  <p class="muted">{{ t . "users.roleHint" }}</p>
+  <details class="card users-create" {{ if .CreateOpen }}open{{ end }}>
+    <summary>{{ t . "users.create" }}</summary>
+    <form method="post" action="/{{ .Locale }}/admin/users" class="stack-form" autocomplete="off">
+      <input type="hidden" name="filter_role" value="{{ .RoleFilter }}" /><input type="hidden" name="q" value="{{ .Query }}" /><input type="hidden" name="page" value="{{ .Pagination.Page }}" />
+      <label for="new-username">{{ t . "settings.account.username" }}</label>
+      <input id="new-username" name="username" value="{{ .NewUsername }}" required maxlength="80" autocomplete="off" />
+      <label for="new-display-name">{{ t . "settings.account.displayName" }}</label>
+      <input id="new-display-name" name="display_name" value="{{ .NewDisplayName }}" maxlength="120" />
+      <label for="new-password">{{ t . "auth.fields.passwordMin" }}</label>
+      <input id="new-password" name="password" type="password" required minlength="8" maxlength="72" autocomplete="new-password" />
+      <label for="new-user-role">{{ t . "settings.account.role" }}</label>
+      <select id="new-user-role" name="role">{{ range .RoleOptions }}<option value="{{ . }}" {{ if eq . $.CreateRole }}selected{{ end }}>{{ t $ (printf "auth.roles.%s" .) }}</option>{{ end }}</select>
+      <button type="submit" class="button-primary">{{ t . "users.create" }}</button>
+    </form>
+  </details>
+</section>
+{{ end }}
+{{ define "pages/users.html" }}{{ template "layout/app_shell" . }}{{ end }}

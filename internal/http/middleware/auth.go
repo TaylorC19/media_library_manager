@@ -72,3 +72,18 @@ func RequireWritable(next http.Handler) http.Handler {
 func WithUser(ctx context.Context, user *domainauth.User) context.Context {
 	return context.WithValue(ctx, authUserKey, user)
 }
+
+func RequireAdmin(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := CurrentUser(r.Context())
+		if user == nil {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		if !user.IsAdmin() {
+			http.Error(w, "administrator access required", http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}

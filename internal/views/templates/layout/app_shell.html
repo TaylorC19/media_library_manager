@@ -16,6 +16,7 @@
       <div class="header-top">
         <h1>{{ t . "common.appName" }}</h1>
         <div class="header-actions">
+          {{ if .User.IsAdmin }}<a href="/{{ .Locale }}/admin/users" {{ if or (eq .ContentTemplate "pages/users.content") .AdminUsersPage }}aria-current="page"{{ end }}>{{ t . "users.title" }}</a>{{ end }}
           <a href="/{{ .Locale }}/settings">{{ t . "library.nav.settings" }}</a>
           {{ template "partials/language_switcher" . }}
           <form method="post" action="/{{ .Locale }}/logout" class="logout-form">

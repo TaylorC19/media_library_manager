@@ -686,3 +686,13 @@ main.container .provider-key-remove input { width: auto; margin: 0; }
 .provider-key-link { margin-left: 0.5rem; font-size: 0.85rem; font-weight: 400; }
 .provider-info h4 { margin: 0 0 0.75rem; }
 .provider-info p:last-child { margin-bottom: 0; }
+.users-table-wrap { overflow-x: auto; margin-top: 1.25rem; }
+.users-table { width: 100%; border-collapse: collapse; text-align: left; }
+.users-table caption { text-align: left; font-weight: 700; margin-bottom: 0.75rem; }
+.users-table th, .users-table td { padding: 0.75rem; border-bottom: 1px solid #aaa; vertical-align: top; }
+main.container form.user-role-form { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; max-width: none; }
+.user-role-form select { flex: 1; min-width: 9rem; margin: 0; }
+.users-table td p { margin: 0.5rem 0 0; }
+.users-create summary { cursor: pointer; font-weight: 700; }
+.users-create[open] summary { margin-bottom: 1rem; }
+main.container .user-role-form button:disabled { cursor: default; opacity: 0.6; }

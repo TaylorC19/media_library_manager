@@ -181,4 +181,19 @@ Production Compose includes the same management command:
 docker compose -f docker-compose.prod.yml exec app ./users -username YOUR_USERNAME -role admin
 ```
 
-Use `-role general` or `-role demo` to change access later. Changes apply on the next authenticated request, including existing sessions. There is no public role-selection or self-promotion endpoint. Older database backups without roles restore accounts with general access; use the command again to promote the intended administrator.
+Admins can open **User management** from the header or Settings to search accounts, create accounts, and change other users’ roles. Your own admin role is disabled to prevent lockout. Web role changes are serialized and the acting admin is rechecked before each change in this single-process app.
+
+Each account also has **Manage saved keys**. Admins can see which providers have personal keys saved, without viewing their values. Clearing a key requires a separate confirmation page and checkbox. It removes only that account’s selected provider override: the server default applies afterward if configured. It does not revoke the credential with the provider or change other accounts’ keys.
+
+The server command remains available for bootstrap and recovery. Use `-role general` or `-role demo` to change access later. Changes apply on the next authenticated request, including existing sessions. There is no public role-selection or self-promotion endpoint. Older database backups without roles restore accounts with general access; use the command again to promote the intended administrator.
+
+## Improvement backlog
+
+Saved for later. User management was prioritized and implemented first. The saved-item detail work was requested but paused before implementation when priorities changed.
+
+- [ ] Rich saved-item pages: cover, description, creators, and media-specific details, separate from copy information.
+- [ ] Collection/Wishlist badges in search, with existing saves clearly indicated.
+- [ ] Direct Wishlist → Collection action that preserves notes and copy details.
+- [ ] Progressive grouped search: show each group as it finishes.
+- [ ] Actual provider pagination beyond the initial fetched batch.
+- [ ] Persistent layout/filter preferences across visits.

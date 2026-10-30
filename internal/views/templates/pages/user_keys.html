@@ -1,0 +1,21 @@
+{{ define "pages/user_keys.content" }}
+<section class="user-keys-page">
+  <h2>{{ t . "users.keys.title" }}: {{ .Overview.Username }}</h2>
+  <p class="muted">{{ t . "users.keys.intro" }}</p>
+  <table class="users-table">
+    <thead><tr><th scope="col">{{ t . "users.keys.provider" }}</th><th scope="col">{{ t . "users.keys.status" }}</th><th scope="col">{{ t . "users.keys.action" }}</th></tr></thead>
+    <tbody>
+    {{ range .Overview.Providers }}
+      <tr>
+        <th scope="row">{{ .Name }}</th>
+        <td>{{ if .Saved }}{{ t $ "users.keys.saved" }}{{ else }}{{ t $ "users.keys.missing" }}{{ end }}</td>
+        <td>{{ if .Saved }}<a class="button-link" href="/{{ $.Locale }}/admin/users/{{ $.Overview.UserID.Hex }}/keys/clear?provider={{ .ID }}&amp;q={{ $.ListValues.Get "q" }}&amp;role={{ $.ListValues.Get "role" }}&amp;page={{ $.ListValues.Get "page" }}">{{ t $ "users.keys.review" }}</a>{{ else }}—{{ end }}</td>
+      </tr>
+    {{ end }}
+    </tbody>
+  </table>
+  <p class="muted">{{ t . "users.keys.effect" }}</p>
+  <p><a class="button-link" href="{{ .BackToUsers }}">{{ t . "users.keys.back" }}</a></p>
+</section>
+{{ end }}
+{{ define "pages/user_keys.html" }}{{ template "layout/app_shell" . }}{{ end }}

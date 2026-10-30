@@ -96,6 +96,8 @@ A personal key overrides the corresponding environment value for that account on
 
 Keys are never populated into HTML or returned to the browser. They are stored as owner-readable/writable JSON files (0600) in an owner-only directory (0700), one file per account ID, under `PROVIDER_KEYS_DIR` (default `data/provider-keys`). These files contain unencrypted secrets, like an `.env` file; protect the host filesystem and use HTTPS for remote access. The directory is excluded from git and Docker build contexts.
 
+User management → Manage saved keys lets administrators view personal-key presence and clear one provider override after a separate confirmation with a required checkbox. It never reveals key values. Clearing restores the server default for that account/provider if configured, preserves all other keys, and does not revoke credentials at the provider. Current admin access is checked again when clearing.
+
 Database backups do **not** contain these files. Back up the directory separately using access controls suitable for secrets. Production Compose mounts a persistent `provider-keys` volume at `/home/app/data/provider-keys`; a standalone deployment must likewise preserve its configured directory across restarts/upgrades.
 
 Credential probes use TMDB’s authenticated movie lookup, RAWG’s games listing with `page_size=1`, and Discogs’ authenticated identity lookup. Only a fixed success/failure message is rendered. Provider authentication references: [TMDB](https://developer.themoviedb.org/docs/authentication-application), [RAWG](https://api.rawg.io/docs/), [Discogs](https://www.discogs.com/developers/#page:user-identity,header:user-identity-identity).

@@ -39,6 +39,12 @@ Unauthenticated visitors hitting protected URLs are redirected to login (locale 
 | GET | `/{locale}/library/{entryId}/edit` | Edit entry form |
 | GET | `/{locale}/scan` | Compatibility redirect to Search with `mode=barcode`; preserves query parameters. |
 | GET | `/{locale}/settings` | Settings |
+| GET | `/{locale}/admin/users` | Admin-only account list/search with pagination; optional `q` and `role=admin|general|demo` filters combine. Empty role means all accounts, and General includes legacy accounts without a role. |
+| POST | `/{locale}/admin/users` | Admin-only account creation; preserves the administrator’s session. |
+| POST | `/{locale}/admin/users/{userId}/role` | Admin-only role change; self-demotion prohibited. |
+| GET | `/{locale}/admin/users/{userId}/keys` | Admin-only personal-key status for TMDB, RAWG, and Discogs; never exposes values. |
+| GET | `/{locale}/admin/users/{userId}/keys/clear` | Confirmation page for the selected `provider`; does not modify keys. |
+| POST | `/{locale}/admin/users/{userId}/keys/clear` | Admin-only clearing of one personal override; requires `provider` and `confirm=clear`, checks current admin access, and rejects cross-origin submissions. |
 | POST | `/{locale}/logout` | Logout |
 
 ### Search query parameters
@@ -102,6 +108,6 @@ Locale switching preserves path where the language switcher replaces the first p
 
 ## Role permissions
 
-All protected routes require authentication. Full-database export/restore additionally require an admin role and reject cross-origin browser submissions. Library creation/attachment/editing/deletion, provider imports, metadata refresh, and provider-key saving require a writable account (admin or general); demo accounts receive HTTP 403. New/edit form pages are restricted in the same way. Public registration always creates general users; role changes are available only through the server-side `cmd/users` command. Accounts without a stored role are general.
+All protected routes require authentication. Full-database export/restore additionally require an admin role and reject cross-origin browser submissions. Library creation/attachment/editing/deletion, provider imports, metadata refresh, and provider-key saving require a writable account (admin or general); demo accounts receive HTTP 403. New/edit form pages are restricted in the same way. Public registration always creates general users; admins can create accounts and change other accounts’ roles in User management. Self-demotion is blocked, changes are serialized in the single-process server, and the actor’s current role is checked again before each change. The server-side `cmd/users` command remains available for initial promotion and recovery. Accounts without a stored role are general.
 
 Pagination clamps an out-of-range page to the same last page for both data slicing and footer labels. Provider-import forms retain scanned barcodes on the user's copy, and local lookup checks that account's saved barcodes. Refresh verifies ownership, fetches uncached provider details, replaces cached details after success, and updates the stored metadata. Deletion returns to the entry's original bucket. Language-switch links are updated from the live URL after HTMX filtering/pagination and history navigation.

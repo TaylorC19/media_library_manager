@@ -47,3 +47,19 @@ func TestActualBackupRoutesRejectAllNonAdmins(t *testing.T) {
 		}
 	}
 }
+
+func TestUserManagementRoutesAreAdminOnly(t *testing.T) {
+	instance := &App{Config: config.Config{DefaultLocale: "en", SessionCookieName: "session", ProviderKeysDir: t.TempDir()}}
+	router := instance.newRouter(fstest.MapFS{}, nil, nil, nil, nil, nil)
+	for _, role := range []string{"", "general", "demo", "unknown"} {
+		for _, test := range []struct{ method, path string }{{"GET", "/en/admin/users"}, {"POST", "/en/admin/users"}, {"POST", "/en/admin/users/012345678901234567890123/role"}, {"GET", "/en/admin/users/012345678901234567890123/keys"}, {"GET", "/en/admin/users/012345678901234567890123/keys/clear?provider=tmdb"}, {"POST", "/en/admin/users/012345678901234567890123/keys/clear"}} {
+			r := httptest.NewRequest(test.method, test.path, strings.NewReader("role=admin"))
+			r = r.WithContext(middleware.WithUser(r.Context(), &domainauth.User{Role: role}))
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, r)
+			if w.Code != 403 {
+				t.Errorf("%s %s role=%q: got %d", test.method, test.path, role, w.Code)
+			}
+		}
+	}
+}

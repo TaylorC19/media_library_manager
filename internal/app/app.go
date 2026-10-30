@@ -17,6 +17,7 @@ import (
 	"media_library_manager/internal/providerkeys"
 	"media_library_manager/internal/providers/musicbrainz"
 	"media_library_manager/internal/repository"
+	"media_library_manager/internal/service/adminusers"
 	authsvc "media_library_manager/internal/service/auth"
 	barcodesvc "media_library_manager/internal/service/barcode"
 	libsvc "media_library_manager/internal/service/library"
@@ -28,12 +29,13 @@ import (
 )
 
 type App struct {
-	Config   config.Config
-	Router   http.Handler
-	Mongo    *mongo.Client
-	Database *mongo.Database
-	Renderer *views.Renderer
-	Auth     *authsvc.Service
+	Config    config.Config
+	Router    http.Handler
+	Mongo     *mongo.Client
+	Database  *mongo.Database
+	Renderer  *views.Renderer
+	UserAdmin *adminusers.Service
+	Auth      *authsvc.Service
 }
 
 func New(cfg config.Config) (*App, error) {
@@ -90,6 +92,7 @@ func New(cfg config.Config) (*App, error) {
 	cache := reliability.NewCache(providerCacheRepo, reliabilitySvc)
 	mbThrottle := musicbrainz.NewThrottle(reliabilitySvc.MusicBrainzThrottle)
 	instance.Auth = authsvc.NewService(usersRepo, sessionsRepo, cfg.SessionTTL())
+	instance.UserAdmin = adminusers.NewService(usersRepo, instance.Auth)
 	librarySvc := libsvc.NewService(mediaRepo, libEntriesRepo)
 	mediaSvc := mediasvc.NewService(cfg, mediaRepo, libEntriesRepo, cache, reliabilitySvc, mbThrottle)
 	searchSvc := searchsvc.NewService(cfg, cache, reliabilitySvc, mbThrottle)
@@ -129,6 +132,8 @@ func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc
 	keyStore := providerkeys.NewStore(a.Config.ProviderKeysDir)
 	settingsHandler := handlers.NewSettingsHandler(a.Config, a.Renderer, keyStore, &providerkeys.Checker{MusicBrainzUA: a.Config.MusicBrainzUA, MusicBrainzThrottle: mbThrottle})
 	backupHandler := handlers.NewBackupHandler(a.Config, a.Database)
+	usersHandler := handlers.NewUsersHandler(a.Renderer, a.UserAdmin)
+	userKeysHandler := handlers.NewUserKeysHandler(a.Renderer, adminusers.NewKeyService(a.UserAdmin, keyStore))
 
 	r.Get("/{locale}/login", authHandler.LoginPage)
 	r.Post("/{locale}/login", authHandler.LoginSubmit)
@@ -145,6 +150,12 @@ func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc
 		r.With(middleware.WithProviderKeys(keyStore)).Get("/{locale}/search/details", mediaHandler.Preview)
 		r.Get("/{locale}/scan", handlers.LegacyScanPage)
 		r.Get("/{locale}/settings", settingsHandler.Page)
+		r.With(middleware.RequireAdmin).Get("/{locale}/admin/users", usersHandler.Page)
+		r.With(middleware.RequireAdmin).Get("/{locale}/admin/users/{userId}/keys", userKeysHandler.Page)
+		r.With(middleware.RequireAdmin).Get("/{locale}/admin/users/{userId}/keys/clear", userKeysHandler.Confirm)
+		r.With(middleware.RequireAdmin).Post("/{locale}/admin/users/{userId}/keys/clear", userKeysHandler.Clear)
+		r.With(middleware.RequireAdmin).Post("/{locale}/admin/users", usersHandler.Create)
+		r.With(middleware.RequireAdmin).Post("/{locale}/admin/users/{userId}/role", usersHandler.ChangeRole)
 		r.With(middleware.RequireWritable).Post("/{locale}/settings/providers", settingsHandler.ProviderKeysSubmit)
 		r.Post("/{locale}/settings/providers/test", settingsHandler.ProviderKeyTest)
 		r.Post("/settings/backup/export", backupHandler.ExportSubmit)
