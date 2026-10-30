@@ -30,6 +30,7 @@ In v1, every item lives in one of two buckets:
 - English and Japanese UI support
 - Docker Compose for local **MongoDB** only; production Go image via `docker-compose.prod.yml`
 - `GET /health` for readiness and container health checks
+- Full-database backup and restore (Settings UI, `cmd/db`, and `mongodump` scripts — see [`docs/backup.md`](docs/backup.md))
 
 ## Philosophy
 
@@ -156,7 +157,7 @@ docker-compose.yml mongo only (local dev DB); docker-compose.prod.yml Go app + o
 ## Roadmap
 
 - richer settings and account management
-- import and export flows
+- per-user library export (subset without auth data)
 - saved filters and collection views
 - deeper edition and release modeling for physical media
 - background metadata refresh

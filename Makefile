@@ -1,4 +1,11 @@
-.PHONY: docker-up docker-down docker-prod-config docker-prod-up docker-prod-up-mongo docker-prod-down docker-prod-logs
+.PHONY: docker-up docker-down docker-prod-config docker-prod-up docker-prod-up-mongo docker-prod-down docker-prod-logs db-backup db-restore
+
+db-backup:
+	./scripts/db-backup.sh
+
+db-restore:
+	@if [ -z "$(ARCHIVE)" ]; then echo "usage: make db-restore ARCHIVE=backups/mongodump-..."; exit 2; fi
+	./scripts/db-restore.sh "$(ARCHIVE)"
 
 docker-up:
 	docker compose up -d
