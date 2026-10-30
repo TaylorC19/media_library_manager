@@ -45,8 +45,12 @@ Locales are `en` or `ja`.
 | POST | `/media/import` |
 | POST | `/media/refresh/{mediaRecordId}` |
 | POST | `/barcode/lookup` |
+| POST | `/settings/backup/export` |
+| POST | `/settings/backup/import` |
 
 Barcode lookup returns JSON for the scan page script; it does **not** create library entries without an explicit user action elsewhere.
+
+Backup export returns `application/gzip` with a `.mlm-backup.json.gz` attachment. Import expects `multipart/form-data` with fields `backup` (file) and `confirm` (must equal `MONGODB_DATABASE`). See [`docs/backup.md`](backup.md).
 
 ## Static files
 

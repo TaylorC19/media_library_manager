@@ -62,6 +62,10 @@ When the request is an **htmx** request (`HX-Request: true`), the handler return
 | POST | `/media/import` | Import from provider ref into catalog/wishlist |
 | POST | `/media/refresh/{mediaRecordId}` | Refresh canonical metadata (htmx may target inline notice). |
 | POST | `/barcode/lookup` | Barcode lookup (JSON for scan page; does **not** auto-save). |
+| POST | `/settings/backup/export` | Download full-database backup (gzip JSON). |
+| POST | `/settings/backup/import` | Restore full database from backup file (requires confirmation). |
+
+See [`docs/backup.md`](backup.md).
 
 ## htmx vs full page (summary)
 
