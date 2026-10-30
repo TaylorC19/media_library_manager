@@ -1,0 +1,14 @@
+{{ define "partials/search_group" }}
+{{ $page := .Page }}{{ $group := .Group }}
+<section class="search-result-group" data-group-result data-has-results="{{ if $group.Hits }}true{{ else }}false{{ end }}" aria-labelledby="results-{{ $group.MediaType }}" {{ if not (or $group.Hits $group.Warnings) }}hidden{{ end }}>
+  <div class="results-header">
+    <h3 id="results-{{ $group.MediaType }}">{{ t $page (printf "search.types.%s" $group.MediaType) }}</h3>
+    {{ if $group.Hits }}<a class="button-link" href="{{ $group.SeeAllURL }}">{{ t $page "search.results.seeAll" }} {{ t $page (printf "search.types.%s" $group.MediaType) }}</a>{{ end }}
+  </div>
+  {{ if $group.Hits }}<p class="muted results-summary">{{ t $page "search.results.summary" }}: {{ len $group.Hits }} / {{ $group.Total }}</p>{{ end }}
+  {{ range $group.Warnings }}<p class="search-warning muted" role="status">{{ t $page . }}</p>{{ end }}
+  {{ if $group.Hits }}<div class="search-results {{ if eq $page.View "grid" }}search-results--grid{{ end }}">
+    {{ range $group.Hits }}{{ template "partials/search_result_card" (dict "Page" $page "Hit" .) }}{{ end }}
+  </div>{{ end }}
+</section>
+{{ end }}

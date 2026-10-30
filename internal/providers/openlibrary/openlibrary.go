@@ -38,7 +38,9 @@ type WorkDetails struct {
 }
 
 type searchResponse struct {
-	Docs []workDoc `json:"docs"`
+	Total    int       `json:"numFound"`
+	TotalAlt int       `json:"num_found"`
+	Docs     []workDoc `json:"docs"`
 }
 
 type workDoc struct {
@@ -77,13 +79,20 @@ func (c *Client) SearchByISBN(ctx context.Context, isbn string, limit int) ([]Wo
 	})
 }
 
+func (c *Client) SearchWorksPage(ctx context.Context, query string, offset, limit int) (httpx.Page[WorkHit], error) {
+	return c.searchJSONPage(ctx, map[string]any{"q": strings.TrimSpace(query), "offset": offset, "limit": limit})
+}
 func (c *Client) searchJSON(ctx context.Context, query map[string]any) ([]WorkHit, error) {
+	page, err := c.searchJSONPage(ctx, query)
+	return page.Items, err
+}
+func (c *Client) searchJSONPage(ctx context.Context, query map[string]any) (httpx.Page[WorkHit], error) {
 	var payload searchResponse
 	if err := httpx.GetJSON(ctx, c.HTTP, "open_library", "search", "https://openlibrary.org/search.json", httpx.GetJSONOptions{
 		Query:   query,
 		Timeout: 15 * time.Second,
 	}, &payload); err != nil {
-		return nil, err
+		return httpx.Page[WorkHit]{}, err
 	}
 
 	var out []WorkHit
@@ -107,7 +116,14 @@ func (c *Client) searchJSON(ctx context.Context, query map[string]any) ([]WorkHi
 			SubjectSnippet: summary,
 		})
 	}
-	return out, nil
+	total := payload.Total
+	if payload.TotalAlt > total {
+		total = payload.TotalAlt
+	}
+	if total == 0 {
+		total = len(payload.Docs)
+	}
+	return httpx.Page[WorkHit]{Items: out, Total: total}, nil
 }
 
 func (c *Client) GetWorkDetails(ctx context.Context, workKey string) (*WorkDetails, error) {

@@ -33,6 +33,7 @@ Unauthenticated visitors hitting protected URLs are redirected to login (locale 
 | GET | `/{locale}/catalog` | Compatibility URL for My Library’s Collection view. |
 | GET | `/{locale}/wishlist` | My Library, Wishlist view |
 | GET | `/{locale}/search` | Title search, barcode entry, and camera scanning. Results open a details dialog with both save actions. |
+| GET | `/{locale}/search/group` | Authenticated HTML fragment for one independent media-type preview; accepts `q`, `media_type`, `view`, and `page_size`. |
 | GET | `/{locale}/search/details` | Read-only metadata preview; `fragment=1` returns dialog content, otherwise a full page. |
 | GET | `/{locale}/library/new` | Manual entry fallback from Search; prefills title query, media type, and barcode when supplied. |
 | GET | `/{locale}/library/{entryId}` | Detail |
@@ -53,18 +54,37 @@ Search is **GET only**. Relevant query keys:
 
 - `q` — search text  
 - `media_type` — optional: `movie` \| `tv` \| `album` \| `book` \| `game`; empty/omitted means All media.
-- `page` — page number for in-memory pagination  
+- `page` — page number for provider-backed pagination
 - `page_size` — optional page size  
 - `mode=barcode` — opens the barcode section without running a title search.
 - `view` — `grid` (default for Search) or `list`; retained through form submissions, See all links, and pagination.
+- `complete=1` — synchronous All media fallback for browsers without JavaScript.
 
-With All media selected, lookups run concurrently for all five types. Each non-empty group shows up to three results and a See all link to the same query filtered by that type, starting on page 1. Empty groups are omitted; provider warnings remain scoped to their type. Type-filtered searches retain normal pagination.
+With All media selected, the page renders immediately with five loading placeholders. JavaScript requests each media type independently from `/{locale}/search/group`; each finished group appears in its original position without waiting for slower providers. Each non-empty group shows up to three results, personal saved badges, and a See all link to the query filtered by that type, starting on page 1. Empty groups disappear; the overall empty state appears after every group finishes successfully with no matches. Provider failures offer a retry for that group, while key-configuration warnings remain scoped to their type. Navigation cancels pending requests, and disconnected or superseded responses cannot update results. Browsers without JavaScript get a link to `complete=1`, which renders all groups synchronously. Type-filtered searches fetch the requested provider page instead of slicing an initial batch.
+
+Title-search cards show **In Collection** and **In Wishlist** badges for the signed-in account in both List and Grid views, including All media previews and type-filtered pages. Both badges appear when appropriate. Status is checked in a batch for visible results by provider ID and media type (including TMDB movie/TV kind), never by title. Manual records without provider references cannot be matched. Personal status is added after provider caching; a failed status check leaves results visible with a warning. Search responses are private and not cached.
 
 When the request is an **htmx** request (`HX-Request: true`), the handler returns the **`partials/search_results`** template fragment instead of the full `pages/search.html` shell so the results region can swap in place.
+
+### Provider-backed pagination
+
+Type-filtered search uses provider totals and requests the relevant page or offset. TMDB movie/TV results use native 20-item pages (up to the provider’s 500-page limit), translating app offsets and page sizes across native boundaries. Open Library and MusicBrainz use `offset`/`limit`; RAWG uses `page`/`page_size`. First-page metadata is cached and used to clamp out-of-range requests before fetching the requested page. Cache keys include page and page size under a new namespace, so old first-batch cache entries cannot mask later results. Grouped searches fetch only three preview results while retaining full accessible totals and See all links. Personal saved badges are added afterward for the visible results.
+
+Pagination reserves Previous, centered page controls, and Next positions, with unavailable navigation and the current page rendered as disabled buttons. Narrow screens place page controls above the navigation row. Library pagination retains HTMX updates; search links retain the query, media type, layout, and page size through full navigation.
 
 ### Library layout
 
 My Library accepts `view=list` (default) or `view=grid`. Cover images appear in both layouts, with a placeholder when unavailable. Layout links preserve the current filters and page; filtering and pagination preserve `view`. Collection/Wishlist links retain the layout.
+
+### Remembered layouts and filters
+
+Collection, Wishlist, and Search remember layout, media type, text query, and page size; Library views also remember format. Preferences are stored for up to one year in bounded, HttpOnly, SameSite=Lax browser cookies scoped by account ID and workspace. They work without JavaScript and do not modify account data, including for demo users. They are shared across languages within the same browser, and do not sync to other browsers/devices. Text filters longer than 256 bytes still work for the current request but are not persisted.
+
+Missing query parameters inherit saved preferences; explicit values, including empty strings, take priority. Returning via a bare workspace URL restores preferences and starts at page 1. Page number, barcode mode, and synchronous fallback flags are not saved. Restored requests canonicalize their URL (or use `HX-Push-Url` for HTMX fragments), while generated pagination links encode empty filters explicitly. Clear filters clears saved filter fields and retains layout/page size. Progressive search-group and detail requests do not update workspace preferences. Collection/Wishlist tabs continue carrying the chosen layout while restoring each bucket’s own filters.
+
+### Moving saved items
+
+Writable accounts see **Move to Collection** near the top of Wishlist item details. The POST changes only `bucket` and `updatedAt` on the owned Wishlist entry, preserving its ID, media link, notes, tags, format, barcode, purchase date, and creation date. It returns to that item with a success message. Repeating a completed move is harmless. If Collection already contains the same media record and format, the unique-entry constraint rejects the move: both entries remain unchanged and a message explains the conflict. Demo accounts cannot move items, and another account’s entry returns 404.
 
 ### Search detail previews
 
@@ -77,6 +97,7 @@ My Library accepts `view=list` (default) or `view=grid`. Cover images appear in 
 | POST | `/library` | Create library entry (e.g. manual create). |
 | POST | `/library/attach` | Attach entry to existing media (flows that post here). |
 | POST | `/library/{entryId}/update` | Update entry |
+| POST | `/library/{entryId}/move-to-collection` | Move an owned Wishlist entry to Collection; preserves entry ID and all copy fields. Writable accounts only; rejects cross-origin submissions. |
 | POST | `/library/{entryId}/delete` | Delete entry |
 | POST | `/media/import` | Import from provider ref into catalog/wishlist |
 | POST | `/media/refresh/{mediaRecordId}` | Refresh canonical metadata (htmx may target inline notice). |

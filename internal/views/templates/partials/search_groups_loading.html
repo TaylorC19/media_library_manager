@@ -1,0 +1,16 @@
+{{ define "partials/search_groups_loading" }}
+<div data-search-groups data-loading="{{ t . "search.results.loading" }}" data-complete="{{ t . "search.results.complete" }}" data-partial="{{ t . "search.results.partial" }}">
+  <p class="muted" data-group-summary role="status">{{ t . "search.results.loading" }}</p>
+  {{ range .ProgressiveGroups }}
+  <div data-search-group-url="{{ .URL }}" data-group-state="pending" data-error="{{ t $ "search.results.groupError" }}" data-retry="{{ t $ "search.dialog.retry" }}" aria-busy="true">
+    <div class="search-result-group" data-group-placeholder>
+      <h3>{{ t $ (printf "search.types.%s" .MediaType) }}</h3>
+      <p class="muted" data-group-message>{{ t $ "search.results.loadingGroup" }}</p>
+    </div>
+    <div data-group-content></div>
+  </div>
+  {{ end }}
+  <p class="empty-state" data-groups-empty hidden>{{ t . "search.results.empty" }}</p>
+</div>
+<noscript><style>[data-search-groups] { display: none; }</style><p><a class="button-link" href="{{ .CompleteSearchURL }}">{{ t . "search.results.loadAll" }}</a></p></noscript>
+{{ end }}

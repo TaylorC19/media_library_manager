@@ -393,18 +393,26 @@ main.container form.inline-form {
 }
 
 .pagination {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(6rem, 1fr) auto minmax(6rem, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 0.75rem;
-  flex-wrap: wrap;
   margin-top: 1rem;
 }
-
-.pagination__pages {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+.pagination__previous { justify-self: start; }
+.pagination__next { justify-self: end; }
+.pagination__center { min-width: 0; text-align: center; }
+.pagination__status { margin: 0 0 0.4rem; font-size: 0.9rem; }
+.pagination__pages { display: flex; justify-content: center; gap: 0.35rem; }
+.pagination__pages .button-link { min-width: 2.25rem; box-sizing: border-box; text-align: center; }
+.pagination button:disabled { cursor: default; }
+.pagination button:disabled:not(.is-current) { opacity: 0.5; }
+@media (max-width: 40rem) {
+  .pagination { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .pagination__center { grid-column: 1 / -1; grid-row: 1; }
+  .pagination__previous { grid-column: 1; grid-row: 2; }
+  .pagination__next { grid-column: 2; grid-row: 2; }
+  .pagination__pages .button-link { padding-left: 0.45rem; padding-right: 0.45rem; }
 }
 
 .pagination .is-current {
@@ -696,3 +704,12 @@ main.container form.user-role-form { display: flex; align-items: center; flex-wr
 .users-create summary { cursor: pointer; font-weight: 700; }
 .users-create[open] summary { margin-bottom: 1rem; }
 main.container .user-role-form button:disabled { cursor: default; opacity: 0.6; }
+
+.search-hit__body > .saved-badges { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.35rem 0; }
+.saved-badge { display: inline-block; border: 1px solid; border-radius: 1rem; padding: 0.15rem 0.55rem; font-size: 0.8rem; font-weight: 600; line-height: 1.4; }
+.saved-badge--collection { color: #165b38; background: #e7f5ec; border-color: #87b99a; }
+.saved-badge--wishlist { color: #633d05; background: #fff4d6; border-color: #c8a55e; }
+@media (prefers-color-scheme: dark) {
+  .saved-badge--collection { color: #b8edca; background: #193b29; border-color: #568669; }
+  .saved-badge--wishlist { color: #ffe0a0; background: #493615; border-color: #9f8048; }
+}

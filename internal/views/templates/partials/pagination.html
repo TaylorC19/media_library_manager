@@ -3,35 +3,42 @@
 <nav class="pagination" aria-label="{{ t .Page "common.pagination.aria" }}">
   {{ if .Pagination.PrevURL }}
     <a
-      class="button-link"
+      class="button-link pagination__previous"
       href="{{ .Pagination.PrevURL }}"
       {{ if .Page.ListPath }}hx-get="{{ .Pagination.PrevURL }}"
       hx-target="#library-list-section"
       hx-push-url="true"{{ end }}
     >{{ t .Page "common.pagination.previous" }}</a>
+  {{ else }}
+    <button class="button-link pagination__previous" type="button" disabled>{{ t .Page "common.pagination.previous" }}</button>
   {{ end }}
 
+  <div class="pagination__center">
+  <p class="pagination__status muted">{{ t .Page "common.pagination.page" }} {{ .Pagination.Page }} / {{ .Pagination.TotalPages }}</p>
   <div class="pagination__pages">
     {{ range .Pagination.Links }}
+      {{ if .Current }}<button type="button" class="button-link is-current" aria-current="page" disabled>{{ .Label }}</button>{{ else }}
       <a
-        class="button-link {{ if .Current }}is-current{{ end }}"
+        class="button-link"
         href="{{ .URL }}"
         {{ if $.Page.ListPath }}hx-get="{{ .URL }}"
         hx-target="#library-list-section"
         hx-push-url="true"{{ end }}
-        {{ if .Current }}aria-current="page"{{ end }}
-      >{{ .Label }}</a>
+      >{{ .Label }}</a>{{ end }}
     {{ end }}
+  </div>
   </div>
 
   {{ if .Pagination.NextURL }}
     <a
-      class="button-link"
+      class="button-link pagination__next"
       href="{{ .Pagination.NextURL }}"
       {{ if .Page.ListPath }}hx-get="{{ .Pagination.NextURL }}"
       hx-target="#library-list-section"
       hx-push-url="true"{{ end }}
     >{{ t .Page "common.pagination.next" }}</a>
+  {{ else }}
+    <button class="button-link pagination__next" type="button" disabled>{{ t .Page "common.pagination.next" }}</button>
   {{ end }}
 </nav>
 {{ end }}

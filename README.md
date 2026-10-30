@@ -189,11 +189,11 @@ The server command remains available for bootstrap and recovery. Use `-role gene
 
 ## Improvement backlog
 
-Saved for later. User management was prioritized and implemented first. The saved-item detail work was requested but paused before implementation when priorities changed.
+Tracked improvements; completed items are checked below. User management is also implemented.
 
-- [ ] Rich saved-item pages: cover, description, creators, and media-specific details, separate from copy information.
-- [ ] Collection/Wishlist badges in search, with existing saves clearly indicated.
-- [ ] Direct Wishlist → Collection action that preserves notes and copy details.
-- [ ] Progressive grouped search: show each group as it finishes.
-- [ ] Actual provider pagination beyond the initial fetched batch.
-- [ ] Persistent layout/filter preferences across visits.
+- [x] Rich saved-item pages: cover, description, creators, and media-specific details, separate from copy information.
+- [x] Collection/Wishlist badges in search, with existing saves clearly indicated.
+- [x] Direct Wishlist → Collection action that preserves notes and copy details.
+- [x] Progressive grouped search: show each group as it finishes.
+- [x] Actual provider pagination beyond the initial fetched batch.
+- [x] Persistent layout/filter preferences across visits (per account in the current browser).

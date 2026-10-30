@@ -108,6 +108,9 @@ func (h *LibraryHandler) listBucket(w http.ResponseWriter, r *http.Request, buck
 	if user == nil {
 		return
 	}
+	if !resolveListPreferences(w, r, bucket) {
+		return
+	}
 	locale := middleware.LocaleFromContext(r.Context())
 	page := parsePage(r.URL.Query().Get("page"))
 	pageSize := parsePageSize(r.URL.Query().Get("page_size"))
@@ -141,6 +144,9 @@ func (h *LibraryHandler) listBucket(w http.ResponseWriter, r *http.Request, buck
 	data["ListPath"] = listPath
 	view := libraryView(r)
 	values := bucketValues(filters)
+	values.Set("q", filters.Query)
+	values.Set("media_type", filters.MediaType)
+	values.Set("format", filters.Format)
 	values.Set("view", view)
 	data["View"] = view
 	data["ViewURLs"] = map[string]string{
@@ -181,7 +187,8 @@ func (h *LibraryHandler) Detail(w http.ResponseWriter, r *http.Request) {
 	}
 	data["ContentTemplate"] = "pages/library_detail.content"
 	data["Detail"] = detail
-	data["CanEditMedia"] = detail.Media.Source == domainlib.SourceManual
+	data["Fields"] = previewFields(detail.Media)
+	data["CanEditMedia"] = detail.Media != nil && detail.Media.Source == domainlib.SourceManual
 	h.consumeFlash(w, r, data)
 	h.renderPage(w, "pages/library_detail.html", data)
 }

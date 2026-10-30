@@ -71,6 +71,9 @@ type previewField struct{ Key, Value string }
 
 func previewFields(record *domainlib.MediaRecord) []previewField {
 	var fields []previewField
+	if record == nil {
+		return fields
+	}
 	if record.ReleaseDate != nil && *record.ReleaseDate != "" {
 		fields = append(fields, previewField{"releaseDate", *record.ReleaseDate})
 	}

@@ -8,6 +8,12 @@
     </span>
     <span class="search-hit__body">
       <span class="search-hit__title">{{ $hit.Title }}</span>
+      {{ if or $hit.InCollection $hit.InWishlist }}
+      <span class="saved-badges">
+        {{ if $hit.InCollection }}<span class="saved-badge saved-badge--collection">{{ t $page "search.results.inCollection" }}</span>{{ end }}
+        {{ if $hit.InWishlist }}<span class="saved-badge saved-badge--wishlist">{{ t $page "search.results.inWishlist" }}</span>{{ end }}
+      </span>
+      {{ end }}
       {{ if $hit.Subtitle }}<span class="search-hit__subtitle muted">{{ $hit.Subtitle }}</span>{{ end }}
       {{ with $hit.Year }}<span class="search-hit__year muted">{{ . }}</span>{{ end }}
       {{ if $hit.Summary }}<span class="search-hit__summary">{{ $hit.Summary }}</span>{{ end }}

@@ -17,7 +17,7 @@ func TestDemoCannotReachAnyWriteRouteEvenWithForgedRoleInput(t *testing.T) {
 	router := instance.newRouter(fstest.MapFS{}, nil, nil, nil, nil, nil)
 	for _, test := range []struct{ method, path string }{
 		{"POST", "/library"}, {"POST", "/library/attach"}, {"POST", "/library/012345678901234567890123/update"},
-		{"POST", "/library/012345678901234567890123/delete"}, {"POST", "/media/import"},
+		{"POST", "/library/012345678901234567890123/move-to-collection"}, {"POST", "/library/012345678901234567890123/delete"}, {"POST", "/media/import"},
 		{"POST", "/media/refresh/012345678901234567890123"}, {"POST", "/en/settings/providers"},
 		{"GET", "/en/library/new"}, {"GET", "/en/library/012345678901234567890123/edit"},
 	} {

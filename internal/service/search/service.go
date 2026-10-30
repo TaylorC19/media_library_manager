@@ -12,6 +12,7 @@ import (
 	domainsearch "media_library_manager/internal/domain/search"
 	"media_library_manager/internal/providerkeys"
 	"media_library_manager/internal/providers/discogs"
+	"media_library_manager/internal/providers/httpx"
 	"media_library_manager/internal/providers/musicbrainz"
 	"media_library_manager/internal/providers/openlibrary"
 	"media_library_manager/internal/providers/providererrors"
@@ -63,11 +64,50 @@ func NewService(cfg config.Config, cache *reliability.Cache, reliabilitySvc *rel
 }
 
 type Outcome struct {
+	Total    int
+	Page     int
+	PageSize int
 	Hits     []domainsearch.Hit
 	Warnings []string // translation keys
 }
 
+// Search returns the small first-page preview used by grouped searches.
 func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome, error) {
+	return s.SearchPage(ctx, mediaType, query, 1, 3)
+}
+
+func (s *Service) SearchPage(ctx context.Context, mediaType, query string, page, pageSize int) (Outcome, error) {
+	if page < 1 {
+		page = 1
+	}
+	if page > 10000 {
+		page = 10000
+	}
+	if pageSize < 1 {
+		pageSize = 10
+	}
+	if pageSize > 50 {
+		pageSize = 50
+	}
+	if page > 1 {
+		// Cached first-page metadata lets us clamp stale or forged page links before
+		// calling providers which reject offsets beyond the last page.
+		first, err := s.searchPage(ctx, mediaType, query, 1, pageSize, true)
+		if err != nil || len(first.Warnings) > 0 {
+			return first, err
+		}
+		last := (first.Total + pageSize - 1) / pageSize
+		if last < 1 {
+			last = 1
+		}
+		if page > last {
+			page = last
+		}
+	}
+	return s.searchPage(ctx, mediaType, query, page, pageSize, false)
+}
+
+func (s *Service) searchPage(ctx context.Context, mediaType, query string, page, pageSize int, metadataOnly bool) (Outcome, error) {
 	query = strings.TrimSpace(query)
 	if query == "" {
 		return Outcome{}, nil
@@ -78,6 +118,9 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 
 	var warnings []string
 	var hits []domainsearch.Hit
+	total := 0
+	offset := (page - 1) * pageSize
+	cacheKey := s.reliability.SearchCacheKey(mediaType, query) + fmt.Sprintf(":provider-page:v1:%d:%d", page, pageSize)
 
 	switch mediaType {
 	case "movie":
@@ -85,8 +128,8 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 			warnings = append(warnings, "search.warnings.tmdbKeyMissing")
 			return Outcome{Warnings: warnings}, nil
 		}
-		rows, err := reliability.Wrap(ctx, s.cache, reliability.OperationSearch, "tmdb", s.reliability.SearchCacheKey("movie", query), func(ctx context.Context) ([]tmdb.Result, error) {
-			return s.tmdb.SearchMovies(ctx, query)
+		rows, err := reliability.Wrap(ctx, s.cache, reliability.OperationSearch, "tmdb", cacheKey, func(ctx context.Context) (httpx.Page[tmdb.Result], error) {
+			return s.tmdb.SearchPage(ctx, "movie", query, offset, pageSize)
 		})
 		if err != nil {
 			if searchWarning, ok := providerSearchWarning(err); ok {
@@ -95,7 +138,11 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 			}
 			return Outcome{}, err
 		}
-		for _, r := range rows {
+		total = rows.Total
+		if metadataOnly {
+			break
+		}
+		for _, r := range rows.Items {
 			img := tmdb.PosterURL(r.PosterPath)
 			year := tmdb.YearFromDate(r.ReleaseDate)
 			hits = append(hits, domainsearch.Hit{
@@ -115,8 +162,8 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 			warnings = append(warnings, "search.warnings.tmdbKeyMissing")
 			return Outcome{Warnings: warnings}, nil
 		}
-		rows, err := reliability.Wrap(ctx, s.cache, reliability.OperationSearch, "tmdb", s.reliability.SearchCacheKey("tv", query), func(ctx context.Context) ([]tmdb.Result, error) {
-			return s.tmdb.SearchTV(ctx, query)
+		rows, err := reliability.Wrap(ctx, s.cache, reliability.OperationSearch, "tmdb", cacheKey, func(ctx context.Context) (httpx.Page[tmdb.Result], error) {
+			return s.tmdb.SearchPage(ctx, "tv", query, offset, pageSize)
 		})
 		if err != nil {
 			if searchWarning, ok := providerSearchWarning(err); ok {
@@ -125,7 +172,11 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 			}
 			return Outcome{}, err
 		}
-		for _, r := range rows {
+		total = rows.Total
+		if metadataOnly {
+			break
+		}
+		for _, r := range rows.Items {
 			img := tmdb.PosterURL(r.PosterPath)
 			year := tmdb.YearFromDate(r.ReleaseDate)
 			hits = append(hits, domainsearch.Hit{
@@ -141,8 +192,8 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 		}
 
 	case "album":
-		rows, err := reliability.Wrap(ctx, s.cache, reliability.OperationSearch, "musicbrainz", s.reliability.SearchCacheKey("album", query), func(ctx context.Context) ([]musicbrainz.ReleaseHit, error) {
-			return s.mb.SearchReleases(ctx, query)
+		rows, err := reliability.Wrap(ctx, s.cache, reliability.OperationSearch, "musicbrainz", cacheKey, func(ctx context.Context) (httpx.Page[musicbrainz.ReleaseHit], error) {
+			return s.mb.SearchReleasesPage(ctx, query, offset, pageSize)
 		})
 		if err != nil {
 			if searchWarning, ok := providerSearchWarning(err); ok {
@@ -151,7 +202,11 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 			}
 			return Outcome{}, err
 		}
-		for _, r := range rows {
+		total = rows.Total
+		if metadataOnly {
+			break
+		}
+		for _, r := range rows.Items {
 			sub := strings.TrimSpace(r.ArtistName)
 			if r.Disambiguation != "" {
 				if sub != "" {
@@ -173,8 +228,8 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 		}
 
 	case "book":
-		rows, err := reliability.Wrap(ctx, s.cache, reliability.OperationSearch, "open_library", s.reliability.SearchCacheKey("book", query), func(ctx context.Context) ([]openlibrary.WorkHit, error) {
-			return s.ol.SearchWorks(ctx, query)
+		rows, err := reliability.Wrap(ctx, s.cache, reliability.OperationSearch, "open_library", cacheKey, func(ctx context.Context) (httpx.Page[openlibrary.WorkHit], error) {
+			return s.ol.SearchWorksPage(ctx, query, offset, pageSize)
 		})
 		if err != nil {
 			if searchWarning, ok := providerSearchWarning(err); ok {
@@ -183,7 +238,11 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 			}
 			return Outcome{}, err
 		}
-		for _, w := range rows {
+		total = rows.Total
+		if metadataOnly {
+			break
+		}
+		for _, w := range rows.Items {
 			var img *string
 			if w.CoverID != nil {
 				img = openlibrary.CoverURL(*w.CoverID)
@@ -208,8 +267,8 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 			warnings = append(warnings, "search.warnings.rawgKeyMissing")
 			return Outcome{Warnings: warnings}, nil
 		}
-		rows, err := reliability.Wrap(ctx, s.cache, reliability.OperationSearch, "rawg", s.reliability.SearchCacheKey("game", query), func(ctx context.Context) ([]rawg.GameHit, error) {
-			return s.rawg.SearchGames(ctx, query)
+		rows, err := reliability.Wrap(ctx, s.cache, reliability.OperationSearch, "rawg", cacheKey, func(ctx context.Context) (httpx.Page[rawg.GameHit], error) {
+			return s.rawg.SearchGamesPage(ctx, query, page, pageSize)
 		})
 		if err != nil {
 			if searchWarning, ok := providerSearchWarning(err); ok {
@@ -218,7 +277,11 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 			}
 			return Outcome{}, err
 		}
-		for _, g := range rows {
+		total = rows.Total
+		if metadataOnly {
+			break
+		}
+		for _, g := range rows.Items {
 			img := rawg.BackgroundURL(g.BackgroundImage)
 			hits = append(hits, domainsearch.Hit{
 				Provider:   "rawg",
@@ -232,7 +295,7 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 		}
 	}
 
-	return Outcome{Hits: hits, Warnings: warnings}, nil
+	return Outcome{Hits: hits, Warnings: warnings, Total: total, Page: page, PageSize: pageSize}, nil
 }
 
 func providerSearchWarning(err error) (string, bool) {

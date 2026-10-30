@@ -18,25 +18,14 @@
 
 {{ if and .Query (eq .SearchError "") }}
   {{ if .AllMedia }}
+    {{ if .ProgressiveGroups }}
+      {{ template "partials/search_groups_loading" . }}
+    {{ else }}
     {{ range .SearchGroups }}
-      {{ $group := . }}
-      {{ if .Hits }}
-      <section class="search-result-group" aria-labelledby="results-{{ .MediaType }}">
-        <div class="results-header">
-          <h3 id="results-{{ .MediaType }}">{{ t $ (printf "search.types.%s" .MediaType) }}</h3>
-          <a class="button-link" href="{{ .SeeAllURL }}">{{ t $ "search.results.seeAll" }} {{ t $ (printf "search.types.%s" .MediaType) }}</a>
-        </div>
-        <p class="muted results-summary">{{ t $ "search.results.summary" }}: {{ len .Hits }} / {{ .Total }}</p>
-        {{ range .Warnings }}<p class="search-warning muted" role="status">{{ t $ . }}</p>{{ end }}
-        <div class="search-results {{ if eq $.View "grid" }}search-results--grid{{ end }}">
-          {{ range .Hits }}{{ template "partials/search_result_card" (dict "Page" $ "Hit" .) }}{{ end }}
-        </div>
-      </section>
-      {{ else }}
-        {{ range .Warnings }}<p class="search-warning muted" role="status">{{ t $ (printf "search.types.%s" $group.MediaType) }}: {{ t $ . }}</p>{{ end }}
-      {{ end }}
+      {{ template "partials/search_group" (dict "Page" $ "Group" .) }}
     {{ end }}
     {{ if not .HasResults }}<p class="empty-state">{{ t . "search.results.empty" }}</p>{{ end }}
+    {{ end }}
   {{ else if .Hits }}
     <div class="results-header">
       <h3 class="search-results-heading">{{ t . "search.results.heading" }}</h3>
@@ -52,6 +41,7 @@
     {{ template "partials/pagination" (dict "Page" . "Pagination" .Pagination) }}
   {{ else }}
     <p class="empty-state">{{ t . "search.results.empty" }}</p>
+    {{ template "partials/pagination" (dict "Page" . "Pagination" .Pagination) }}
   {{ end }}
 {{ end }}
 {{ end }}

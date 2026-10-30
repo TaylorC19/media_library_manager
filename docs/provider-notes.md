@@ -103,3 +103,8 @@ Database backups do **not** contain these files. Back up the directory separatel
 Credential probes use TMDB’s authenticated movie lookup, RAWG’s games listing with `page_size=1`, and Discogs’ authenticated identity lookup. Only a fixed success/failure message is rendered. Provider authentication references: [TMDB](https://developer.themoviedb.org/docs/authentication-application), [RAWG](https://api.rawg.io/docs/), [Discogs](https://www.discogs.com/developers/#page:user-identity,header:user-identity-identity).
 
 MusicBrainz and Open Library also have **Test connection** buttons. They make small, uncached searches (`limit=1`) without API keys and verify the response structure. MusicBrainz uses the configured User-Agent and shares the app’s existing request throttle. These checks neither read nor write saved keys.
+
+
+## Search pagination
+
+Search fetches provider-backed pages and retains reported totals instead of treating the initial batch as the complete result set. Grouped previews fetch three records; See all opens a paginated search. TMDB offsets are translated across fixed 20-item pages and stop at its [500-page API limit](https://developer.themoviedb.org/docs/errors). [Open Library](https://openlibrary.org/dev/docs/api/search) and [MusicBrainz](https://musicbrainz.org/doc/MusicBrainz_API/Search) support offset/limit, while [RAWG](https://api.rawg.io/docs/) supports page/page_size. Page and page size are part of each provider cache key; personal saved status is never stored in this shared cache.

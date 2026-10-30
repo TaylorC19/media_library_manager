@@ -26,6 +26,7 @@
       "serverError": "エラーが発生しました。しばらくしてから再度お試しください。"
     },
     "pagination": {
+      "page": "ページ",
       "aria": "ページ送り",
       "previous": "前へ",
       "next": "次へ"
@@ -98,8 +99,12 @@
       "gridView": "グリッド"
     },
     "detail": {
+      "backCollection": "コレクションに戻る",
+      "backWishlist": "ウィッシュリストに戻る",
+      "moveHint": "メモ、タグ、形式、バーコード、購入情報はそのまま保持されます。",
       "myCopy": "マイコピー",
       "mediaDetails": "作品情報",
+      "noSummary": "説明はありません。",
       "missingMedia": "関連するメディアレコードがありません。"
     },
     "fields": {
@@ -130,6 +135,7 @@
       "clear": "クリア"
     },
     "actions": {
+      "moveToCollection": "コレクションに移動",
       "refreshMedia": "作品情報を更新"
     },
     "errors": {
@@ -137,11 +143,13 @@
       "invalidMediaType": "有効なメディア種別を選んでください。",
       "invalidBucket": "カタログかウィッシュリストを選んでください。",
       "invalidFormat": "有効なフォーマットを選んでください。",
+      "moveConflict": "同じ作品・形式のアイテムがコレクションにあります。変更は行われず、ウィッシュリストのメモやコピー情報も保持されています。別のコピーの場合は形式を編集できます。",
       "duplicateEntry": "同じバケット・フォーマットの組み合わせで既に登録されています。",
       "mediaNotFound": "該当するメディアレコードが見つかりませんでした。",
       "invalidMediaRecordId": "メディアIDの形式が正しくありません。"
     },
     "flash": {
+      "movedToCollection": "コレクションに移動しました。メモやコピー情報は保持されています。",
       "created": "保存しました。",
       "updated": "更新しました。",
       "deleted": "ライブラリから削除しました。",
@@ -303,6 +311,14 @@
       "addWishlist": "ウィッシュリストに追加"
     },
     "results": {
+      "inCollection": "コレクションに保存済み",
+      "inWishlist": "ウィッシュリストに保存済み",
+      "loading": "すべてのメディアを検索中…",
+      "loadingGroup": "検索中…",
+      "complete": "検索が完了しました。",
+      "partial": "一部のメディアを読み込めませんでした。下のボタンから再試行できます。",
+      "groupError": "このメディアを読み込めませんでした。再試行してください。",
+      "loadAll": "JavaScript を使わずにすべての結果を表示",
       "heading": "結果",
       "empty": "該当する結果がありません。",
       "summary": "表示中",
@@ -312,6 +328,7 @@
     "warnings": {
       "tmdbKeyMissing": "TMDB の API キーが未設定です。映画/TV を検索するには TMDB_API_KEY を設定してください。",
       "rawgKeyMissing": "RAWG の API キーが未設定です。ゲームを検索するには RAWG_API_KEY を設定してください。",
+      "savedStatusUnavailable": "保存状況を確認できませんでした。ページを再読み込みしてください。",
       "providerUnavailable": "プロバイダーに一時的に接続できません。しばらくしてから再試行してください。"
     },
     "errors": {
