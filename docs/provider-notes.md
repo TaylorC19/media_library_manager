@@ -87,3 +87,17 @@ These integrations help demonstrate:
 - rate-limit-aware API work
 - metadata normalization
 - clear frontend/backend responsibility boundaries
+
+## Configure API keys in Settings
+
+Settings → Metadata providers lets each signed-in account configure personal **TMDB**, **RAWG**, and **Discogs** credentials. Changes apply to subsequent search, detail/import, and barcode requests without a restart. MusicBrainz and Open Library do not need API keys.
+
+A personal key overrides the corresponding environment value for that account only. Without a personal key, `TMDB_API_KEY`, `RAWG_API_KEY`, and `DISCOGS_TOKEN` remain server defaults. Empty fields preserve saved values; Remove deletes only the personal override. Status labels indicate configuration. Each provider has a **Test key** button: it checks a candidate without saving, or checks the effective saved/server key if the input is blank. With Remove selected and no candidate entered, it tests the server default that would apply after saving. Tests bypass metadata caches and use read-only requests with a 10-second timeout. Responses distinguish accepted/rejected credentials, access restrictions, rate limits, and temporary failures; raw keys, provider payloads, and account identities are never returned. Metadata caching remains shared.
+
+Keys are never populated into HTML or returned to the browser. They are stored as owner-readable/writable JSON files (0600) in an owner-only directory (0700), one file per account ID, under `PROVIDER_KEYS_DIR` (default `data/provider-keys`). These files contain unencrypted secrets, like an `.env` file; protect the host filesystem and use HTTPS for remote access. The directory is excluded from git and Docker build contexts.
+
+Database backups do **not** contain these files. Back up the directory separately using access controls suitable for secrets. Production Compose mounts a persistent `provider-keys` volume at `/home/app/data/provider-keys`; a standalone deployment must likewise preserve its configured directory across restarts/upgrades.
+
+Credential probes use TMDB’s authenticated movie lookup, RAWG’s games listing with `page_size=1`, and Discogs’ authenticated identity lookup. Only a fixed success/failure message is rendered. Provider authentication references: [TMDB](https://developer.themoviedb.org/docs/authentication-application), [RAWG](https://api.rawg.io/docs/), [Discogs](https://www.discogs.com/developers/#page:user-identity,header:user-identity-identity).
+
+MusicBrainz and Open Library also have **Test connection** buttons. They make small, uncached searches (`limit=1`) without API keys and verify the response structure. MusicBrainz uses the configured User-Agent and shares the app’s existing request throttle. These checks neither read nor write saved keys.

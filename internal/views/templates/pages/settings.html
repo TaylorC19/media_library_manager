@@ -22,6 +22,49 @@
     </div>
   </section>
 
+  <section class="card detail-section" aria-labelledby="provider-keys-heading">
+    <h3 id="provider-keys-heading">{{ t . "settings.providers.heading" }}</h3>
+    <p class="muted">{{ t . "settings.providers.intro" }}</p>
+    {{ template "partials/form_errors" . }}
+    <form method="post" action="/{{ .Locale }}/settings/providers" class="stack-form" autocomplete="off">
+      {{ range .ProviderStatuses }}
+      <fieldset class="form-fieldset">
+        {{ $keyLabel := "settings.providers.getKey" }}{{ if eq .ID "discogs" }}{{ $keyLabel = "settings.providers.getToken" }}{{ end }}
+        <legend>{{ .Name }} <a class="provider-key-link" href="{{ .KeyURL }}" target="_blank" rel="noopener noreferrer" aria-label="{{ .Name }}: {{ t $ $keyLabel }} ({{ t $ "settings.providers.newTab" }})">{{ t $ $keyLabel }} <span aria-hidden="true">↗</span></a></legend>
+        <p>{{ t $ .StatusKey }}</p>
+        <p class="muted">{{ t $ (printf "settings.providers.uses.%s" .ID) }}</p>
+        <label for="provider-{{ .ID }}">{{ t $ "settings.providers.newKey" }}</label>
+        <div class="provider-key-input">
+          <input id="provider-{{ .ID }}" name="{{ .ID }}" type="password" autocomplete="new-password" maxlength="512" spellcheck="false" aria-describedby="provider-key-hint" />
+          <button type="button" data-test-provider="{{ .ID }}" data-test-url="/{{ $.Locale }}/settings/providers/test" aria-label="{{ t $ "settings.providers.test" }} {{ .Name }}" aria-controls="provider-test-{{ .ID }}">{{ t $ "settings.providers.test" }}</button>
+        </div>
+        <p id="provider-test-{{ .ID }}" class="provider-test-result" role="status" aria-live="polite" data-testing="{{ t $ "settings.providers.testing" }}" data-error="{{ t $ "settings.providers.testResults.unavailable" }}"></p>
+        {{ if .Personal }}
+        <label class="provider-key-remove"><input type="checkbox" name="remove_{{ .ID }}" /> {{ t $ "settings.providers.remove" }}</label>
+        {{ end }}
+      </fieldset>
+      {{ end }}
+      <p class="muted">{{ t . "settings.providers.testHint" }}</p>
+      <p id="provider-key-hint" class="muted">{{ t . "settings.providers.keepHint" }}</p>
+      <button class="button-primary" type="submit">{{ t . "settings.providers.save" }}</button>
+    </form>
+
+    <section class="form-fieldset provider-info" aria-labelledby="provider-musicbrainz-heading">
+      <h4 id="provider-musicbrainz-heading">MusicBrainz <a class="provider-key-link" href="https://musicbrainz.org/" target="_blank" rel="noopener noreferrer" aria-label="MusicBrainz: {{ t . "settings.providers.website" }} ({{ t . "settings.providers.newTab" }})">{{ t . "settings.providers.website" }} <span aria-hidden="true">↗</span></a></h4>
+      <p>{{ t . "settings.providers.noKeyNeeded" }}</p>
+      <p class="muted">{{ t . "settings.providers.uses.musicbrainz" }}</p>
+      <button type="button" data-test-provider="musicbrainz" data-test-url="/{{ .Locale }}/settings/providers/test" aria-label="MusicBrainz: {{ t . "settings.providers.testConnection" }}" aria-controls="provider-test-musicbrainz">{{ t . "settings.providers.testConnection" }}</button>
+      <p id="provider-test-musicbrainz" class="provider-test-result" role="status" aria-live="polite" data-testing="{{ t . "settings.providers.testing" }}" data-error="{{ t . "settings.providers.testResults.unavailable" }}"></p>
+    </section>
+    <section class="form-fieldset provider-info" aria-labelledby="provider-openlibrary-heading">
+      <h4 id="provider-openlibrary-heading">Open Library <a class="provider-key-link" href="https://openlibrary.org/" target="_blank" rel="noopener noreferrer" aria-label="Open Library: {{ t . "settings.providers.website" }} ({{ t . "settings.providers.newTab" }})">{{ t . "settings.providers.website" }} <span aria-hidden="true">↗</span></a></h4>
+      <p>{{ t . "settings.providers.noKeyNeeded" }}</p>
+      <p class="muted">{{ t . "settings.providers.uses.openlibrary" }}</p>
+      <button type="button" data-test-provider="openlibrary" data-test-url="/{{ .Locale }}/settings/providers/test" aria-label="Open Library: {{ t . "settings.providers.testConnection" }}" aria-controls="provider-test-openlibrary">{{ t . "settings.providers.testConnection" }}</button>
+      <p id="provider-test-openlibrary" class="provider-test-result" role="status" aria-live="polite" data-testing="{{ t . "settings.providers.testing" }}" data-error="{{ t . "settings.providers.testResults.unavailable" }}"></p>
+    </section>
+  </section>
+
   {{ if .BackupEnabled }}
   <section class="card detail-section">
     <h3>{{ t . "settings.backup.heading" }}</h3>

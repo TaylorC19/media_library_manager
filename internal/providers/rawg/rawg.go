@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"media_library_manager/internal/providerkeys"
 	"media_library_manager/internal/providers/httpx"
 	"media_library_manager/internal/providers/providererrors"
 )
@@ -53,13 +54,14 @@ func (c *Client) SearchGames(ctx context.Context, query string) ([]GameHit, erro
 	if query == "" {
 		return nil, nil
 	}
-	if strings.TrimSpace(c.APIKey) == "" {
+	key := providerkeys.Resolve(ctx, "rawg", c.APIKey)
+	if key == "" {
 		return nil, nil
 	}
 	var payload searchResponse
 	if err := httpx.GetJSON(ctx, c.HTTP, "rawg", "search", "https://api.rawg.io/api/games", httpx.GetJSONOptions{
 		Query: map[string]any{
-			"key":       c.APIKey,
+			"key":       key,
 			"search":    query,
 			"page_size": 50,
 		},
@@ -86,7 +88,8 @@ func (c *Client) SearchGames(ctx context.Context, query string) ([]GameHit, erro
 }
 
 func (c *Client) GetGameDetails(ctx context.Context, externalID string) (*GameDetails, error) {
-	if strings.TrimSpace(c.APIKey) == "" {
+	key := providerkeys.Resolve(ctx, "rawg", c.APIKey)
+	if key == "" {
 		return nil, nil
 	}
 	externalID = strings.TrimSpace(externalID)
@@ -118,7 +121,7 @@ func (c *Client) GetGameDetails(ctx context.Context, externalID string) (*GameDe
 	}
 	err := httpx.GetJSON(ctx, c.HTTP, "rawg", "detail", "https://api.rawg.io/api/games/"+url.PathEscape(externalID), httpx.GetJSONOptions{
 		Query: map[string]any{
-			"key": c.APIKey,
+			"key": key,
 		},
 		Timeout: 15 * time.Second,
 	}, &payload)

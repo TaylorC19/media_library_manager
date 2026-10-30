@@ -46,10 +46,13 @@ Unauthenticated visitors hitting protected URLs are redirected to login (locale 
 Search is **GET only**. Relevant query keys:
 
 - `q` — search text  
-- `media_type` — `movie` \| `tv` \| `album` \| `book` \| `game`  
+- `media_type` — optional: `movie` \| `tv` \| `album` \| `book` \| `game`; empty/omitted means All media.
 - `page` — page number for in-memory pagination  
 - `page_size` — optional page size  
 - `mode=barcode` — opens the barcode section without running a title search.
+- `view` — `grid` (default for Search) or `list`; retained through form submissions, See all links, and pagination.
+
+With All media selected, lookups run concurrently for all five types. Each non-empty group shows up to three results and a See all link to the same query filtered by that type, starting on page 1. Empty groups are omitted; provider warnings remain scoped to their type. Type-filtered searches retain normal pagination.
 
 When the request is an **htmx** request (`HX-Request: true`), the handler returns the **`partials/search_results`** template fragment instead of the full `pages/search.html` shell so the results region can swap in place.
 
@@ -72,6 +75,8 @@ My Library accepts `view=list` (default) or `view=grid`. Cover images appear in 
 | POST | `/media/import` | Import from provider ref into catalog/wishlist |
 | POST | `/media/refresh/{mediaRecordId}` | Refresh canonical metadata (htmx may target inline notice). |
 | POST | `/barcode/lookup` | Barcode lookup (JSON for the barcode section in Search; does **not** auto-save). |
+| POST | `/{locale}/settings/providers/test` | Authenticated, read-only credential check for one provider; never saves settings. |
+| POST | `/{locale}/settings/providers` | Save/remove only the signed-in account’s personal provider keys; blank fields preserve values. |
 | POST | `/settings/backup/export` | Download full-database backup (gzip JSON). |
 | POST | `/settings/backup/import` | Restore full database from backup file (requires confirmation). |
 

@@ -21,6 +21,7 @@ type Config struct {
 	SessionCookieSecure bool
 
 	// Provider API keys (optional; search degrades gracefully when unset).
+	ProviderKeysDir              string
 	TMDBAPIKey                   string
 	RAWGAPIKey                   string
 	DiscogsToken                 string
@@ -36,8 +37,8 @@ type Config struct {
 	MusicBrainzRateLimitCooldown time.Duration
 	MusicBrainzRetryableCooldown time.Duration
 
-	BackupEnabled         bool
-	BackupMaxUploadBytes  int64
+	BackupEnabled        bool
+	BackupMaxUploadBytes int64
 }
 
 func Load() (Config, error) {
@@ -54,6 +55,7 @@ func Load() (Config, error) {
 		SessionCookieName:            getEnv("SESSION_COOKIE_NAME", "mlm_session"),
 		SessionTTLHours:              getEnvInt("SESSION_TTL_HOURS", 24*14),
 		SessionCookieSecure:          getEnvBool("SESSION_COOKIE_SECURE", false),
+		ProviderKeysDir:              getEnv("PROVIDER_KEYS_DIR", "data/provider-keys"),
 		TMDBAPIKey:                   getEnv("TMDB_API_KEY", ""),
 		RAWGAPIKey:                   getEnv("RAWG_API_KEY", ""),
 		DiscogsToken:                 getEnv("DISCOGS_TOKEN", ""),
@@ -70,6 +72,10 @@ func Load() (Config, error) {
 		MusicBrainzRetryableCooldown: getEnvDurationMS("MUSICBRAINZ_RETRYABLE_COOLDOWN_MS", 2*time.Second),
 		BackupEnabled:                getEnvBool("BACKUP_ENABLED", true),
 		BackupMaxUploadBytes:         getEnvInt64("BACKUP_MAX_UPLOAD_BYTES", 100*1024*1024),
+	}
+
+	if strings.TrimSpace(cfg.ProviderKeysDir) == "" {
+		return Config{}, fmt.Errorf("PROVIDER_KEYS_DIR is required")
 	}
 
 	if cfg.MongoDatabase == "" {

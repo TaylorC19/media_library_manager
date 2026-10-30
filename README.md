@@ -27,6 +27,7 @@ In v1, every item lives in one of two buckets:
 - Manual entry creation when provider data is missing or incomplete
 - Provider-backed search with normalized results
 - Search with title lookup, barcode entry, and camera scanning, with explicit confirmation before saving
+- Personal provider API keys configurable from Settings, with environment defaults
 - English and Japanese UI support
 - Docker Compose for local **MongoDB** only; production Go image via `docker-compose.prod.yml`
 - `GET /health` for readiness and container health checks

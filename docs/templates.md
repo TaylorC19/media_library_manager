@@ -86,7 +86,7 @@ Partials are composed by layouts and `render_content` / page templates as needed
 
 ## Workspace navigation
 
-My Library is the default page, with Collection and Wishlist as local views and counts. Both support cover images and List/Grid layouts, preserved through filters and pagination. Add item opens Search. Search combines title lookup with a collapsible barcode input/camera section and a shared media type. Clicking a result opens full metadata in a native dialog, where Collection and Wishlist save actions are offered separately. Manual creation is a fallback within this flow. Settings lives in the header.
+My Library is the default page, with Collection and Wishlist as local views and counts. Both support cover images and List/Grid layouts, preserved through filters and pagination. Add item opens Search. Search combines title lookup with a collapsible barcode input/camera section and an optional media type selector above the title field. All media shows up to three results per type with See all links into type-filtered pagination. Search defaults to a cover grid within each group, with a List alternative; the active layout control is disabled. The layout remains selected through searches, See all, and pagination. Clicking a result opens full metadata in a native dialog, where Collection and Wishlist save actions are offered separately. Manual creation is a fallback within this flow. Settings lives in the header.
 
 `scan.js` owns barcode candidates and camera cleanup (including closing the disclosure). `search.js` handles read-only preview loading, dialog cancellation/retry, focus restoration, and manual creation links. Preview links support full-page navigation without JavaScript. Both English and Japanese use the same page structure.
 

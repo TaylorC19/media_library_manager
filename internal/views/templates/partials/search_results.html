@@ -1,4 +1,13 @@
 {{ define "partials/search_results" }}
+<nav class="view-switch" aria-label="{{ t . "search.results.layout" }}">
+  {{ if eq .View "list" }}
+  <button type="button" class="button-link" aria-current="true" disabled>{{ t . "library.list.listView" }}</button>
+  {{ else }}<a class="button-link" href="{{ .ViewURLs.list }}">{{ t . "library.list.listView" }}</a>{{ end }}
+  {{ if eq .View "grid" }}
+  <button type="button" class="button-link" aria-current="true" disabled>{{ t . "library.list.gridView" }}</button>
+  {{ else }}<a class="button-link" href="{{ .ViewURLs.grid }}">{{ t . "library.list.gridView" }}</a>{{ end }}
+</nav>
+
 {{ if ne .SearchError "" }}
   <p class="form-error" role="alert">{{ t . .SearchError }}</p>
 {{ end }}
@@ -8,20 +17,40 @@
 {{ end }}
 
 {{ if and .Query (eq .SearchError "") }}
-  {{ if .Hits }}
+  {{ if .AllMedia }}
+    {{ range .SearchGroups }}
+      {{ $group := . }}
+      {{ if .Hits }}
+      <section class="search-result-group" aria-labelledby="results-{{ .MediaType }}">
+        <div class="results-header">
+          <h3 id="results-{{ .MediaType }}">{{ t $ (printf "search.types.%s" .MediaType) }}</h3>
+          <a class="button-link" href="{{ .SeeAllURL }}">{{ t $ "search.results.seeAll" }} {{ t $ (printf "search.types.%s" .MediaType) }}</a>
+        </div>
+        <p class="muted results-summary">{{ t $ "search.results.summary" }}: {{ len .Hits }} / {{ .Total }}</p>
+        {{ range .Warnings }}<p class="search-warning muted" role="status">{{ t $ . }}</p>{{ end }}
+        <div class="search-results {{ if eq $.View "grid" }}search-results--grid{{ end }}">
+          {{ range .Hits }}{{ template "partials/search_result_card" (dict "Page" $ "Hit" .) }}{{ end }}
+        </div>
+      </section>
+      {{ else }}
+        {{ range .Warnings }}<p class="search-warning muted" role="status">{{ t $ (printf "search.types.%s" $group.MediaType) }}: {{ t $ . }}</p>{{ end }}
+      {{ end }}
+    {{ end }}
+    {{ if not .HasResults }}<p class="empty-state">{{ t . "search.results.empty" }}</p>{{ end }}
+  {{ else if .Hits }}
     <div class="results-header">
       <h3 class="search-results-heading">{{ t . "search.results.heading" }}</h3>
       <p class="muted results-summary">
         {{ t . "search.results.summary" }}: {{ .Pagination.StartItem }}-{{ .Pagination.EndItem }} / {{ .Pagination.TotalItems }}
       </p>
     </div>
-    <div class="search-results">
+    <div class="search-results {{ if eq $.View "grid" }}search-results--grid{{ end }}">
       {{ range .Hits }}
         {{ template "partials/search_result_card" (dict "Page" $ "Hit" .) }}
       {{ end }}
     </div>
     {{ template "partials/pagination" (dict "Page" . "Pagination" .Pagination) }}
-  {{ else if .Values.media_type }}
+  {{ else }}
     <p class="empty-state">{{ t . "search.results.empty" }}</p>
   {{ end }}
 {{ end }}

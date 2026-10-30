@@ -16,3 +16,6 @@ backups/
 
 # Go build artifact at repo root (if you use go build -o web).
 /web
+
+# Personal provider credentials (server-side only).
+data/provider-keys/

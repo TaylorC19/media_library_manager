@@ -10,6 +10,7 @@ import (
 	"media_library_manager/internal/config"
 	bdom "media_library_manager/internal/domain/barcode"
 	domainlib "media_library_manager/internal/domain/library"
+	"media_library_manager/internal/providerkeys"
 	"media_library_manager/internal/providers/discogs"
 	"media_library_manager/internal/providers/musicbrainz"
 	"media_library_manager/internal/providers/openlibrary"
@@ -108,7 +109,7 @@ func (s *Service) Lookup(ctx context.Context, userID primitive.ObjectID, req bdo
 				if st.MediaType != "album" {
 					continue
 				}
-				if strings.TrimSpace(s.cfg.DiscogsToken) == "" {
+				if providerkeys.Resolve(ctx, "discogs", s.cfg.DiscogsToken) == "" {
 					addFailure(&failures, seenFail, bdom.Failure{Provider: bdom.ProviderDiscogs, Code: bdom.CodeUnsupported})
 					continue
 				}

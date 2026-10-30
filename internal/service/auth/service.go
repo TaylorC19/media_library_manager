@@ -51,6 +51,7 @@ func (s *Service) Register(ctx context.Context, username, password string) (*dom
 
 	dn := username
 	user := &domainauth.User{
+		Role:         domainauth.RoleGeneral,
 		Username:     username,
 		PasswordHash: string(hash),
 		DisplayName:  &dn,

@@ -9,10 +9,11 @@ import (
 
 type User struct {
 	ID           primitive.ObjectID `bson:"_id,omitempty"`
+	Role         string             `bson:"role,omitempty"`
 	Username     string             `bson:"username"`
 	PasswordHash string             `bson:"passwordHash"`
 	// Pointer so BSON null decodes; omitempty keeps inserts clean.
-	DisplayName *string `bson:"displayName,omitempty"`
+	DisplayName *string   `bson:"displayName,omitempty"`
 	CreatedAt   time.Time `bson:"createdAt"`
 	UpdatedAt   time.Time `bson:"updatedAt"`
 }

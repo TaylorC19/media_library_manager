@@ -20,3 +20,6 @@ tmp
 .env
 .env.prod
 mongo-data
+
+# Personal provider credentials (server-side only).
+data/provider-keys/

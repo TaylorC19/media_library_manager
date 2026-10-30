@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"media_library_manager/internal/providerkeys"
 	"media_library_manager/internal/providers/httpx"
 	"media_library_manager/internal/providers/providererrors"
 )
@@ -23,14 +24,16 @@ type Client struct {
 }
 
 func (c *Client) SearchMovies(ctx context.Context, query string) ([]Result, error) {
-	if strings.TrimSpace(c.APIKey) == "" {
+	key := providerkeys.Resolve(ctx, "tmdb", c.APIKey)
+	if key == "" {
 		return nil, nil
 	}
 	return c.decodeSearch(ctx, "https://api.themoviedb.org/3/search/movie", "movie", strings.TrimSpace(query))
 }
 
 func (c *Client) SearchTV(ctx context.Context, query string) ([]Result, error) {
-	if strings.TrimSpace(c.APIKey) == "" {
+	key := providerkeys.Resolve(ctx, "tmdb", c.APIKey)
+	if key == "" {
 		return nil, nil
 	}
 	return c.decodeSearch(ctx, "https://api.themoviedb.org/3/search/tv", "tv", strings.TrimSpace(query))
@@ -67,10 +70,11 @@ type searchResponse struct {
 }
 
 func (c *Client) decodeSearch(ctx context.Context, endpoint, kind, query string) ([]Result, error) {
+	key := providerkeys.Resolve(ctx, "tmdb", c.APIKey)
 	var envelope searchResponse
 	if err := httpx.GetJSON(ctx, c.HTTP, "tmdb", "search", endpoint, httpx.GetJSONOptions{
 		Query: map[string]any{
-			"api_key":  c.APIKey,
+			"api_key":  key,
 			"query":    query,
 			"language": "en-US",
 		},
@@ -128,7 +132,8 @@ func decodeResultItem(raw json.RawMessage, kind string) (Result, bool) {
 }
 
 func (c *Client) GetDetails(ctx context.Context, externalID, kind string) (*Detail, error) {
-	if strings.TrimSpace(c.APIKey) == "" {
+	key := providerkeys.Resolve(ctx, "tmdb", c.APIKey)
+	if key == "" {
 		return nil, nil
 	}
 	if kind != "movie" && kind != "tv" {
@@ -170,7 +175,7 @@ func (c *Client) GetDetails(ctx context.Context, externalID, kind string) (*Deta
 	}
 	err = httpx.GetJSON(ctx, c.HTTP, "tmdb", "detail", "https://api.themoviedb.org/3/"+kind+"/"+strconv.Itoa(id), httpx.GetJSONOptions{
 		Query: map[string]any{
-			"api_key":            c.APIKey,
+			"api_key":            key,
 			"language":           "en-US",
 			"append_to_response": "credits",
 		},

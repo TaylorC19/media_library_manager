@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"media_library_manager/internal/providerkeys"
 	"media_library_manager/internal/providers/httpx"
 )
 
@@ -40,7 +41,11 @@ type searchResultItem struct {
 // SearchByBarcode queries Discogs release search by barcode.
 func (c *Client) SearchByBarcode(ctx context.Context, barcode string, limit int) ([]SearchHit, error) {
 	barcode = strings.TrimSpace(barcode)
-	if barcode == "" || c == nil || strings.TrimSpace(c.Token) == "" {
+	if c == nil {
+		return nil, nil
+	}
+	token := providerkeys.Resolve(ctx, "discogs", c.Token)
+	if barcode == "" || token == "" {
 		return nil, nil
 	}
 	if limit <= 0 {
@@ -54,7 +59,7 @@ func (c *Client) SearchByBarcode(ctx context.Context, barcode string, limit int)
 			"per_page": limit,
 		},
 		Headers: map[string]string{
-			"Authorization": "Discogs token=" + strings.TrimSpace(c.Token),
+			"Authorization": "Discogs token=" + token,
 			"User-Agent":    "MediaLibraryManager/1.0",
 		},
 		Timeout: 20 * time.Second,
@@ -91,10 +96,10 @@ func (c *Client) SearchByBarcode(ctx context.Context, barcode string, limit int)
 }
 
 // EnrichAlbumSubtitle is a placeholder hook for search subtitle enrichment.
-func (c *Client) EnrichAlbumSubtitle(_ context.Context, artist, title, currentSubtitle string) string {
+func (c *Client) EnrichAlbumSubtitle(ctx context.Context, artist, title, currentSubtitle string) string {
 	_ = artist
 	_ = title
-	if c == nil || strings.TrimSpace(c.Token) == "" {
+	if c == nil || providerkeys.Resolve(ctx, "discogs", c.Token) == "" {
 		return currentSubtitle
 	}
 	return currentSubtitle

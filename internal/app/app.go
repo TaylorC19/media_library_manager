@@ -14,6 +14,7 @@ import (
 	"media_library_manager/internal/db"
 	"media_library_manager/internal/http/handlers"
 	"media_library_manager/internal/http/middleware"
+	"media_library_manager/internal/providerkeys"
 	"media_library_manager/internal/providers/musicbrainz"
 	"media_library_manager/internal/repository"
 	authsvc "media_library_manager/internal/service/auth"
@@ -93,7 +94,7 @@ func New(cfg config.Config) (*App, error) {
 	mediaSvc := mediasvc.NewService(cfg, mediaRepo, libEntriesRepo, cache, reliabilitySvc, mbThrottle)
 	searchSvc := searchsvc.NewService(cfg, cache, reliabilitySvc, mbThrottle)
 	barcodeSvc := barcodesvc.NewService(cfg, mediaRepo, libEntriesRepo, scanLogsRepo, cache, reliabilitySvc, mbThrottle)
-	instance.Router = instance.newRouter(staticFS, librarySvc, mediaSvc, searchSvc, barcodeSvc)
+	instance.Router = instance.newRouter(staticFS, librarySvc, mediaSvc, searchSvc, barcodeSvc, mbThrottle)
 
 	return instance, nil
 }
@@ -105,7 +106,7 @@ func (a *App) Close(ctx context.Context) error {
 	return a.Mongo.Disconnect(ctx)
 }
 
-func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc.Service, search *searchsvc.Service, barcode *barcodesvc.Service) http.Handler {
+func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc.Service, search *searchsvc.Service, barcode *barcodesvc.Service, mbThrottle *musicbrainz.Throttle) http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.Recovery)
@@ -125,7 +126,8 @@ func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc
 	searchHandler := handlers.NewSearchHandler(a.Renderer, search)
 	mediaHandler := handlers.NewMediaHandler(a.Renderer, media)
 	barcodeHandler := handlers.NewBarcodeHandler(barcode)
-	settingsHandler := handlers.NewSettingsHandler(a.Config, a.Renderer)
+	keyStore := providerkeys.NewStore(a.Config.ProviderKeysDir)
+	settingsHandler := handlers.NewSettingsHandler(a.Config, a.Renderer, keyStore, &providerkeys.Checker{MusicBrainzUA: a.Config.MusicBrainzUA, MusicBrainzThrottle: mbThrottle})
 	backupHandler := handlers.NewBackupHandler(a.Config, a.Database)
 
 	r.Get("/{locale}/login", authHandler.LoginPage)
@@ -139,22 +141,24 @@ func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc
 		r.Get("/{locale}/", libraryHandler.LibraryPage)
 		r.Get("/{locale}/catalog", libraryHandler.Catalog)
 		r.Get("/{locale}/wishlist", libraryHandler.Wishlist)
-		r.Get("/{locale}/search", searchHandler.Page)
-		r.Get("/{locale}/search/details", mediaHandler.Preview)
+		r.With(middleware.WithProviderKeys(keyStore)).Get("/{locale}/search", searchHandler.Page)
+		r.With(middleware.WithProviderKeys(keyStore)).Get("/{locale}/search/details", mediaHandler.Preview)
 		r.Get("/{locale}/scan", handlers.LegacyScanPage)
 		r.Get("/{locale}/settings", settingsHandler.Page)
+		r.With(middleware.RequireWritable).Post("/{locale}/settings/providers", settingsHandler.ProviderKeysSubmit)
+		r.Post("/{locale}/settings/providers/test", settingsHandler.ProviderKeyTest)
 		r.Post("/settings/backup/export", backupHandler.ExportSubmit)
 		r.Post("/settings/backup/import", backupHandler.ImportSubmit)
-		r.Post("/media/import", mediaHandler.ImportSubmit)
-		r.Post("/media/refresh/{mediaRecordId}", mediaHandler.RefreshSubmit)
-		r.Get("/{locale}/library/new", libraryHandler.NewForm)
-		r.Get("/{locale}/library/{entryId}/edit", libraryHandler.EditForm)
+		r.With(middleware.RequireWritable, middleware.WithProviderKeys(keyStore)).Post("/media/import", mediaHandler.ImportSubmit)
+		r.With(middleware.RequireWritable, middleware.WithProviderKeys(keyStore)).Post("/media/refresh/{mediaRecordId}", mediaHandler.RefreshSubmit)
+		r.With(middleware.RequireWritable).Get("/{locale}/library/new", libraryHandler.NewForm)
+		r.With(middleware.RequireWritable).Get("/{locale}/library/{entryId}/edit", libraryHandler.EditForm)
 		r.Get("/{locale}/library/{entryId}", libraryHandler.Detail)
-		r.Post("/library", libraryHandler.CreateSubmit)
-		r.Post("/library/attach", libraryHandler.AttachSubmit)
-		r.Post("/library/{entryId}/update", libraryHandler.UpdateSubmit)
-		r.Post("/library/{entryId}/delete", libraryHandler.DeleteSubmit)
-		r.Post("/barcode/lookup", barcodeHandler.Lookup)
+		r.With(middleware.RequireWritable).Post("/library", libraryHandler.CreateSubmit)
+		r.With(middleware.RequireWritable).Post("/library/attach", libraryHandler.AttachSubmit)
+		r.With(middleware.RequireWritable).Post("/library/{entryId}/update", libraryHandler.UpdateSubmit)
+		r.With(middleware.RequireWritable).Post("/library/{entryId}/delete", libraryHandler.DeleteSubmit)
+		r.With(middleware.WithProviderKeys(keyStore)).Post("/barcode/lookup", barcodeHandler.Lookup)
 	})
 
 	return r

@@ -10,6 +10,7 @@ import (
 	"media_library_manager/internal/config"
 	domainlib "media_library_manager/internal/domain/library"
 	domainsearch "media_library_manager/internal/domain/search"
+	"media_library_manager/internal/providerkeys"
 	"media_library_manager/internal/providers/discogs"
 	"media_library_manager/internal/providers/musicbrainz"
 	"media_library_manager/internal/providers/openlibrary"
@@ -80,7 +81,7 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 
 	switch mediaType {
 	case "movie":
-		if strings.TrimSpace(s.cfg.TMDBAPIKey) == "" {
+		if providerkeys.Resolve(ctx, "tmdb", s.cfg.TMDBAPIKey) == "" {
 			warnings = append(warnings, "search.warnings.tmdbKeyMissing")
 			return Outcome{Warnings: warnings}, nil
 		}
@@ -110,7 +111,7 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 		}
 
 	case "tv":
-		if strings.TrimSpace(s.cfg.TMDBAPIKey) == "" {
+		if providerkeys.Resolve(ctx, "tmdb", s.cfg.TMDBAPIKey) == "" {
 			warnings = append(warnings, "search.warnings.tmdbKeyMissing")
 			return Outcome{Warnings: warnings}, nil
 		}
@@ -203,7 +204,7 @@ func (s *Service) Search(ctx context.Context, mediaType, query string) (Outcome,
 		}
 
 	case "game":
-		if strings.TrimSpace(s.cfg.RAWGAPIKey) == "" {
+		if providerkeys.Resolve(ctx, "rawg", s.cfg.RAWGAPIKey) == "" {
 			warnings = append(warnings, "search.warnings.rawgKeyMissing")
 			return Outcome{Warnings: warnings}, nil
 		}
