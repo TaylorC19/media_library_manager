@@ -5,16 +5,18 @@ import (
 
 	domainauth "media_library_manager/internal/domain/auth"
 	domainlib "media_library_manager/internal/domain/library"
+	"media_library_manager/internal/config"
 	"media_library_manager/internal/http/middleware"
 	"media_library_manager/internal/views"
 )
 
 type SettingsHandler struct {
+	cfg    config.Config
 	render *views.Renderer
 }
 
-func NewSettingsHandler(render *views.Renderer) *SettingsHandler {
-	return &SettingsHandler{render: render}
+func NewSettingsHandler(cfg config.Config, render *views.Renderer) *SettingsHandler {
+	return &SettingsHandler{cfg: cfg, render: render}
 }
 
 func (h *SettingsHandler) baseAppData(r *http.Request, titleKey string) map[string]any {
@@ -77,6 +79,8 @@ func (h *SettingsHandler) Page(w http.ResponseWriter, r *http.Request) {
 	data := h.baseAppData(r, "settings.title")
 	data["ContentTemplate"] = "pages/settings.content"
 	data["CurrentLanguageKey"] = "common.languageSwitcher." + data["Locale"].(string)
+	data["DatabaseName"] = h.cfg.MongoDatabase
+	data["BackupEnabled"] = h.cfg.BackupEnabled
 	h.consumeFlash(w, r, data)
 	h.renderPage(w, "pages/settings.html", data)
 }

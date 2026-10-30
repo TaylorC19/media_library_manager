@@ -208,6 +208,25 @@
       "heading": "Language",
       "current": "Current language",
       "choose": "Choose language"
+    },
+    "backup": {
+      "heading": "Data backup",
+      "intro": "Export or restore the full application database (all users, library entries, metadata, sessions, and cache).",
+      "warning": "Backup files contain password hashes and session data. Store them securely. Import replaces all existing data in the database.",
+      "export": "Download backup",
+      "import": "Restore from backup",
+      "fileLabel": "Backup file",
+      "confirmLabel": "Confirm database name",
+      "confirmHint": "Type this database name to confirm restore:",
+      "flash": {
+        "imported": "Database restored from backup. You may need to sign in again."
+      },
+      "errors": {
+        "disabled": "Backup and restore are disabled on this server.",
+        "invalidUpload": "Could not read the backup file. Check the file size and format.",
+        "confirmMismatch": "Database name confirmation does not match.",
+        "importFailed": "Restore failed. The backup file may be invalid or from an incompatible version."
+      }
     }
   },
   "search": {

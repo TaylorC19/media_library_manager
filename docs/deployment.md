@@ -131,6 +131,25 @@ Set `SESSION_COOKIE_SECURE=true` when the app is served behind HTTPS so session 
 
 Production templates include provider keys and cache TTLs (`PROVIDER_CACHE_*`, MusicBrainz throttling). See [`.env.prod.example`](../.env.prod.example) and [`internal/config/config.go`](../internal/config/config.go).
 
+## Database backup and restore
+
+Full-database backup options are documented in [`docs/backup.md`](backup.md).
+
+**Quick ops backup** (requires MongoDB Database Tools on the host):
+
+```bash
+make db-backup
+make db-restore ARCHIVE=backups/mongodump-<timestamp>
+```
+
+With bundled Mongo in Docker:
+
+```bash
+docker compose exec mongo mongodump --uri=mongodb://127.0.0.1:27017 --db=media_library --out=/tmp/backup
+```
+
+The production app container does not include `mongodump`; use host tools, the `mongo` service, or **Settings → Download backup** / `go run ./cmd/db export`.
+
 ## Raspberry Pi notes
 
 - Prefer **64-bit** OS.
