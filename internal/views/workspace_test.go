@@ -146,3 +146,108 @@ func TestPreviewHasDetailsAndBothExplicitSaveActions(t *testing.T) {
 		}
 	}
 }
+
+func TestAllMediaSearchRendering(t *testing.T) {
+	renderer, err := NewRenderer(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, locale := range []string{"en", "ja"} {
+		data := map[string]any{
+			"Locale": locale, "Values": map[string]string{"media_type": "", "q": "test"},
+			"ContentTemplate": "pages/search.content", "User": &domainauth.User{Username: "test"},
+			"Path": "/" + locale + "/search", "MediaTypes": domainlib.MediaTypes,
+			"Query": "test", "SearchError": "", "AllMedia": true, "HasResults": true,
+			"SearchGroups": []map[string]any{
+				{"MediaType": "game", "Hits": []domainsearch.Hit{{Title: "Game title", MediaType: "game", Provider: "rawg", ExternalID: "1"}}, "Total": 1, "SeeAllURL": "/" + locale + "/search?q=test&media_type=game"},
+			},
+		}
+		var out bytes.Buffer
+		if err := renderer.Render(&out, "pages/search.html", data); err != nil {
+			t.Fatal(err)
+		}
+		html := out.String()
+		if strings.Index(html, `id="media_type"`) > strings.Index(html, `id="q"`) {
+			t.Error("type selector must precede title")
+		}
+		for _, want := range []string{`value="" selected`, `id="results-game"`, `data-search-detail`, `media_type=game`} {
+			if !strings.Contains(html, want) {
+				t.Errorf("missing %q", want)
+			}
+		}
+		if strings.Contains(html, `class="pagination"`) {
+			t.Error("all-media previews should link to per-type pagination")
+		}
+		data["HasResults"] = false
+		data["SearchGroups"] = nil
+		out.Reset()
+		if err := renderer.Render(&out, "partials/search_results", data); err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(out.String(), `class="empty-state"`) {
+			t.Error("all-media search needs an empty state")
+		}
+	}
+}
+
+func TestSearchListAndGridLayouts(t *testing.T) {
+	renderer, err := NewRenderer(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, view := range []string{"list", "grid"} {
+		for _, grouped := range []bool{true, false} {
+			hits := []domainsearch.Hit{{Title: "Cover title", MediaType: "game", Provider: "rawg", ExternalID: "1"}}
+			data := map[string]any{
+				"Locale": "en", "Query": "query", "SearchError": "", "View": view,
+				"ViewURLs": map[string]string{"list": "/en/search?q=query&view=list", "grid": "/en/search?q=query&view=grid"},
+				"AllMedia": grouped, "HasResults": true, "Hits": hits,
+				"SearchGroups": []map[string]any{{"MediaType": "game", "Hits": hits, "Total": 1, "SeeAllURL": "/en/search?q=query&media_type=game&view=" + view}},
+				"Pagination":   map[string]any{"TotalItems": 1, "PageSize": 10, "StartItem": 1, "EndItem": 1},
+			}
+			var out bytes.Buffer
+			if err := renderer.Render(&out, "partials/search_results", data); err != nil {
+				t.Fatal(err)
+			}
+			html := out.String()
+			if strings.Contains(html, "search-results--grid") != (view == "grid") {
+				t.Errorf("wrong %s layout, grouped=%v", view, grouped)
+			}
+			if strings.Count(html, `aria-current="true" disabled`) != 1 {
+				t.Error("active layout must be disabled")
+			}
+			if !strings.Contains(html, `data-search-detail`) {
+				t.Error("layout must preserve preview links")
+			}
+		}
+	}
+}
+
+func TestSettingsProviderKeysNeverPopulateSecrets(t *testing.T) {
+	renderer, err := NewRenderer(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, locale := range []string{"en", "ja"} {
+		var out bytes.Buffer
+		data := map[string]any{
+			"Locale": locale, "Path": "/" + locale + "/settings", "User": &domainauth.User{Username: "test"},
+			"ContentTemplate": "pages/settings.content", "CurrentLanguageKey": "common.languageSwitcher." + locale,
+			"ProviderStatuses": []map[string]any{{"ID": "tmdb", "Name": "TMDB", "StatusKey": "settings.providers.status.personal", "Personal": true, "KeyURL": "https://www.themoviedb.org/settings/api"}},
+			// Deliberately supply secret data outside statuses: the template must ignore it.
+			"Values": map[string]string{"tmdb": "test-secret-do-not-render"},
+		}
+		if err := renderer.Render(&out, "pages/settings.html", data); err != nil {
+			t.Fatal(err)
+		}
+		html := out.String()
+		for _, want := range []string{`/settings/providers`, `type="password"`, `name="remove_tmdb"`, `autocomplete="new-password"`, `type="button" data-test-provider="tmdb"`, `role="status"`, `/settings/providers/test`, `href="https://www.themoviedb.org/settings/api"`, `target="_blank" rel="noopener noreferrer"`, `data-test-provider="musicbrainz"`, `data-test-provider="openlibrary"`} {
+			if !strings.Contains(html, want) {
+				t.Errorf("missing %q", want)
+			}
+		}
+		if strings.Contains(html, "test-secret-do-not-render") {
+			t.Error("settings leaked a key")
+		}
+	}
+}

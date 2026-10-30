@@ -9,10 +9,6 @@
     action="/{{ .Locale }}/search"
   >
     <div class="field">
-      <label for="q">{{ t . "search.fields.query" }}</label>
-      <input id="q" name="q" type="search" value="{{ .Values.q }}" autocomplete="off" />
-    </div>
-    <div class="field">
       <label for="media_type">{{ t . "search.fields.mediaType" }}</label>
       <select id="media_type" name="media_type">
         <option value="" {{ if eq .Values.media_type "" }}selected{{ end }}>{{ t . "search.fields.mediaTypePlaceholder" }}</option>
@@ -21,6 +17,11 @@
         {{ end }}
       </select>
     </div>
+    <div class="field">
+      <label for="q">{{ t . "search.fields.query" }}</label>
+      <input id="q" name="q" type="search" value="{{ .Values.q }}" autocomplete="off" />
+    </div>
+    <input type="hidden" name="view" value="{{ .View }}" />
     <input type="hidden" name="page_size" value="{{ if .Values.page_size }}{{ .Values.page_size }}{{ else }}10{{ end }}" />
     <button class="button-primary" type="submit">{{ t . "search.actions.submit" }}</button>
   </form>

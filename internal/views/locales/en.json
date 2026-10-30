@@ -205,7 +205,7 @@
   },
   "settings": {
     "title": "Settings",
-    "intro": "Review your account details and switch the app language.",
+    "intro": "Manage your account, language, provider API keys, and backups.",
     "account": {
       "heading": "Account",
       "username": "Username",
@@ -234,6 +234,53 @@
         "confirmMismatch": "Database name confirmation does not match.",
         "importFailed": "Restore failed. The backup file may be invalid or from an incompatible version."
       }
+    },
+    "providers": {
+      "heading": "Metadata providers",
+      "intro": "Set personal keys for your account. They apply immediately to search, item details, and barcode lookup. Server defaults are used when no personal key is set.",
+      "newKey": "New API key or token",
+      "keepHint": "Leave a field blank to keep its current key. Saved keys are never shown. To replace a key, enter the new value without selecting Remove.",
+      "remove": "Remove my saved key and use the server default",
+      "save": "Save API keys",
+      "saved": "API key settings saved.",
+      "noKeyNeeded": "No API key required.",
+      "status": {
+        "missing": "Not configured",
+        "server": "Using server default",
+        "personal": "Using your saved key"
+      },
+      "uses": {
+        "tmdb": "Finds movies and TV shows and supplies posters, descriptions, cast, and release details.",
+        "rawg": "Finds video games and supplies cover images, descriptions, platforms, and release details.",
+        "discogs": "Finds physical music releases, such as CDs and vinyl, from scanned or entered barcodes.",
+        "musicbrainz": "Finds music albums and supplies artist, release, label, and track details.",
+        "openlibrary": "Finds books by title or ISBN and supplies covers, descriptions, and author details."
+      },
+      "errors": {
+        "invalid": "Enter a key without spaces (up to 512 characters). Do not replace and remove the same key at once.",
+        "load": "Could not load your saved API keys.",
+        "save": "Could not save API keys. Please try again."
+      },
+      "test": "Test key",
+      "testing": "Testing…",
+      "testHint": "Test checks the entered key without saving. With a blank field, it checks your saved key or the server default. If Remove is selected, it checks the server default.",
+      "testResults": {
+        "success": "Key accepted. No changes were saved by this test.",
+        "missing": "No key is configured. Enter one to test.",
+        "rejected": "The provider rejected this key. Check it and try again.",
+        "forbidden": "Access was denied. Check the key permissions or provider restrictions.",
+        "rate_limited": "The provider’s rate limit was reached. Try again later.",
+        "invalid_response": "The provider returned an unexpected response. Try again later.",
+        "unavailable": "Could not complete the test. Check your connection or try again later.",
+        "invalid": "Enter a key without spaces (up to 512 characters), and do not select Remove when testing a replacement.",
+        "connection_success": "Connection successful. The service returned a valid response.",
+        "connection_denied": "The service denied the connection. Please try again later."
+      },
+      "getKey": "Get API key",
+      "getToken": "Get API token",
+      "newTab": "opens in a new tab",
+      "testConnection": "Test connection",
+      "website": "Website"
     }
   },
   "search": {
@@ -241,7 +288,7 @@
     "fields": {
       "query": "Title or keywords",
       "mediaType": "Media type",
-      "mediaTypePlaceholder": "Choose a type for title search…"
+      "mediaTypePlaceholder": "All media"
     },
     "actions": {
       "submit": "Search",
@@ -251,7 +298,9 @@
     "results": {
       "heading": "Results",
       "empty": "No matches found.",
-      "summary": "Showing"
+      "summary": "Showing",
+      "seeAll": "See all",
+      "layout": "Search result layout"
     },
     "warnings": {
       "tmdbKeyMissing": "TMDB API key is not configured. Add TMDB_API_KEY to search movies and TV.",
@@ -259,7 +308,6 @@
       "providerUnavailable": "The provider is temporarily unavailable. Try again in a moment."
     },
     "errors": {
-      "mediaTypeRequired": "Choose a media type before searching.",
       "invalidMediaType": "That media type is not supported."
     },
     "provider": {
@@ -318,6 +366,13 @@
       "publishers": "Publishers",
       "platforms": "Platforms",
       "releaseDate": "Release date"
+    },
+    "types": {
+      "movie": "Movies",
+      "tv": "TV",
+      "album": "Music",
+      "book": "Books",
+      "game": "Games"
     }
   }
 }

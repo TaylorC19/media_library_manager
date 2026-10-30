@@ -20,6 +20,8 @@ App backups use the format `media_library_manager.backup` version `1` (`.mlm-bac
 
 Backup files include **password hashes** and **session tokens**. Treat them like secrets. Do not commit them to git (`backups/` is gitignored).
 
+Personal API keys configured in Settings are stored outside MongoDB, in `PROVIDER_KEYS_DIR`. Database export/restore does not include or modify them. Back up that private directory separately; see [provider credentials](provider-notes.md#configure-api-keys-in-settings).
+
 ## Settings UI
 
 1. Sign in and open **Settings**.

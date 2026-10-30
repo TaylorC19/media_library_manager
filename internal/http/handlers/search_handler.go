@@ -101,11 +101,20 @@ func (h *SearchHandler) Page(w http.ResponseWriter, r *http.Request) {
 
 	data := h.baseAppData(r, "search.title")
 	data["ContentTemplate"] = "pages/search.content"
+	view := searchView(r)
+	data["View"] = view
+	data["ViewURLs"] = map[string]string{
+		"list": libraryViewURL(r, basePath, "list"),
+		"grid": libraryViewURL(r, basePath, "grid"),
+	}
 	scanOpen := r.URL.Query().Get("mode") == "barcode"
 	data["ScanOpen"] = scanOpen
 	data["PageScripts"] = []string{"/static/js/vendor/zxing-browser.min.js", "/static/js/scan.js", "/static/js/search.js"}
 	data["Query"] = q
 	data["Hits"] = []domainsearch.Hit{}
+	data["AllMedia"] = mediaType == ""
+	data["SearchGroups"] = []searchGroup{}
+	data["HasResults"] = false
 	data["SearchWarnings"] = []string{}
 	data["SearchError"] = ""
 	data["Values"] = map[string]string{
@@ -113,22 +122,27 @@ func (h *SearchHandler) Page(w http.ResponseWriter, r *http.Request) {
 		"media_type": mediaType,
 		"page_size":  r.URL.Query().Get("page_size"),
 	}
-	data["Pagination"] = buildPagination(basePath, searchValues(q, mediaType), page, pageSize, 0)
+	data["Pagination"] = buildPagination(basePath, searchPageValues(q, mediaType, view), page, pageSize, 0)
 	data["SearchPath"] = basePath
 
-	if !scanOpen && q != "" && mediaType == "" {
-		data["SearchError"] = "search.errors.mediaTypeRequired"
-	}
 	if q == "" || scanOpen {
 		h.renderSearchResponse(w, r, data)
 		return
 	}
-	if mediaType == "" {
+	if mediaType != "" && !domainlib.IsMediaType(mediaType) {
+		data["SearchError"] = "search.errors.invalidMediaType"
 		h.renderSearchResponse(w, r, data)
 		return
 	}
-	if !domainlib.IsMediaType(mediaType) {
-		data["SearchError"] = "search.errors.invalidMediaType"
+	if mediaType == "" {
+		groups, err := h.search.SearchAll(r.Context(), q)
+		if err != nil {
+			http.Error(w, "Could not complete search", http.StatusBadGateway)
+			return
+		}
+		previews, hasResults := buildSearchGroups(basePath, q, pageSize, view, groups)
+		data["SearchGroups"] = previews
+		data["HasResults"] = hasResults
 		h.renderSearchResponse(w, r, data)
 		return
 	}
@@ -142,7 +156,7 @@ func (h *SearchHandler) Page(w http.ResponseWriter, r *http.Request) {
 	start, end := pageBounds(totalItems, page, pageSize)
 	data["Hits"] = out.Hits[start:end]
 	data["SearchWarnings"] = out.Warnings
-	data["Pagination"] = buildPagination(basePath, searchValues(q, mediaType), page, pageSize, totalItems)
+	data["Pagination"] = buildPagination(basePath, searchPageValues(q, mediaType, view), page, pageSize, totalItems)
 
 	h.renderSearchResponse(w, r, data)
 }
@@ -164,5 +178,50 @@ func searchValues(query, mediaType string) url.Values {
 	if mediaType != "" {
 		values.Set("media_type", mediaType)
 	}
+	return values
+}
+
+const searchGroupPreviewSize = 3
+
+type searchGroup struct {
+	MediaType string
+	Hits      []domainsearch.Hit
+	Warnings  []string
+	Total     int
+	SeeAllURL string
+}
+
+func buildSearchGroups(path, query string, pageSize int, view string, groups []searchsvc.Group) ([]searchGroup, bool) {
+	previews := make([]searchGroup, 0, len(groups))
+	hasResults := false
+	for _, group := range groups {
+		if len(group.Hits) == 0 && len(group.Warnings) == 0 {
+			continue
+		}
+		count := len(group.Hits)
+		if count > searchGroupPreviewSize {
+			count = searchGroupPreviewSize
+		}
+		if count > 0 {
+			hasResults = true
+		}
+		previews = append(previews, searchGroup{
+			MediaType: group.MediaType, Hits: group.Hits[:count], Warnings: group.Warnings,
+			Total: len(group.Hits), SeeAllURL: pageURL(path, searchPageValues(query, group.MediaType, view), 1, pageSize),
+		})
+	}
+	return previews, hasResults
+}
+
+func searchView(r *http.Request) string {
+	if r.URL.Query().Get("view") == "list" {
+		return "list"
+	}
+	return "grid"
+}
+
+func searchPageValues(query, mediaType, view string) url.Values {
+	values := searchValues(query, mediaType)
+	values.Set("view", view)
 	return values
 }

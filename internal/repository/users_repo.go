@@ -40,12 +40,15 @@ func (r *UsersRepository) Create(ctx context.Context, user *domainauth.User) err
 	user.CreatedAt = now
 	user.UpdatedAt = now
 
-	_, err := r.coll.InsertOne(ctx, user)
+	result, err := r.coll.InsertOne(ctx, user)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			return ErrUsernameTaken
 		}
 		return fmt.Errorf("create user: %w", err)
+	}
+	if id, ok := result.InsertedID.(primitive.ObjectID); ok {
+		user.ID = id
 	}
 	return nil
 }
@@ -72,4 +75,19 @@ func (r *UsersRepository) FindByID(ctx context.Context, id primitive.ObjectID) (
 		return nil, fmt.Errorf("find user by id: %w", err)
 	}
 	return &user, nil
+}
+
+// SetRole is used by the server-side management command, never public signup.
+func (r *UsersRepository) SetRole(ctx context.Context, username, role string) error {
+	if !domainauth.IsRole(role) {
+		return fmt.Errorf("invalid role")
+	}
+	result, err := r.coll.UpdateOne(ctx, bson.M{"username": username}, bson.M{"$set": bson.M{"role": role, "updatedAt": time.Now().UTC()}})
+	if err != nil {
+		return fmt.Errorf("set user role: %w", err)
+	}
+	if result.MatchedCount == 0 {
+		return mongo.ErrNoDocuments
+	}
+	return nil
 }

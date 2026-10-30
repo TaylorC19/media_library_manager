@@ -52,3 +52,18 @@ func CurrentSession(ctx context.Context) *domainauth.Session {
 	session, _ := ctx.Value(authSessionKey).(*domainauth.Session)
 	return session
 }
+
+func RequireWritable(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := CurrentUser(r.Context())
+		if user == nil {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		if !user.CanWrite() {
+			http.Error(w, "This account is read-only", http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}

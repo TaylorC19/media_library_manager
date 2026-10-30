@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	domainsearch "media_library_manager/internal/domain/search"
+	searchsvc "media_library_manager/internal/service/search"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -65,6 +67,65 @@ func TestLibraryViewURLsKeepFiltersAndPagination(t *testing.T) {
 		}
 		if got := libraryView(r); got != want {
 			t.Errorf("view=%q, want %q", got, want)
+		}
+	}
+}
+
+func TestGroupedSearchPreviewsAndSeeAllLinks(t *testing.T) {
+	groups := []searchsvc.Group{
+		{MediaType: "movie", Outcome: searchsvc.Outcome{Hits: []domainsearch.Hit{{Title: "1"}, {Title: "2"}, {Title: "3"}, {Title: "4"}}}},
+		{MediaType: "tv"},
+		{MediaType: "album", Outcome: searchsvc.Outcome{Warnings: []string{"search.warnings.providerUnavailable"}}},
+		{MediaType: "book", Outcome: searchsvc.Outcome{Hits: []domainsearch.Hit{{Title: "Book"}}}},
+	}
+	previews, hasResults := buildSearchGroups("/ja/search", "A/B & C", 10, "grid", groups)
+	if !hasResults || len(previews) != 3 {
+		t.Fatalf("unexpected groups: %#v", previews)
+	}
+	if len(previews[0].Hits) != 3 || previews[0].Total != 4 {
+		t.Error("preview must cap at three without losing total")
+	}
+	if previews[1].MediaType != "album" || len(previews[1].Warnings) != 1 {
+		t.Error("scoped warnings must survive empty results")
+	}
+	for _, group := range previews {
+		u, err := url.Parse(group.SeeAllURL)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for key, want := range map[string]string{"q": "A/B & C", "media_type": group.MediaType, "page": "1", "page_size": "10", "view": "grid"} {
+			if got := u.Query().Get(key); got != want {
+				t.Errorf("%s=%q, want %q", key, got, want)
+			}
+		}
+	}
+	empty, hasResults := buildSearchGroups("/en/search", "x", 10, "grid", []searchsvc.Group{{MediaType: "tv"}})
+	if len(empty) != 0 || hasResults {
+		t.Error("empty types should not become result groups")
+	}
+}
+
+func TestSearchLayoutDefaultAndPagination(t *testing.T) {
+	for _, param := range []string{"", "invalid", "grid", "list"} {
+		r := httptest.NewRequest(http.MethodGet, "/en/search?view="+param, nil)
+		want := "grid"
+		if param == "list" {
+			want = "list"
+		}
+		if got := searchView(r); got != want {
+			t.Errorf("view %q: got %q, want %q", param, got, want)
+		}
+	}
+	for _, view := range []string{"grid", "list"} {
+		pagination := buildPagination("/en/search", searchPageValues("cyberpunk", "tv", view), 1, 10, 25)
+		u, err := url.Parse(pagination.NextURL)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for key, want := range map[string]string{"q": "cyberpunk", "media_type": "tv", "view": view, "page": "2"} {
+			if got := u.Query().Get(key); got != want {
+				t.Errorf("%s=%q, want %q", key, got, want)
+			}
 		}
 	}
 }

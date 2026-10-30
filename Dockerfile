@@ -9,7 +9,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/web ./cmd/web
 
 FROM alpine:3.20
 RUN apk add --no-cache ca-certificates \
-	&& addgroup -S app && adduser -S app -G app
+	&& addgroup -S app && adduser -S app -G app \
+	&& mkdir -p /home/app/data/provider-keys \
+	&& chown -R app:app /home/app/data
 USER app
 WORKDIR /home/app
 
