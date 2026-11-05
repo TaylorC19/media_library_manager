@@ -142,7 +142,7 @@ function dialogSetup(fetchResponse) {
     listeners.click({target:{closest:()=>trigger},button:0,preventDefault(){prevented=true;},...extra});
     return prevented;
   }
-  return {ids,requests,trigger,click};
+  return {ids,requests,trigger,click,window:context.window};
 }
 
 test('opening a result loads read-only details and closing restores focus', async () => {
@@ -211,4 +211,21 @@ test('Scan again ignores an older lookup that finishes after the new scan', asyn
   const titles=descendants(ids['scan-results'],'h3').map(element=>element.textContent);
   assert.equal(titles.includes('New scan'),true);
   assert.equal(titles.includes('Old scan'),false);
+});
+
+
+test('dialog close button and Escape keep edits until discard is confirmed', async () => {
+  const {ids,click,window}=dialogSetup();
+  let allow=false, prompts=0;
+  window.UnsavedChanges={initialize(){},confirmDiscard(){prompts++;return allow;}};
+  click(); await flush();
+  ids['search-detail-close'].emit('click');
+  assert.equal(ids['search-detail-dialog'].open,true);
+  let prevented=false;
+  ids['search-detail-dialog'].emit('cancel',{preventDefault(){prevented=true;}});
+  assert.equal(prevented,true);
+  assert.equal(ids['search-detail-dialog'].open,true);
+  allow=true;ids['search-detail-close'].emit('click');
+  assert.equal(ids['search-detail-dialog'].open,false);
+  assert.equal(prompts,3);
 });

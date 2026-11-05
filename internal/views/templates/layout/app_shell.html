@@ -11,8 +11,9 @@
     <script src="/static/js/htmx.min.js" defer></script>
     <script src="/static/js/navigation.js" defer></script>
     <script src="/static/js/formats.js" defer></script>
+    <script src="/static/js/unsaved.js" defer></script>
   </head>
-  <body>
+  <body data-unsaved-message="{{ t . "common.unsavedChanges" }}">
     <header class="container header-bar">
       <div class="header-top">
         <h1>{{ t . "common.appName" }}</h1>

@@ -202,7 +202,7 @@ func (r *MediaRecordsRepository) FindLooseTitleYear(ctx context.Context, mediaTy
 	return out, nil
 }
 
-func (r *MediaRecordsRepository) UpdateManualCore(ctx context.Context, id primitive.ObjectID, title string, sortTitle *string, mediaType string, year *int32) error {
+func (r *MediaRecordsRepository) UpdateManualCore(ctx context.Context, id primitive.ObjectID, title string, sortTitle *string, mediaType string, year *int32, metadata ...domainlib.ManualMetadata) error {
 	set := bson.M{
 		"title":     title,
 		"mediaType": mediaType,
@@ -219,6 +219,11 @@ func (r *MediaRecordsRepository) UpdateManualCore(ctx context.Context, id primit
 		set["year"] = nil
 	}
 
+	if len(metadata) > 0 {
+		set["imageUrl"] = metadata[0].ImageURL
+		set["summary"] = metadata[0].Summary
+		set["details"] = metadata[0].Details
+	}
 	res, err := r.coll.UpdateOne(ctx, bson.M{"_id": id, "source": domainlib.SourceManual}, bson.M{"$set": set})
 	if err != nil {
 		return fmt.Errorf("update media record: %w", err)

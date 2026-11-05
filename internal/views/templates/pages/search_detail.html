@@ -22,7 +22,7 @@
     </div>{{ end }}
   </div>
   {{ if .User.CanWrite }}
-  <form data-dialog-save class="dialog-copy-form stack-form" method="post" action="{{ if .LocalID }}/library/attach{{ else }}/media/import{{ end }}">
+  <form data-unsaved data-dialog-save class="dialog-copy-form stack-form" method="post" action="{{ if .LocalID }}/library/attach{{ else }}/media/import{{ end }}">
     <input type="hidden" name="locale" value="{{ .Locale }}" />
     <input type="hidden" name="barcode" value="{{ .Barcode }}" />
     {{ if .LocalID }}<input type="hidden" name="media_record_id" value="{{ .LocalID }}" />

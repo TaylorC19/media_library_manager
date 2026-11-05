@@ -29,7 +29,7 @@
     <h3 id="provider-keys-heading">{{ t . "settings.providers.heading" }}</h3>
     <p class="muted">{{ t . "settings.providers.intro" }}</p>
     {{ template "partials/form_errors" . }}
-    <form method="post" action="/{{ .Locale }}/settings/providers" class="stack-form" autocomplete="off">
+    <form data-unsaved method="post" action="/{{ .Locale }}/settings/providers" class="stack-form" autocomplete="off">
       {{ range .ProviderStatuses }}
       <fieldset class="form-fieldset">
         {{ $keyLabel := "settings.providers.getKey" }}{{ if eq .ID "discogs" }}{{ $keyLabel = "settings.providers.getToken" }}{{ end }}

@@ -1,7 +1,7 @@
 {{ define "pages/library_form.content" }}
 <h2>{{ if .IsEdit }}{{ t . "library.form.editTitle" }}{{ else }}{{ t . "library.form.newTitle" }}{{ end }}</h2>
 {{ template "partials/form_errors" . }}
-<form method="post" action="{{ .FormAction }}" class="stack-form">
+<form data-unsaved data-unsaved-invalid="{{ if .FormErrors }}true{{ else }}false{{ end }}" method="post" action="{{ .FormAction }}" class="stack-form">
   <input type="hidden" name="locale" value="{{ .Locale }}" />
 
   <fieldset class="form-fieldset">
@@ -70,6 +70,22 @@
     <label class="field">
       <span>{{ t . "library.fields.year" }}</span>
       <input type="number" name="year" value="{{ index .Values "year" }}" min="0" step="1" />
+    </label>
+    <label class="field">
+      <span>{{ t . "library.fields.coverURL" }}</span>
+      <input type="url" name="image_url" value="{{ index .Values "image_url" }}" maxlength="2048" inputmode="url" aria-describedby="manual-cover-hint" />
+    </label>
+    <p id="manual-cover-hint" class="muted">{{ t . "library.form.coverHint" }}</p>
+
+    <label class="field">
+      <span>{{ t . "library.fields.creators" }}</span>
+      <textarea name="creators" rows="3" maxlength="5000" aria-describedby="manual-creators-hint">{{ index .Values "creators" }}</textarea>
+    </label>
+    <p id="manual-creators-hint" class="muted">{{ t . "library.form.creatorsHint" }}</p>
+
+    <label class="field">
+      <span>{{ t . "library.fields.description" }}</span>
+      <textarea name="description" rows="6" maxlength="10000">{{ index .Values "description" }}</textarea>
     </label>
     {{ else }}
     <p class="muted">{{ t . "library.form.mediaReadOnly" }}</p>

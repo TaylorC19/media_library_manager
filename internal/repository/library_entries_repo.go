@@ -151,18 +151,22 @@ func (r *LibraryEntriesRepository) CountByMediaRecordID(ctx context.Context, med
 func (r *LibraryEntriesRepository) Update(ctx context.Context, entry *domainlib.LibraryEntry) error {
 	entry.UpdatedAt = time.Now().UTC()
 	set := bson.M{
-		"bucket":       entry.Bucket,
-		"mediaType":    entry.MediaType,
-		"format":       entry.Format,
-		"barcode":      entry.Barcode,
-		"purchaseDate": entry.PurchaseDate,
-		"notes":        entry.Notes,
-		"tags":         entry.Tags,
-		"updatedAt":    entry.UpdatedAt,
+		"mediaRecordId": entry.MediaRecordID,
+		"bucket":        entry.Bucket,
+		"mediaType":     entry.MediaType,
+		"format":        entry.Format,
+		"barcode":       entry.Barcode,
+		"purchaseDate":  entry.PurchaseDate,
+		"notes":         entry.Notes,
+		"tags":          entry.Tags,
+		"updatedAt":     entry.UpdatedAt,
 	}
-	_, err := r.coll.UpdateOne(ctx, bson.M{"_id": entry.ID, "userId": entry.UserID}, bson.M{"$set": set})
+	result, err := r.coll.UpdateOne(ctx, bson.M{"_id": entry.ID, "userId": entry.UserID}, bson.M{"$set": set})
 	if err != nil {
 		return fmt.Errorf("update library entry: %w", err)
+	}
+	if result.MatchedCount == 0 {
+		return mongo.ErrNoDocuments
 	}
 	return nil
 }
@@ -226,4 +230,9 @@ func (r *LibraryEntriesRepository) FindByUserAndBarcode(ctx context.Context, use
 func (r *LibraryEntriesRepository) SetBarcodeIfMissing(ctx context.Context, userID, entryID primitive.ObjectID, barcode string) error {
 	_, err := r.coll.UpdateOne(ctx, bson.M{"_id": entryID, "userId": userID, "$or": bson.A{bson.M{"barcode": nil}, bson.M{"barcode": ""}}}, bson.M{"$set": bson.M{"barcode": barcode, "updatedAt": time.Now().UTC()}})
 	return err
+}
+
+func (r *LibraryEntriesRepository) ReferencedByOtherUser(ctx context.Context, mediaID, userID primitive.ObjectID) (bool, error) {
+	count, err := r.coll.CountDocuments(ctx, bson.M{"mediaRecordId": mediaID, "userId": bson.M{"$ne": userID}}, options.Count().SetLimit(1))
+	return count > 0, err
 }

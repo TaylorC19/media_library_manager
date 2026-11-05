@@ -24,7 +24,7 @@
           <th scope="row">{{ .Username }} {{ if $self }}<span class="muted">({{ t $ "users.you" }})</span>{{ end }}</th>
           <td>{{ .ShowName }}</td>
           <td>
-            <form class="user-role-form" method="post" action="/{{ $.Locale }}/admin/users/{{ .ID.Hex }}/role">
+            <form data-unsaved class="user-role-form" method="post" action="/{{ $.Locale }}/admin/users/{{ .ID.Hex }}/role">
               <input type="hidden" name="filter_role" value="{{ $.RoleFilter }}" /><input type="hidden" name="q" value="{{ $.Query }}" /><input type="hidden" name="page" value="{{ $.Pagination.Page }}" />
               <label class="is-hidden" for="role-{{ .ID.Hex }}">{{ t $ "settings.account.role" }}: {{ .Username }}</label>
               {{ $current := .EffectiveRole }}
@@ -45,7 +45,7 @@
   <p class="muted">{{ t . "users.roleHint" }}</p>
   <details class="card users-create" {{ if .CreateOpen }}open{{ end }}>
     <summary>{{ t . "users.create" }}</summary>
-    <form method="post" action="/{{ .Locale }}/admin/users" class="stack-form" autocomplete="off">
+    <form data-unsaved method="post" action="/{{ .Locale }}/admin/users" class="stack-form" autocomplete="off">
       <input type="hidden" name="filter_role" value="{{ .RoleFilter }}" /><input type="hidden" name="q" value="{{ .Query }}" /><input type="hidden" name="page" value="{{ .Pagination.Page }}" />
       <label for="new-username">{{ t . "settings.account.username" }}</label>
       <input id="new-username" name="username" value="{{ .NewUsername }}" required maxlength="80" autocomplete="off" />

@@ -68,6 +68,7 @@
 
   async function save(form, submitter) {
     if (pendingSave) return;
+    const savedValues = window.UnsavedChanges?.snapshot(form);
     const key = identity(currentURL);
     const body = new URLSearchParams(new FormData(form));
     if (submitter?.name === "bucket") body.set("bucket", submitter.value);
@@ -92,6 +93,8 @@
       if (!acknowledgedSaves.has(key)) acknowledgedSaves.set(key, new Map());
       acknowledgedSaves.get(key).set(bucket, { revision: ++saveRevision, result });
       updateBadges(key, bucket);
+      // Duplicate saves preserve the existing copy, including its original notes.
+      if (!result.existing) window.UnsavedChanges?.saved(form, savedValues);
       if (dialog.open && identity(currentURL) === key) {
         const restoreFocus = form.contains(document.activeElement);
         const link = savedAction(result);
@@ -139,6 +142,7 @@
       const html = await response.text();
       if (request.signal.aborted || controller !== request || !dialog.open) return;
       content.innerHTML = html;
+      window.UnsavedChanges?.initialize();
       // A preview that began before a save completed may contain older status.
       for (const ack of acknowledgedSaves.get(identity(url))?.values() || []) {
         if (ack.revision > revisionAtStart) savedAction(ack.result);
@@ -192,11 +196,16 @@
     if (link.hasAttribute("data-manual-preview")) manualPreview(link);
     else load(link.href);
   });
-  close.addEventListener("click", () => dialog.close());
+  function requestClose() {
+    if (window.UnsavedChanges && !window.UnsavedChanges.confirmDiscard(content)) return;
+    dialog.close();
+  }
+  close.addEventListener("click", requestClose);
+  dialog.addEventListener("cancel", function (event) { event.preventDefault(); requestClose(); });
   dialog.addEventListener("click", function (event) {
     if (event.target !== dialog) return;
     const bounds = dialog.getBoundingClientRect();
-    if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
+    if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) requestClose();
   });
   dialog.addEventListener("close", function () {
     if (controller) controller.abort();

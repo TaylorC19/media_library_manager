@@ -1,5 +1,6 @@
 {
   "common": {
+    "unsavedChanges": "You have unsaved changes. Leave and discard them?",
     "appName": "Media Library Manager",
     "languageSwitcher": {
       "aria": "Language switcher",
@@ -117,6 +118,9 @@
       "missingMedia": "Linked media record is missing."
     },
     "fields": {
+      "coverURL": "Cover image URL",
+      "creators": "Creators",
+      "description": "Description",
       "bucket": "Save to",
       "mediaType": "Media type",
       "format": "Format",
@@ -130,6 +134,8 @@
       "source": "Source"
     },
     "form": {
+      "coverHint": "Paste an http:// or https:// image URL. Leave blank for no cover.",
+      "creatorsHint": "Authors, directors, artists, or developers — one name per line. Names containing commas can stay on one line.",
       "legacyFormat": "This copy uses a previously saved format. You can keep it or choose a format relevant to this media type.",
       "newTitle": "Create manually",
       "editTitle": "Edit item",
@@ -160,6 +166,9 @@
       "refreshMedia": "Refresh media details"
     },
     "errors": {
+      "invalidCoverURL": "Enter an http:// or https:// image URL without embedded credentials (up to 2048 characters).",
+      "descriptionTooLong": "Keep the description to 10,000 characters or fewer.",
+      "creatorsTooLong": "Keep the creator list to 5,000 characters or fewer.",
       "titleRequired": "Title is required.",
       "invalidMediaType": "Choose a valid media type.",
       "invalidBucket": "Choose catalog or wishlist.",

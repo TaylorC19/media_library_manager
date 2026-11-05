@@ -171,3 +171,14 @@ Relevant formats are enforced server-side for new saves and manual creation:
 | Game | Nintendo Switch, PlayStation 5, Xbox, Blu-ray, DVD, CD, Digital, Other |
 
 Not set remains valid for every type. Library filters and manual/edit forms update format choices immediately when media type changes. Any media type exposes all formats. An existing legacy format can remain unchanged when editing the same media type; new unrelated choices are rejected. Filter URLs can still target legacy formats. Without JavaScript, forms retain server-rendered choices and ordinary form submission works; changing a manual media type may require submitting and choosing a relevant format after validation.
+
+
+### Manual media metadata
+
+Manual create/edit forms accept optional `image_url`, `description`, and `creators` alongside title/year and copy information. Cover images use absolute HTTP(S) URLs without embedded credentials; the server stores the URL rather than fetching or uploading an image. Descriptions are plain text (up to 10,000 characters). Creators are entered one per line (up to 5,000 characters total), preserving commas inside names and deduplicating case variants. They are stored as authors for books, directors for movies, creators for TV, artists for albums, and developers for games, so existing Library details and creator search work without separate rendering rules. Blank optional fields clear saved values; validation errors retain entered values.
+
+Provider metadata ignores these manual fields, even if they are submitted directly. All manual write actions enforce writable accounts and same-origin submissions. If another user references a manual record, changing its metadata clones it for the selected saved entry instead of modifying the other user’s record; the saved-entry ID and copy details are preserved. Duplicate-copy conflicts are checked before metadata is changed. No image files are uploaded or included in backups by this feature; backups contain the saved URLs and metadata.
+
+### Unsaved form changes
+
+Library create/edit, provider key settings, admin role/create-user forms, and Search copy-details forms warn before discarding changed values. Navigation links, Cancel, logout, and dialog close/Escape/backdrop use a localized confirmation; reload, tab close, and full-page history navigation use the browser's standard warning (subject to browser support and user interaction). Unchanged or reverted values do not warn. Successful native submissions proceed normally; Library validation responses remain protected. Successful new-copy dialog saves acknowledge only submitted values, preserving warnings for newer edits or failed/duplicate saves. Search/filter controls are excluded. Form values remain in memory; no drafts or credentials are written to browser storage.

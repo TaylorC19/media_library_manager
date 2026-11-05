@@ -268,6 +268,7 @@ func (h *LibraryHandler) EditForm(w http.ResponseWriter, r *http.Request) {
 		"purchase_date": stringVal(detail.Entry.PurchaseDate),
 		"notes":         stringVal(detail.Entry.Notes),
 		"tags":          strings.Join(detail.Entry.Tags, ", "),
+		"image_url":     stringVal(detail.Media.ImageURL), "description": stringVal(detail.Media.Summary), "creators": libsvc.ManualCreatorText(detail.Media),
 	}
 	if detail.Media.Year != nil {
 		values["year"] = strconv.Itoa(int(*detail.Media.Year))
@@ -290,6 +291,11 @@ func (h *LibraryHandler) CreateSubmit(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		return
 	}
+	if !user.CanWrite() || !sameSettingsOrigin(r) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "invalid form", http.StatusBadRequest)
 		return
@@ -300,6 +306,7 @@ func (h *LibraryHandler) CreateSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := libsvc.ManualCreateForm{
+		ImageURL: r.FormValue("image_url"), Summary: r.FormValue("description"), Creators: r.FormValue("creators"),
 		Bucket:       r.FormValue("bucket"),
 		MediaType:    r.FormValue("media_type"),
 		Title:        r.FormValue("title"),
@@ -408,6 +415,11 @@ func (h *LibraryHandler) UpdateSubmit(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		return
 	}
+	if !user.CanWrite() || !sameSettingsOrigin(r) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -422,6 +434,7 @@ func (h *LibraryHandler) UpdateSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	form := libsvc.ManualUpdateForm{
+		ImageURL: r.FormValue("image_url"), Summary: r.FormValue("description"), Creators: r.FormValue("creators"),
 		MediaType:    r.FormValue("media_type"),
 		Title:        r.FormValue("title"),
 		Year:         parseYearField(r.FormValue("year")),
@@ -562,6 +575,7 @@ func bucketValues(filters libsvc.ListBucketFilters) url.Values {
 
 func formValuesFromCreate(f libsvc.ManualCreateForm) map[string]string {
 	return map[string]string{
+		"image_url": f.ImageURL, "description": f.Summary, "creators": f.Creators,
 		"bucket":        f.Bucket,
 		"media_type":    f.MediaType,
 		"title":         f.Title,
@@ -576,6 +590,7 @@ func formValuesFromCreate(f libsvc.ManualCreateForm) map[string]string {
 
 func formValuesFromUpdate(f libsvc.ManualUpdateForm) map[string]string {
 	return map[string]string{
+		"image_url": f.ImageURL, "description": f.Summary, "creators": f.Creators,
 		"bucket":        f.Bucket,
 		"media_type":    f.MediaType,
 		"title":         f.Title,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 
 	domainlib "media_library_manager/internal/domain/library"
@@ -47,6 +48,9 @@ type ListBucketResult struct {
 }
 
 type ManualCreateForm struct {
+	ImageURL     string
+	Summary      string
+	Creators     string
 	Bucket       string
 	MediaType    string
 	Title        string
@@ -59,6 +63,9 @@ type ManualCreateForm struct {
 }
 
 type ManualUpdateForm struct {
+	ImageURL     string
+	Summary      string
+	Creators     string
 	MediaType    string
 	Title        string
 	Year         *int
@@ -281,6 +288,7 @@ func (s *Service) CreateManual(ctx context.Context, userID primitive.ObjectID, f
 		errs = append(errs, "library.errors.titleRequired")
 	}
 	errs = append(errs, validateCore(f.MediaType, f.Bucket, f.Format)...)
+	errs = append(errs, validateManualMetadata(f.ImageURL, f.Summary, f.Creators)...)
 	if len(errs) > 0 {
 		return primitive.NilObjectID, errs, ErrValidation
 	}
@@ -300,6 +308,7 @@ func (s *Service) CreateManual(ctx context.Context, userID primitive.ObjectID, f
 		SortTitle:         &sortTitle,
 		Year:              year,
 		BarcodeCandidates: []string{},
+		ImageURL:          optionalString(f.ImageURL), Summary: optionalString(f.Summary), Details: manualDetails(nil, f.MediaType, f.Creators),
 	}
 	if err := s.media.Insert(ctx, mediaRec); err != nil {
 		return primitive.NilObjectID, nil, err
@@ -419,6 +428,7 @@ func (s *Service) UpdateEntry(ctx context.Context, userID, entryID primitive.Obj
 			errs = append(errs, "library.errors.titleRequired")
 		}
 		errs = append(errs, validateCore(f.MediaType, f.Bucket, validateFormat)...)
+		errs = append(errs, validateManualMetadata(f.ImageURL, f.Summary, f.Creators)...)
 	} else {
 		errs = append(errs, validateCore(mediaRec.MediaType, f.Bucket, validateFormat)...)
 	}
@@ -426,6 +436,15 @@ func (s *Service) UpdateEntry(ctx context.Context, userID, entryID primitive.Obj
 		return errs, ErrValidation
 	}
 
+	// Check copy conflicts before changing any metadata.
+	conflict, err := s.entries.FindByUserMediaBucketAndFormat(ctx, userID, mediaRec.ID, f.Bucket, optionalString(f.Format))
+	if err != nil {
+		return nil, err
+	}
+	if conflict != nil && conflict.ID != entry.ID {
+		return []string{"library.errors.duplicateEntry"}, ErrValidation
+	}
+	var clonedID primitive.ObjectID
 	if mediaRec.Source == domainlib.SourceManual {
 		title := strings.TrimSpace(f.Title)
 		sortTitle := strings.ToLower(title)
@@ -434,11 +453,34 @@ func (s *Service) UpdateEntry(ctx context.Context, userID, entryID primitive.Obj
 			y := int32(*f.Year)
 			year = &y
 		}
-		if err := s.media.UpdateManualCore(ctx, mediaRec.ID, title, &sortTitle, f.MediaType, year); err != nil {
-			if errors.Is(err, mongo.ErrNoDocuments) {
-				return nil, ErrNotFound
+		metadata := domainlib.ManualMetadata{ImageURL: optionalString(f.ImageURL), Summary: optionalString(f.Summary), Details: manualDetails(mediaRec.Details, f.MediaType, f.Creators)}
+		changed := title != mediaRec.Title || f.MediaType != mediaRec.MediaType || !reflect.DeepEqual(year, mediaRec.Year) || stringValue(metadata.ImageURL) != stringValue(mediaRec.ImageURL) || stringValue(metadata.Summary) != stringValue(mediaRec.Summary) || strings.Join(parseCreators(f.Creators), "\n") != ManualCreatorText(mediaRec)
+		if changed {
+			shared, err := s.entries.ReferencedByOtherUser(ctx, mediaRec.ID, userID)
+			if err != nil {
+				return nil, err
 			}
-			return nil, err
+			if shared {
+				copy := *mediaRec
+				copy.ID = primitive.NilObjectID
+				copy.Title = title
+				copy.SortTitle = &sortTitle
+				copy.MediaType = f.MediaType
+				copy.Year = year
+				copy.ImageURL = metadata.ImageURL
+				copy.Summary = metadata.Summary
+				copy.Details = metadata.Details
+				if err := s.media.Insert(ctx, &copy); err != nil {
+					return nil, err
+				}
+				clonedID = copy.ID
+				entry.MediaRecordID = copy.ID
+			} else if err := s.media.UpdateManualCore(ctx, mediaRec.ID, title, &sortTitle, f.MediaType, year, metadata); err != nil {
+				if errors.Is(err, mongo.ErrNoDocuments) {
+					return nil, ErrNotFound
+				}
+				return nil, err
+			}
 		}
 		entry.MediaType = f.MediaType
 	} else {
@@ -459,6 +501,12 @@ func (s *Service) UpdateEntry(ctx context.Context, userID, entryID primitive.Obj
 	entry.Tags = parseTags(f.Tags)
 
 	if err := s.entries.Update(ctx, entry); err != nil {
+		if !clonedID.IsZero() {
+			_ = s.media.DeleteByID(ctx, clonedID)
+		}
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, ErrNotFound
+		}
 		if mongo.IsDuplicateKeyError(err) {
 			return []string{"library.errors.duplicateEntry"}, ErrValidation
 		}

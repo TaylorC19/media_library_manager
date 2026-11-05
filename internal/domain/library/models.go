@@ -40,3 +40,10 @@ type LibraryEntry struct {
 	CreatedAt     time.Time          `bson:"createdAt"`
 	UpdatedAt     time.Time          `bson:"updatedAt"`
 }
+
+// ManualMetadata is supplied only when updating manually entered media.
+type ManualMetadata struct {
+	ImageURL *string
+	Summary  *string
+	Details  bson.M
+}

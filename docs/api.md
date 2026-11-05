@@ -82,3 +82,6 @@ Sessions use an HTTP-only cookie (name from `SESSION_COOKIE_NAME`, default `mlm_
 
 
 Search-dialog saves to `/media/import` or `/library/attach` accept optional `format` and `notes`. Format must be relevant to the actual media type; an existing same-format copy is returned without replacing its notes. `X-Search-Dialog: 1` returns the existing saved-copy navigation JSON plus `format`. Ordinary form requests continue redirecting to the saved copy. One form uses Collection/Wishlist buttons named `bucket` to identify the destination.
+
+
+Manual create/update actions additionally accept `image_url`, `description`, and newline-separated `creators`. These fields apply only to manually entered media; provider metadata remains read-only. Empty values clear optional metadata, and invalid cover URL schemes/credentials and overlong text are rejected.
