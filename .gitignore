@@ -19,3 +19,15 @@ backups/
 
 # Personal provider credentials (server-side only).
 data/provider-keys/
+
+# QA/audit publishing policy: only reviewed Markdown summaries belong in Git.
+# Runtime code and regression tests under internal/ and scripts/ are unaffected.
+/docs/qa/**
+!/docs/qa/**/
+!/docs/qa/**/*.md
+/docs/security/**
+!/docs/security/**/
+!/docs/security/**/*.md
+# Raw reports may themselves be Markdown; always keep private folders ignored.
+/docs/qa/**/private/
+/docs/security/**/private/

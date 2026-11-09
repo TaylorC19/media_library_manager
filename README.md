@@ -200,7 +200,7 @@ Tracked improvements; completed items are checked below. User management is also
 
 ### Next improvements and browser QA
 
-Live browser review: [2026-10-30 report and screenshots](docs/qa/2026-10-30/report.md). Confirmed defects are separate from improvement suggestions; destructive and account-changing flows were not submitted.
+Live browser review: [2026-10-30 sanitized QA report](docs/qa/2026-10-30/report.md). Confirmed defects are separate from improvement suggestions; destructive and account-changing flows were not submitted.
 
 - [x] **BQA-01 — Responsive detail layout:** stack cover/metadata by component width and stack metadata labels/values on narrow cards; verified in the browser at 390, 515, and 1280 px.
 - [x] **I-01 — Save and continue browsing:** save inside the search dialog, update badges immediately, and offer Open saved item for existing saves.

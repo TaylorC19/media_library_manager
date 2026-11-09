@@ -23,3 +23,7 @@ mongo-data
 
 # Personal provider credentials (server-side only).
 data/provider-keys/
+
+# QA/audit evidence is not needed in application images.
+docs/qa/
+docs/security/

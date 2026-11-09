@@ -1,0 +1,39 @@
+# Keep deployment exclusions aligned with .gitignore when it changes.
+.DS_Store
+.env
+.env.local
+.env.*.local
+node_modules
+.pnpm-store
+.turbo
+.next
+dist
+coverage
+*.log
+*.tsbuildinfo
+mongodb-data
+tmp/
+backups/
+
+# Go build artifact at repo root (if you use go build -o web).
+/web
+
+# Personal provider credentials (server-side only).
+data/provider-keys/
+
+# QA/audit publishing policy: only reviewed Markdown summaries belong in Git.
+# Runtime code and regression tests under internal/ and scripts/ are unaffected.
+/docs/qa/**
+!/docs/qa/**/
+!/docs/qa/**/*.md
+/docs/security/**
+!/docs/security/**/
+!/docs/security/**/*.md
+# Raw reports may themselves be Markdown; always keep private folders ignored.
+/docs/qa/**/private/
+/docs/security/**/private/
+
+# No real environment files or QA/audit material belongs in deployment uploads.
+.env*
+/docs/qa/
+/docs/security/
