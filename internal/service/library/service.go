@@ -359,7 +359,25 @@ func (s *Service) AttachFromMediaRecord(ctx context.Context, userID, mediaRecord
 		return primitive.NilObjectID, false, nil, err
 	}
 	if mediaRec == nil {
-		return primitive.NilObjectID, false, []string{"library.errors.mediaNotFound"}, ErrValidation
+		return primitive.NilObjectID, false, nil, ErrNotFound
+	}
+	// Existing references define access to legacy shared manual records. A new
+	// account cannot acquire access merely by knowing a manual record's ID.
+	switch mediaRec.Source {
+	case domainlib.SourceProvider:
+	case domainlib.SourceManual:
+		if userID.IsZero() {
+			return primitive.NilObjectID, false, nil, ErrNotFound
+		}
+		owned, err := s.entries.FindByUserAndMediaRecordIDs(ctx, userID, []primitive.ObjectID{mediaRecordID})
+		if err != nil {
+			return primitive.NilObjectID, false, nil, err
+		}
+		if len(owned) == 0 {
+			return primitive.NilObjectID, false, nil, ErrNotFound
+		}
+	default:
+		return primitive.NilObjectID, false, nil, ErrNotFound
 	}
 
 	var errs []string

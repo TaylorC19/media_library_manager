@@ -25,7 +25,7 @@ func TestSearchRemotePageRenderingAndStableControls(t *testing.T) {
 	media := repository.NewMediaRecordsRepository(database)
 	entries := repository.NewLibraryEntriesRepository(database)
 	owner := primitive.NewObjectID()
-	rec := &domainlib.MediaRecord{MediaType: "book", ProviderRefs: bson.M{"openLibrary": bson.M{"workKey": "OL61W"}}}
+	rec := &domainlib.MediaRecord{MediaType: "book", Source: domainlib.SourceProvider, ProviderRefs: bson.M{"openLibrary": bson.M{"workKey": "OL61W"}}}
 	if err := media.Insert(ctx, rec); err != nil {
 		t.Fatal(err)
 	}

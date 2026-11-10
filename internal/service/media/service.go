@@ -120,7 +120,7 @@ func (s *Service) Import(ctx context.Context, userID primitive.ObjectID, form Im
 	if err != nil {
 		return nil, nil, err
 	}
-	if existingByProviderRef != nil {
+	if existingByProviderRef != nil && existingByProviderRef.Source == domainlib.SourceProvider {
 		return s.attachLibraryEntry(ctx, userID, existingByProviderRef, form.Bucket, form.Barcode, form.Format, form.Notes, true)
 	}
 
@@ -322,6 +322,9 @@ func (s *Service) findReusableRecord(ctx context.Context, normalized *domainlib.
 
 	var matches []domainlib.MediaRecord
 	for _, candidate := range candidates {
+		if candidate.Source != domainlib.SourceProvider {
+			continue
+		}
 		if normalizeTitle(candidate.Title) != normalizeTitle(normalized.Title) {
 			continue
 		}
@@ -622,7 +625,9 @@ func singleUniqueRecord(records []domainlib.MediaRecord) *domainlib.MediaRecord 
 	}
 	seen := make(map[primitive.ObjectID]domainlib.MediaRecord)
 	for _, record := range records {
-		seen[record.ID] = record
+		if record.Source == domainlib.SourceProvider {
+			seen[record.ID] = record
+		}
 	}
 	if len(seen) != 1 {
 		return nil

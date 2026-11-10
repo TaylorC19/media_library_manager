@@ -6,4 +6,4 @@ Screenshots and raw reports remain local-only and are ignored by Git. Store inte
 
 The regression tests under `internal/` and `scripts/` remain tracked and are separate from private browser evidence. QA/security documentation is excluded from Docker and Vercel deployment uploads.
 
-QA/audit folders were removed from local and affected remote branch histories on 2026-11-09. Current ignore rules prevent ordinary future additions. Older clones, forks, and host-retained refs or caches can still contain prior copies; see [the cleanup record](../security/history-cleanup.md).
+Current ignore rules prevent ordinary additions of private evidence. Follow the [history hygiene guide](../security/history-cleanup.md) when previously committed material requires cleanup; keep incident-specific status in private records.

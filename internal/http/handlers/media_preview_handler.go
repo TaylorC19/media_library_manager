@@ -35,7 +35,7 @@ func (h *MediaHandler) Preview(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 			return
 		}
-		record, err = h.media.PreviewLocal(r.Context(), id)
+		record, err = h.media.PreviewLocal(r.Context(), middleware.CurrentUser(r.Context()).ID, id)
 	} else {
 		record, err = h.media.Preview(r.Context(), form)
 	}

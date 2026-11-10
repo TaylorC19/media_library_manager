@@ -163,7 +163,7 @@ docker-compose.yml mongo only (local dev DB); docker-compose.prod.yml Go app + o
 - saved filters and collection views
 - deeper edition and release modeling for physical media
 - background metadata refresh
-- replace [`docs/screenshots/README.md`](docs/screenshots/README.md) placeholders with real captures; more deployment examples
+- more deployment examples and reviewed screenshots using synthetic data; keep raw captures private
 
 ## Account roles
 
@@ -181,7 +181,7 @@ Production Compose includes the same management command:
 docker compose -f docker-compose.prod.yml exec app ./users -username YOUR_USERNAME -role admin
 ```
 
-Admins can open **User management** from the header or Settings to search accounts, create accounts, and change other users’ roles. Your own admin role is disabled to prevent lockout. Web role changes are serialized and the acting admin is rechecked before each change in this single-process app.
+Admins can open **User management** from the header or Settings to search accounts, create accounts, and change other users’ roles. Your own admin role is disabled to prevent lockout. Role changes require current administrator access; the server-side recovery command remains available.
 
 Each account also has **Manage saved keys**. Admins can see which providers have personal keys saved, without viewing their values. Clearing a key requires a separate confirmation page and checkbox. It removes only that account’s selected provider override: the server default applies afterward if configured. It does not revoke the credential with the provider or change other accounts’ keys.
 

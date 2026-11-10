@@ -80,7 +80,7 @@ func (r *MediaRecordsRepository) FindByProviderImportRef(ctx context.Context, pr
 		return nil, nil
 	}
 
-	query := bson.M{}
+	query := bson.M{"source": domainlib.SourceProvider}
 	switch strings.TrimSpace(provider) {
 	case "tmdb":
 		query["providerRefs.tmdb.id"] = externalID
@@ -143,6 +143,7 @@ func (r *MediaRecordsRepository) FindByAnyBarcodeCandidates(ctx context.Context,
 	}
 
 	cur, err := r.coll.Find(ctx, bson.M{
+		"source":            domainlib.SourceProvider,
 		"mediaType":         mediaType,
 		"barcodeCandidates": bson.M{"$in": barcodes},
 	})
@@ -172,6 +173,7 @@ func (r *MediaRecordsRepository) FindLooseTitleYear(ctx context.Context, mediaTy
 	}
 
 	query := bson.M{
+		"source":    domainlib.SourceProvider,
 		"mediaType": mediaType,
 		"title": bson.M{
 			"$regex":   "^" + regexp.QuoteMeta(title) + "$",
@@ -238,6 +240,9 @@ func (r *MediaRecordsRepository) UpdateProviderData(ctx context.Context, rec *do
 	if rec == nil {
 		return mongo.ErrNilDocument
 	}
+	if rec.Source != domainlib.SourceProvider {
+		return mongo.ErrNoDocuments
+	}
 
 	now := time.Now().UTC()
 	rec.UpdatedAt = now
@@ -258,7 +263,7 @@ func (r *MediaRecordsRepository) UpdateProviderData(ctx context.Context, rec *do
 		"updatedAt":         now,
 	}
 
-	res, err := r.coll.UpdateOne(ctx, bson.M{"_id": rec.ID}, bson.M{"$set": set})
+	res, err := r.coll.UpdateOne(ctx, bson.M{"_id": rec.ID, "source": domainlib.SourceProvider}, bson.M{"$set": set})
 	if err != nil {
 		return fmt.Errorf("update provider media record: %w", err)
 	}

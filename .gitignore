@@ -2,6 +2,9 @@
 .env
 .env.local
 .env.*.local
+.env.*
+!.env.example
+!.env.prod.example
 node_modules
 .pnpm-store
 .turbo
@@ -27,7 +30,11 @@ data/provider-keys/
 !/docs/qa/**/*.md
 /docs/security/**
 !/docs/security/**/
-!/docs/security/**/*.md
+!/docs/security/README.md
+!/docs/security/history-cleanup.md
 # Raw reports may themselves be Markdown; always keep private folders ignored.
 /docs/qa/**/private/
 /docs/security/**/private/
+
+# Security risk registers stay private, including sanitized audit summaries.
+/docs/**/audit.md

@@ -211,6 +211,11 @@ func (s *Service) buildLocalCandidates(ctx context.Context, userID primitive.Obj
 	var out []scoredCandidate
 	for _, rec := range recs {
 		entList := byMedia[rec.ID]
+		// Manual barcode candidates are private even when metadata contains a
+		// globally searchable barcode. Provider metadata remains shareable.
+		if rec.Source != domainlib.SourceProvider && (rec.Source != domainlib.SourceManual || len(entList) == 0) {
+			continue
+		}
 		linked := make([]bdom.LinkedEntry, 0, len(entList))
 		for _, e := range entList {
 			linked = append(linked, bdom.LinkedEntry{EntryID: e.ID.Hex(), Bucket: e.Bucket})

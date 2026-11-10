@@ -67,7 +67,7 @@ These fields are what make one user's copy different from another user's copy of
 
 ## `media_records`
 
-Stores normalized metadata snapshots shared across library entries.
+Stores normalized metadata snapshots. Provider-sourced metadata can be shared across users; manual metadata is accessible through the signed-in user’s Library entries.
 
 Common fields:
 

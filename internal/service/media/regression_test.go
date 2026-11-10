@@ -76,7 +76,7 @@ func (r *regressionCache) Set(_ context.Context, _, _ string, payload []byte, _ 
 func TestProviderImportRetainsScannedBarcodeForNewAndExistingCopies(t *testing.T) {
 	for _, existing := range []bool{false, true} {
 		owner := primitive.NewObjectID()
-		media := &regressionMediaRepo{record: &domainlib.MediaRecord{ID: primitive.NewObjectID(), MediaType: "book"}}
+		media := &regressionMediaRepo{record: &domainlib.MediaRecord{ID: primitive.NewObjectID(), Source: domainlib.SourceProvider, MediaType: "book"}}
 		entries := &regressionEntries{owner: owner}
 		notes := "Keep my notes"
 		if existing {

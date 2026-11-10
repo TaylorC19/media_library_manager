@@ -40,7 +40,7 @@ func (r *MediaRecordsRepository) FindByProviderImportRefs(ctx context.Context, r
 	if len(filters) == 0 {
 		return nil, nil
 	}
-	cursor, err := r.coll.Find(ctx, bson.M{"$or": filters}, options.Find().SetProjection(bson.M{"_id": 1, "mediaType": 1, "providerRefs": 1}))
+	cursor, err := r.coll.Find(ctx, bson.M{"source": domainlib.SourceProvider, "$or": filters}, options.Find().SetProjection(bson.M{"_id": 1, "mediaType": 1, "providerRefs": 1}))
 	if err != nil {
 		return nil, fmt.Errorf("find media by search refs: %w", err)
 	}

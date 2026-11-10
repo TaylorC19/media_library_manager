@@ -387,6 +387,10 @@ func (h *LibraryHandler) AttachSubmit(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Could not save item", status)
 			return
 		}
+		if errors.Is(err, libsvc.ErrNotFound) {
+			http.NotFound(w, r)
+			return
+		}
 		if errors.Is(err, libsvc.ErrValidation) {
 			msgKey := "common.flash.serverError"
 			if len(formErrs) > 0 {

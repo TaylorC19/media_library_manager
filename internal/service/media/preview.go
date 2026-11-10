@@ -25,13 +25,30 @@ func (s *Service) Preview(ctx context.Context, form ImportForm) (*domainlib.Medi
 	return s.fetchNormalizedRecord(ctx, form)
 }
 
-// PreviewLocal returns shared metadata only; it never exposes another user's copy fields.
-func (s *Service) PreviewLocal(ctx context.Context, id primitive.ObjectID) (*domainlib.MediaRecord, error) {
+// PreviewLocal shares provider metadata; manual metadata requires an owned copy.
+func (s *Service) PreviewLocal(ctx context.Context, userID, id primitive.ObjectID) (*domainlib.MediaRecord, error) {
 	record, err := s.media.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 	if record == nil {
+		return nil, ErrNotFound
+	}
+	switch record.Source {
+	case domainlib.SourceProvider:
+		// Provider metadata is intentionally shared across accounts.
+	case domainlib.SourceManual:
+		if userID.IsZero() {
+			return nil, ErrNotFound
+		}
+		owned, err := s.entries.FindByUserAndMediaRecordIDs(ctx, userID, []primitive.ObjectID{id})
+		if err != nil {
+			return nil, err
+		}
+		if len(owned) == 0 {
+			return nil, ErrNotFound
+		}
+	default:
 		return nil, ErrNotFound
 	}
 	return record, nil

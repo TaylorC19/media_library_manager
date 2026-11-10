@@ -99,7 +99,7 @@ func TestIndependentSearchGroupKeepsBadgesAndDoesNotWaitForSlowType(t *testing.T
 	media := repository.NewMediaRecordsRepository(database)
 	entries := repository.NewLibraryEntriesRepository(database)
 	owner := primitive.NewObjectID()
-	record := &domainlib.MediaRecord{Title: "Saved book", MediaType: "book", ProviderRefs: bson.M{"openLibrary": bson.M{"workKey": "OL1W"}}}
+	record := &domainlib.MediaRecord{Title: "Saved book", MediaType: "book", Source: domainlib.SourceProvider, ProviderRefs: bson.M{"openLibrary": bson.M{"workKey": "OL1W"}}}
 	if err := media.Insert(ctx, record); err != nil {
 		t.Fatal(err)
 	}

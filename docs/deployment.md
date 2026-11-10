@@ -82,6 +82,8 @@ There is **no** `SESSION_SECRET` in the Go app: sessions use stored tokens in Mo
 make docker-prod-config
 ```
 
+Resolved configuration can contain credentials. Inspect it locally; do not commit it or paste it into public logs, issues, or QA reports.
+
 ### 3. Start
 
 External or Atlas Mongo:

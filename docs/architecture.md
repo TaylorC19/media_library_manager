@@ -66,7 +66,7 @@ flowchart LR
 ## Persistence model
 
 - **`library_entries`** — user-owned collection state (bucket, notes, tags, format, etc.).
-- **`media_records`** — normalized shared metadata and provider references.
+- **`media_records`** — shared provider metadata and private manual metadata, with access scoped through Library entries.
 
 See [`docs/data-model.md`](./data-model.md).
 

@@ -61,10 +61,10 @@ func TestAttachFromMediaRecord_Table(t *testing.T) {
 	mediaID := insertTestMedia(t, ctx, mediaRepo, "Test Album", "album")
 	t.Run("media_not_found", func(t *testing.T) {
 		_, _, errs, err := svc.AttachFromMediaRecord(ctx, userID, missingID, domainlib.BucketCatalog, "9780000000000")
-		if err != ErrValidation {
-			t.Fatalf("err = %v, want ErrValidation", err)
+		if err != ErrNotFound {
+			t.Fatalf("err = %v, want ErrNotFound", err)
 		}
-		if len(errs) != 1 || errs[0] != "library.errors.mediaNotFound" {
+		if len(errs) != 0 {
 			t.Fatalf("errs = %v", errs)
 		}
 	})
