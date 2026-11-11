@@ -126,46 +126,43 @@ only `MONGODB_URI` (maintenance credentials) and `MONGODB_DATABASE`.
    use the read-only environment-file mount and hidden prompt shown in the
    setup-tool guide. No app secrets are needed for database initialization.
 4. Set Vercel runtime variables from `.env.prod.example`: `APP_ENV=production`,
-   exact HTTPS `PUBLIC_ORIGIN`, `SESSION_COOKIE_SECURE=true`,
+   `PORT=8080`, exact HTTPS `PUBLIC_ORIGIN`, `SESSION_COOKIE_SECURE=true`,
    `SESSION_COOKIE_NAME=__Host-mlm_session`, runtime `MONGODB_URI`,
    `MONGODB_DATABASE`, and `PROVIDER_KEYS_ENCRYPTION_KEY`. Generate the last
    value with `openssl rand -base64 32` and retain it separately from backups.
    Keep `SIGNUP_ENABLED=false`, `BACKUP_ENABLED=false`, `ENSURE_INDEXES=false`.
    Do not upload `.env.setup` or use its credentials in the web runtime.
-5. Deploy from the repository root. `vercel.json` selects the Go preset and
-   builds `cmd/server`; the server listens on Vercel's `PORT`. All templates and
-   assets are embedded, and the MongoDB connection pool is reused and bounded.
+5. Deploy from the repository root. The checked-in `vercel.json` selects the
+   Container preset. Vercel builds the root Dockerfile's final `app` stage;
+   the runtime settings from the preceding step configure its production mode
+   and HTTP port. All templates and assets are
+   embedded, and the MongoDB connection pool is reused and bounded. No manual
+   JSON edits or custom Go build command are required.
 
 Production configuration is explicit; the server does not load `.env.prod` for
 you. Preview and Production need separate databases, credentials and encryption
 keys. Set each `PUBLIC_ORIGIN` to the exact URL used to access that environment;
 incorrect origins reject writes. Keep previews protected. Vercel networking,
 function duration and database access must be checked for your plan. See the
-[Vercel Go documentation](https://vercel.com/docs/functions/runtimes/go) and
+[Vercel Container Runtime documentation](https://vercel.com/docs/functions/runtimes/container) and
 [Static IP documentation](https://vercel.com/docs/networking/static-ips).
 
 ## Vercel Container Runtime with an external database
 
-Vercel also supports deploying the root Dockerfile with its Container Runtime
-(beta). This is an alternative to the native Go preset configured by default.
-Initialize the external database using the packaged setup tool first, following
-the preceding Vercel steps. The Compose database and setup services do not run
-inside Vercel.
+The repository defaults to Vercel's Container Runtime (beta). Initialize the
+external database using the packaged setup tool first, following the preceding
+Vercel steps. The Compose database and setup services do not run inside Vercel.
 
-For a container deployment, use this `vercel.json` in the deployment source:
+Import the repository with its root as the project root and use the checked-in
+`vercel.json` as-is. It selects the Container preset. Set `PORT=8080` in the
+Vercel project's environment settings so the router and web process use the
+same port. The Dockerfile's final `app` stage is the
+HTTP service; the maintenance `setup` stage runs separately on your workstation.
 
-```json
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "container"
-}
-```
-
-Remove the Go `buildCommand` and any dashboard build-command override. Import the
-repository with the Container preset and set `PORT=8080` explicitly: Vercel's
-container routing defaults to port 80, while this application serves port 8080.
-The root Dockerfile's final `app` stage is the web container; do not select the
-maintenance `setup` stage for the deployed HTTP service.
+For an existing project previously configured for native Go, clear any dashboard
+build-command or output-directory overrides and redeploy `main`. Confirm the
+project framework is Container. Database credentials, HTTPS origin and encryption
+key belong in the project's runtime environment settings, not in source control.
 
 Set the production runtime variables listed above: runtime `MONGODB_URI`,
 `MONGODB_DATABASE`, `PUBLIC_ORIGIN`, `PROVIDER_KEYS_ENCRYPTION_KEY`, secure session

@@ -106,8 +106,8 @@ Details: [`docs/provider-notes.md`](docs/provider-notes.md).
 
 [Docker Compose is the primary installation path](docs/deployment.md).
 Vercel is an optional managed deployment: initialize its external database with
-the Docker setup image or a packaged `mlm-setup` executable, then deploy the Go
-server. Installers do not need to fork this repository or run GitHub Actions.
+the Docker setup image or a packaged `mlm-setup` executable, then deploy the Docker
+web app using the checked-in Vercel Container configuration. Installers do not need to fork this repository or run GitHub Actions.
 
 ## Health checks
 
