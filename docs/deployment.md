@@ -144,6 +144,43 @@ function duration and database access must be checked for your plan. See the
 [Vercel Go documentation](https://vercel.com/docs/functions/runtimes/go) and
 [Static IP documentation](https://vercel.com/docs/networking/static-ips).
 
+## Vercel Container Runtime with an external database
+
+Vercel also supports deploying the root Dockerfile with its Container Runtime
+(beta). This is an alternative to the native Go preset configured by default.
+Initialize the external database using the packaged setup tool first, following
+the preceding Vercel steps. The Compose database and setup services do not run
+inside Vercel.
+
+For a container deployment, use this `vercel.json` in the deployment source:
+
+```json
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "container"
+}
+```
+
+Remove the Go `buildCommand` and any dashboard build-command override. Import the
+repository with the Container preset and set `PORT=8080` explicitly: Vercel's
+container routing defaults to port 80, while this application serves port 8080.
+The root Dockerfile's final `app` stage is the web container; do not select the
+maintenance `setup` stage for the deployed HTTP service.
+
+Set the production runtime variables listed above: runtime `MONGODB_URI`,
+`MONGODB_DATABASE`, `PUBLIC_ORIGIN`, `PROVIDER_KEYS_ENCRYPTION_KEY`, secure session
+cookie settings, `APP_ENV=production`, and disabled startup indexes/signup/backups.
+Use the exact HTTPS origin users will visit. Keep the maintenance database URI on
+your workstation. Choose a function region near the database and configure its
+network access for Vercel's egress. Verify login, persistence and headers on the
+actual deployment; no cloud project is configured by these instructions.
+
+This documented path builds the Dockerfile from repository source and stores the
+image in Vercel's registry. The public Docker download bundles are for Docker
+hosts and local setup; they are not uploaded directly through `docker load` to
+Vercel. See [Container Runtime](https://vercel.com/docs/functions/runtimes/container)
+for current availability, port handling and platform limits.
+
 ## Database contents, secrets and recovery
 
 The setup tool creates collections for users, sessions, media records, library

@@ -61,7 +61,10 @@ def main():
     with (output / 'SHA256SUMS').open('w') as manifest:
         for path in sorted(output.glob('*.tar.gz')):
             with path.open('rb') as data:
-                digest = hashlib.file_digest(data, 'sha256').hexdigest()
+                hasher = hashlib.sha256()
+                for chunk in iter(lambda: data.read(1024 * 1024), b''):
+                    hasher.update(chunk)
+                digest = hasher.hexdigest()
             manifest.write(digest + '  ' + path.name + '\n')
     print('Release assets prepared in', output)
 
