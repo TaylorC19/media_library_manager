@@ -31,7 +31,7 @@ Personal API keys configured in Settings are stored outside MongoDB, in `PROVIDE
 
 Import **replaces all data** in the configured database. Sign in again after restoring on a new instance if sessions do not match your cookie.
 
-Disable UI backup with `BACKUP_ENABLED=false` (see [`.env.example`](../.env.example)).
+Web backups are disabled by default and unavailable in production. Enable only for local development with `BACKUP_ENABLED=true`; disable again with `BACKUP_ENABLED=false` (see [`.env.example`](../.env.example)).
 
 ## CLI (`cmd/db`)
 
@@ -67,9 +67,17 @@ Scripts read `MONGODB_URI` and `MONGODB_DATABASE` from `.env` when present.
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `BACKUP_ENABLED` | `true` | Show backup UI and allow export/import routes |
+| `BACKUP_ENABLED` | `false` | Enable development-only backup UI and routes |
 | `BACKUP_MAX_UPLOAD_BYTES` | `104857600` (100MB) | Max upload size for Settings import |
 
 ## Large databases
 
 For very large catalogs, prefer `mongodump` and filesystem backups. App export loads collections into memory for JSON encoding; increase `BACKUP_MAX_UPLOAD_BYTES` only if uploads require it.
+
+
+CLI imports validate the complete archive before writes and require a MongoDB
+replica set for an atomic multi-collection transaction. Archives are limited to
+128 MiB after decompression. Restore into an isolated database and verify it
+before switching application traffic; use managed snapshots or MongoDB tools
+for larger datasets. Development web restores validate the archive first but
+are not an atomic maintenance interface. Production web restores are disabled.

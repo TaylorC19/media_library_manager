@@ -17,7 +17,10 @@ import (
 
 func testMongoDB(t *testing.T) *mongo.Database {
 	t.Helper()
-	uri := os.Getenv("MONGODB_URI")
+	uri := os.Getenv("MONGO_TEST_URI")
+	if uri == "" {
+		uri = os.Getenv("MONGODB_URI")
+	}
 	if uri == "" {
 		uri = "mongodb://localhost:27017"
 	}
@@ -26,10 +29,16 @@ func testMongoDB(t *testing.T) *mongo.Database {
 
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if err != nil {
+		if os.Getenv("REQUIRE_MONGO_TESTS") == "1" {
+			t.Fatal(err)
+		}
 		t.Skipf("mongo not available: %v", err)
 	}
 	if err := client.Ping(ctx, nil); err != nil {
 		_ = client.Disconnect(ctx)
+		if os.Getenv("REQUIRE_MONGO_TESTS") == "1" {
+			t.Fatal(err)
+		}
 		t.Skipf("mongo not reachable: %v", err)
 	}
 

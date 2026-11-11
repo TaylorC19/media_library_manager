@@ -13,7 +13,7 @@
 
 <p>
   {{ t . "auth.login.altLabel" }}
-  <a href="/{{ .Locale }}/register">{{ t . "auth.register.title" }}</a>
+  {{ if .SignupEnabled }}<a href="/{{ .Locale }}/register">{{ t . "auth.register.title" }}</a>{{ end }}
 </p>
 {{ end }}
 

@@ -1,7 +1,9 @@
 package config
 
 import (
+	"encoding/base64"
 	"fmt"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -11,14 +13,18 @@ import (
 )
 
 type Config struct {
-	Env                 string
-	Port                int
-	MongoURI            string
-	MongoDatabase       string
-	DefaultLocale       string
-	SessionCookieName   string
-	SessionTTLHours     int
-	SessionCookieSecure bool
+	PublicOrigin              string
+	SignupEnabled             bool
+	ProviderKeysEncryptionKey string
+	EnsureIndexes             bool
+	Env                       string
+	Port                      int
+	MongoURI                  string
+	MongoDatabase             string
+	DefaultLocale             string
+	SessionCookieName         string
+	SessionTTLHours           int
+	SessionCookieSecure       bool
 
 	// Provider API keys (optional; search degrades gracefully when unset).
 	ProviderKeysDir              string
@@ -44,17 +50,28 @@ type Config struct {
 func Load() (Config, error) {
 	// Best-effort .env loading for local development.
 	// Existing OS environment values still win.
-	_ = godotenv.Load(".env")
+	if !strings.EqualFold(strings.TrimSpace(os.Getenv("APP_ENV")), "production") && os.Getenv("VERCEL") != "1" {
+		_ = godotenv.Load(".env")
+	}
+	production := strings.EqualFold(strings.TrimSpace(os.Getenv("APP_ENV")), "production") || os.Getenv("VERCEL") == "1"
 
+	cookieName := "mlm_session"
+	if production {
+		cookieName = "__Host-mlm_session"
+	}
 	cfg := Config{
 		Env:                          getEnv("APP_ENV", "development"),
+		PublicOrigin:                 getEnv("PUBLIC_ORIGIN", ""),
+		SignupEnabled:                getEnvBool("SIGNUP_ENABLED", !production),
+		ProviderKeysEncryptionKey:    getEnv("PROVIDER_KEYS_ENCRYPTION_KEY", ""),
+		EnsureIndexes:                getEnvBool("ENSURE_INDEXES", !production),
 		Port:                         getEnvInt("PORT", 8080),
 		MongoURI:                     getEnvWithAliases([]string{"MONGODB_URI", "MONGODB_URL"}, "mongodb://localhost:27017"),
 		MongoDatabase:                getEnv("MONGODB_DATABASE", "media_library"),
 		DefaultLocale:                getEnv("DEFAULT_LOCALE", "en"),
-		SessionCookieName:            getEnv("SESSION_COOKIE_NAME", "mlm_session"),
+		SessionCookieName:            getEnv("SESSION_COOKIE_NAME", cookieName),
 		SessionTTLHours:              getEnvInt("SESSION_TTL_HOURS", 24*14),
-		SessionCookieSecure:          getEnvBool("SESSION_COOKIE_SECURE", false),
+		SessionCookieSecure:          getEnvBool("SESSION_COOKIE_SECURE", production),
 		ProviderKeysDir:              getEnv("PROVIDER_KEYS_DIR", "data/provider-keys"),
 		TMDBAPIKey:                   getEnv("TMDB_API_KEY", ""),
 		RAWGAPIKey:                   getEnv("RAWG_API_KEY", ""),
@@ -70,10 +87,44 @@ func Load() (Config, error) {
 		MusicBrainzMinInterval:       getEnvDurationMS("MUSICBRAINZ_MIN_INTERVAL_MS", 1100*time.Millisecond),
 		MusicBrainzRateLimitCooldown: getEnvDurationMS("MUSICBRAINZ_RATE_LIMIT_COOLDOWN_MS", 5*time.Second),
 		MusicBrainzRetryableCooldown: getEnvDurationMS("MUSICBRAINZ_RETRYABLE_COOLDOWN_MS", 2*time.Second),
-		BackupEnabled:                getEnvBool("BACKUP_ENABLED", true),
+		BackupEnabled:                getEnvBool("BACKUP_ENABLED", false),
 		BackupMaxUploadBytes:         getEnvInt64("BACKUP_MAX_UPLOAD_BYTES", 100*1024*1024),
 	}
 
+	cfg.Env = strings.ToLower(strings.TrimSpace(cfg.Env))
+	if cfg.Env != "development" && cfg.Env != "production" {
+		return Config{}, fmt.Errorf("APP_ENV must be development or production")
+	}
+	if production {
+		cfg.Env = "production"
+		if !strings.HasPrefix(cfg.SessionCookieName, "__Host-") {
+			return Config{}, fmt.Errorf("production requires a __Host- session cookie name")
+		}
+		if !cfg.SessionCookieSecure {
+			return Config{}, fmt.Errorf("production requires secure session cookies")
+		}
+		origin, err := url.Parse(cfg.PublicOrigin)
+		if err != nil || origin.Scheme != "https" || origin.Host == "" || origin.User != nil || origin.RawQuery != "" || origin.Fragment != "" || (origin.Path != "" && origin.Path != "/") {
+			return Config{}, fmt.Errorf("PUBLIC_ORIGIN must be an HTTPS origin")
+		}
+		cfg.PublicOrigin = strings.TrimSuffix(cfg.PublicOrigin, "/")
+		key, err := base64.StdEncoding.DecodeString(cfg.ProviderKeysEncryptionKey)
+		if err != nil || len(key) != 32 {
+			return Config{}, fmt.Errorf("PROVIDER_KEYS_ENCRYPTION_KEY must encode 32 random bytes in base64")
+		}
+		if cfg.BackupEnabled {
+			return Config{}, fmt.Errorf("web backups are unavailable in production; use database maintenance tools")
+		}
+		if os.Getenv("MONGODB_URI") == "" && os.Getenv("MONGODB_URL") == "" {
+			return Config{}, fmt.Errorf("production requires an explicit MongoDB URI")
+		}
+		if os.Getenv("MONGODB_DATABASE") == "" {
+			return Config{}, fmt.Errorf("production requires an explicit database name")
+		}
+	}
+	if strings.HasPrefix(cfg.SessionCookieName, "__Host-") && !cfg.SessionCookieSecure {
+		return Config{}, fmt.Errorf("host cookies require HTTPS")
+	}
 	if strings.TrimSpace(cfg.ProviderKeysDir) == "" {
 		return Config{}, fmt.Errorf("PROVIDER_KEYS_DIR is required")
 	}

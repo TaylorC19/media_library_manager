@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
+
 	domainauth "media_library_manager/internal/domain/auth"
 )
 
@@ -30,8 +31,8 @@ type Service struct {
 	accounts accountCreator
 }
 
-// Serialize role changes and recheck the actor inside the lock. Two admins
-// cannot demote each other concurrently in this single-process application.
+// The mutex supports in-memory repositories in unit tests. Mongo repositories
+// also serialize authorization and updates in a shared database transaction.
 var roleChanges sync.Mutex
 
 func NewService(users userRepository, accounts accountCreator) *Service {
@@ -57,11 +58,19 @@ func (s *Service) List(ctx context.Context, actor primitive.ObjectID, query, rol
 	return s.users.ListManaged(ctx, strings.TrimSpace(query), role, page, 20)
 }
 func (s *Service) ChangeRole(ctx context.Context, actor, target primitive.ObjectID, role string) error {
-	if !domainauth.IsRole(role) {
-		return ErrInvalidRole
+	if coordinator, ok := s.users.(interface {
+		WithRoleChange(context.Context, func(context.Context) error) error
+	}); ok {
+		return coordinator.WithRoleChange(ctx, func(ctx context.Context) error { return s.changeRole(ctx, actor, target, role) })
 	}
 	roleChanges.Lock()
 	defer roleChanges.Unlock()
+	return s.changeRole(ctx, actor, target, role)
+}
+func (s *Service) changeRole(ctx context.Context, actor, target primitive.ObjectID, role string) error {
+	if !domainauth.IsRole(role) {
+		return ErrInvalidRole
+	}
 	if err := s.authorize(ctx, actor); err != nil {
 		return err
 	}
@@ -78,8 +87,16 @@ func (s *Service) ChangeRole(ctx context.Context, actor, target primitive.Object
 	return s.users.SetRole(ctx, user.Username, role)
 }
 func (s *Service) Create(ctx context.Context, actor primitive.ObjectID, username, password, displayName, role string) error {
+	if coordinator, ok := s.users.(interface {
+		WithRoleChange(context.Context, func(context.Context) error) error
+	}); ok {
+		return coordinator.WithRoleChange(ctx, func(ctx context.Context) error { return s.create(ctx, actor, username, password, displayName, role) })
+	}
 	roleChanges.Lock()
 	defer roleChanges.Unlock()
+	return s.create(ctx, actor, username, password, displayName, role)
+}
+func (s *Service) create(ctx context.Context, actor primitive.ObjectID, username, password, displayName, role string) error {
 	if err := s.authorize(ctx, actor); err != nil {
 		return err
 	}

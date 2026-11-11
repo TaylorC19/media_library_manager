@@ -1,9 +1,11 @@
-// Package providerkeys stores personal provider credentials outside database
-// backups and supplies immutable per-request overrides to provider clients.
+// Package providerkeys stores personal credentials outside custom app backups
+// and supplies immutable per-request overrides to provider clients. Production
+// uses encrypted durable MongoDB storage; development supports local files.
 package providerkeys
 
 import (
 	"context"
+	"crypto/cipher"
 	"encoding/json"
 	"errors"
 	"os"
@@ -12,6 +14,7 @@ import (
 	"sync"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var Providers = []string{"tmdb", "rawg", "discogs"}
@@ -37,13 +40,18 @@ func Resolve(ctx context.Context, provider, fallback string) string {
 }
 
 type Store struct {
-	dir string
-	mu  sync.Mutex
+	coll *mongo.Collection
+	aead cipher.AEAD
+	dir  string
+	mu   sync.Mutex
 }
 
 func NewStore(dir string) *Store { return &Store{dir: dir} }
 
 func (s *Store) Get(userID primitive.ObjectID) (Keys, error) {
+	if s.coll != nil {
+		return s.mongoGet(userID)
+	}
 	file, err := os.Open(filepath.Join(s.dir, userID.Hex()+".json"))
 	if errors.Is(err, os.ErrNotExist) {
 		return Keys{}, nil
@@ -62,6 +70,9 @@ func (s *Store) Get(userID primitive.ObjectID) (Keys, error) {
 // Update changes only supplied fields; an empty value removes the personal
 // override. Writes are atomic, with owner-only directory and file permissions.
 func (s *Store) Update(userID primitive.ObjectID, changes Keys) error {
+	if s.coll != nil {
+		return s.mongoUpdate(userID, changes)
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	keys, err := s.Get(userID)

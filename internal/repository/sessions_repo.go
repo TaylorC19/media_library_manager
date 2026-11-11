@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	domainauth "media_library_manager/internal/domain/auth"
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	domainauth "media_library_manager/internal/domain/auth"
 )
 
 type SessionsRepository struct {
@@ -22,17 +22,20 @@ func NewSessionsRepository(db *mongo.Database) *SessionsRepository {
 }
 
 func (r *SessionsRepository) EnsureIndexes(ctx context.Context) error {
-	_, err := r.coll.Indexes().CreateMany(ctx, []mongo.IndexModel{
-		{
-			Keys:    bson.D{{Key: "tokenHash", Value: 1}},
-			Options: options.Index().SetUnique(true),
-		},
-		{
-			Keys: bson.D{{Key: "expiresAt", Value: 1}},
-		},
-	})
+
+	_, err := r.coll.Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{Key: "tokenHash", Value: 1}}, Options: options.Index().SetUnique(true)})
 	if err != nil {
-		return fmt.Errorf("create sessions indexes: %w", err)
+		return fmt.Errorf("create session token index: %w", err)
+	}
+	_, err = r.coll.Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{Key: "expiresAt", Value: 1}}, Options: options.Index().SetExpireAfterSeconds(0)})
+
+	if err != nil {
+		if ce, ok := err.(mongo.CommandError); ok && ce.Code == 85 {
+			err = r.coll.Database().RunCommand(ctx, bson.D{{Key: "collMod", Value: r.coll.Name()}, {Key: "index", Value: bson.M{"keyPattern": bson.M{"expiresAt": 1}, "expireAfterSeconds": 0}}}).Err()
+		}
+		if err != nil {
+			return fmt.Errorf("create sessions indexes: %w", err)
+		}
 	}
 	return nil
 }

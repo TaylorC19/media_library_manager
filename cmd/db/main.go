@@ -101,7 +101,7 @@ func runImport(args []string) int {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
-	result, err := backup.ImportDatabase(ctx, database, f, backup.ImportOptions{RequireDatabaseMatch: true})
+	result, err := backup.ImportDatabase(ctx, database, f, backup.ImportOptions{RequireDatabaseMatch: true, Atomic: true})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1

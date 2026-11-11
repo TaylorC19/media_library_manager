@@ -5,14 +5,14 @@ import (
 	"net/url"
 	"strings"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
 	"media_library_manager/internal/config"
 	domainauth "media_library_manager/internal/domain/auth"
 	domainlib "media_library_manager/internal/domain/library"
 	"media_library_manager/internal/http/middleware"
 	"media_library_manager/internal/providerkeys"
 	"media_library_manager/internal/views"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type providerKeyStore interface {
@@ -108,7 +108,7 @@ func (h *SettingsHandler) settingsData(r *http.Request) map[string]any {
 	data["PageScripts"] = []string{"/static/js/settings.js"}
 	data["CurrentLanguageKey"] = "common.languageSwitcher." + data["Locale"].(string)
 	data["DatabaseName"] = h.cfg.MongoDatabase
-	data["BackupEnabled"] = h.cfg.BackupEnabled && middleware.CurrentUser(r.Context()).IsAdmin()
+	data["BackupEnabled"] = h.cfg.BackupEnabled && h.cfg.Env != "production" && middleware.CurrentUser(r.Context()).IsAdmin()
 	return data
 }
 

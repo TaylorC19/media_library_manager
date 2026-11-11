@@ -11,9 +11,6 @@ services:
       # Force embedded assets in container; see internal/config.UseEmbeddedAssets.
       APP_ENV: production
       PORT: "8080"
-      PROVIDER_KEYS_DIR: /home/app/data/provider-keys
-    volumes:
-      - provider-keys:/home/app/data/provider-keys
     ports:
       - "${PORT:-8080}:8080"
     healthcheck:
@@ -31,6 +28,7 @@ services:
 
   mongo:
     image: mongo:7
+    command: ["mongod", "--replSet", "mlm", "--bind_ip_all"]
     profiles:
       - mongo
     restart: unless-stopped
@@ -48,5 +46,4 @@ services:
       start_period: 5s
 
 volumes:
-  provider-keys:
   mongo-prod-data:

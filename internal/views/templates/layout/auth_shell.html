@@ -2,6 +2,7 @@
 <!doctype html>
 <html lang="{{ .Locale }}">
   <head>
+ <script src="/static/js/privacy.js"></script>
     {{ $pageTitle := t . "common.appName" }}
     {{ if .TitleKey }}{{ $pageTitle = t . .TitleKey }}{{ else if .Title }}{{ $pageTitle = .Title }}{{ end }}
     <meta charset="utf-8" />

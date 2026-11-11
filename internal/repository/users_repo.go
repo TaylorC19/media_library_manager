@@ -7,18 +7,19 @@ import (
 	"regexp"
 	"time"
 
-	domainauth "media_library_manager/internal/domain/auth"
-
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	domainauth "media_library_manager/internal/domain/auth"
 )
 
 var ErrUsernameTaken = errors.New("username already exists")
 
 type UsersRepository struct {
-	coll *mongo.Collection
+	coll                *mongo.Collection
+	requireTransactions bool
 }
 
 func NewUsersRepository(db *mongo.Database) *UsersRepository {
@@ -143,3 +144,5 @@ func (r *UsersRepository) ListManaged(ctx context.Context, query, role string, p
 	}
 	return users, count, nil
 }
+
+func (r *UsersRepository) RequireRoleTransactions() { r.requireTransactions = true }

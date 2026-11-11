@@ -14,6 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
 	"media_library_manager/internal/config"
 	domainauth "media_library_manager/internal/domain/auth"
 	domainlib "media_library_manager/internal/domain/library"
@@ -35,10 +36,16 @@ func regressionDatabase(t *testing.T) *mongo.Database {
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if err != nil {
+		if os.Getenv("REQUIRE_MONGO_TESTS") == "1" {
+			t.Fatal("Mongo test instance unavailable")
+		}
 		t.Skip("Mongo test instance unavailable")
 	}
 	if err := client.Ping(ctx, nil); err != nil {
 		client.Disconnect(context.Background())
+		if os.Getenv("REQUIRE_MONGO_TESTS") == "1" {
+			t.Fatal("Mongo test instance unavailable")
+		}
 		t.Skip("Mongo test instance unavailable")
 	}
 	database := client.Database("mlm_qa_regression_" + primitive.NewObjectID().Hex())

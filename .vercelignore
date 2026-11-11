@@ -37,3 +37,6 @@ data/provider-keys/
 .env*
 /docs/qa/
 /docs/security/
+
+# Local compiled Go server.
+/server

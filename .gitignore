@@ -38,3 +38,6 @@ data/provider-keys/
 
 # Security risk registers stay private, including sanitized audit summaries.
 /docs/**/audit.md
+
+# Local compiled Go server.
+/server

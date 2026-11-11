@@ -32,7 +32,7 @@ In v1, every item lives in one of two buckets:
 - English and Japanese UI support
 - Docker Compose for local **MongoDB** only; production Go image via `docker-compose.prod.yml`
 - `GET /health` for readiness and container health checks
-- Full-database backup and restore (Settings UI, `cmd/db`, and `mongodump` scripts — see [`docs/backup.md`](docs/backup.md))
+- Full-database maintenance (development Settings UI, `cmd/db`, and `mongodump` scripts — see [`docs/backup.md`](docs/backup.md))
 
 ## Philosophy
 
@@ -167,7 +167,7 @@ docker-compose.yml mongo only (local dev DB); docker-compose.prod.yml Go app + o
 
 ## Account roles
 
-Public registration creates **general** accounts. Existing accounts without a role also remain general; none are automatically promoted. **Admin** can use full-database backup/restore and manage their own library. **General** can manage their own library and provider keys. **Demo** can browse, search, and test provider connections, but cannot save library/settings changes, refresh metadata, or use database backups. Demo barcode lookups do not create scan-log records.
+When explicitly enabled, public registration creates **general** accounts. Production defaults to admin-created accounts. Existing accounts without a role also remain general; none are automatically promoted. **Admin** can use full-database backup/restore and manage their own library. **General** can manage their own library and provider keys. **Demo** can browse, search, and test provider connections, but cannot save library/settings changes, refresh metadata, or use database backups. Demo barcode lookups do not create scan-log records.
 
 Promote an existing account using trusted server access:
 

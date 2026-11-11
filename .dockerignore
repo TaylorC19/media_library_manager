@@ -27,3 +27,9 @@ data/provider-keys/
 # QA/audit evidence is not needed in application images.
 docs/qa/
 docs/security/
+
+# Local compiled Go server.
+/server
+
+# Exclude every real environment variant from the build context.
+.env*

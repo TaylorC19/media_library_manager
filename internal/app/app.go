@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"media_library_manager/internal/config"
@@ -47,6 +49,12 @@ func New(cfg config.Config) (*App, error) {
 		return nil, err
 	}
 
+	initialized := false
+	defer func() {
+		if !initialized {
+			_ = mongoClient.Disconnect(context.Background())
+		}
+	}()
 	renderer, err := views.NewRenderer(cfg.UseEmbeddedAssets())
 	if err != nil {
 		return nil, err
@@ -65,27 +73,37 @@ func New(cfg config.Config) (*App, error) {
 	}
 
 	usersRepo := repository.NewUsersRepository(instance.Database)
+	if cfg.Env == "production" {
+		var hello struct {
+			SetName string `bson:"setName"`
+			Msg     string `bson:"msg"`
+		}
+		if err := instance.Database.RunCommand(ctx, bson.M{"hello": 1}).Decode(&hello); err != nil || (hello.SetName == "" && hello.Msg != "isdbgrid") {
+			return nil, fmt.Errorf("production requires MongoDB replica set or sharded cluster")
+		}
+		usersRepo.RequireRoleTransactions()
+	}
 	sessionsRepo := repository.NewSessionsRepository(instance.Database)
-	if err := usersRepo.EnsureIndexes(ctx); err != nil {
+	if err := ensureIndexes(ctx, cfg, usersRepo.EnsureIndexes); err != nil {
 		return nil, err
 	}
-	if err := sessionsRepo.EnsureIndexes(ctx); err != nil {
+	if err := ensureIndexes(ctx, cfg, sessionsRepo.EnsureIndexes); err != nil {
 		return nil, err
 	}
 	mediaRepo := repository.NewMediaRecordsRepository(instance.Database)
 	libEntriesRepo := repository.NewLibraryEntriesRepository(instance.Database)
-	if err := mediaRepo.EnsureIndexes(ctx); err != nil {
+	if err := ensureIndexes(ctx, cfg, mediaRepo.EnsureIndexes); err != nil {
 		return nil, err
 	}
-	if err := libEntriesRepo.EnsureIndexes(ctx); err != nil {
+	if err := ensureIndexes(ctx, cfg, libEntriesRepo.EnsureIndexes); err != nil {
 		return nil, err
 	}
 	scanLogsRepo := repository.NewScanLogsRepository(instance.Database)
-	if err := scanLogsRepo.EnsureIndexes(ctx); err != nil {
+	if err := ensureIndexes(ctx, cfg, scanLogsRepo.EnsureIndexes); err != nil {
 		return nil, err
 	}
 	providerCacheRepo := repository.NewProviderCacheRepository(instance.Database)
-	if err := providerCacheRepo.EnsureIndexes(ctx); err != nil {
+	if err := ensureIndexes(ctx, cfg, providerCacheRepo.EnsureIndexes); err != nil {
 		return nil, err
 	}
 	reliabilitySvc := reliability.NewService(cfg)
@@ -99,6 +117,7 @@ func New(cfg config.Config) (*App, error) {
 	barcodeSvc := barcodesvc.NewService(cfg, mediaRepo, libEntriesRepo, scanLogsRepo, cache, reliabilitySvc, mbThrottle)
 	instance.Router = instance.newRouter(staticFS, librarySvc, mediaSvc, searchSvc, barcodeSvc, mbThrottle)
 
+	initialized = true
 	return instance, nil
 }
 
@@ -114,8 +133,12 @@ func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc
 
 	r.Use(middleware.Recovery)
 	r.Use(middleware.Logging)
+	r.Use(middleware.Security(a.Config))
 	r.Use(middleware.Locale(a.Config.DefaultLocale))
 	r.Use(middleware.WithAuthSession(a.Auth, a.Config.SessionCookieName))
+	if a.Config.Env == "production" {
+		r.Use(middleware.NewBudget(a.Database, os.Getenv("VERCEL") == "1").Wrap)
+	}
 
 	r.Get("/health", a.health)
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
@@ -130,6 +153,13 @@ func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc
 	mediaHandler := handlers.NewMediaHandler(a.Renderer, media)
 	barcodeHandler := handlers.NewBarcodeHandler(barcode)
 	keyStore := providerkeys.NewStore(a.Config.ProviderKeysDir)
+	if a.Config.ProviderKeysEncryptionKey != "" {
+		var err error
+		keyStore, err = providerkeys.NewMongoStore(a.Database, a.Config.ProviderKeysEncryptionKey)
+		if err != nil {
+			panic("invalid provider key configuration")
+		}
+	}
 	settingsHandler := handlers.NewSettingsHandler(a.Config, a.Renderer, keyStore, &providerkeys.Checker{MusicBrainzUA: a.Config.MusicBrainzUA, MusicBrainzThrottle: mbThrottle})
 	backupHandler := handlers.NewBackupHandler(a.Config, a.Database)
 	usersHandler := handlers.NewUsersHandler(a.Renderer, a.UserAdmin)
@@ -180,13 +210,19 @@ func (a *App) newRouter(staticFS fs.FS, library *libsvc.Service, media *mediasvc
 
 func (a *App) health(w http.ResponseWriter, r *http.Request) {
 	status := map[string]any{
-		"ok":       true,
-		"service":  "media-library-manager",
-		"database": a.Config.MongoDatabase,
+		"ok":      true,
+		"service": "media-library-manager",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(status); err != nil {
 		http.Error(w, "failed to encode response", http.StatusInternalServerError)
 	}
+}
+
+func ensureIndexes(ctx context.Context, cfg config.Config, create func(context.Context) error) error {
+	if !cfg.EnsureIndexes {
+		return nil
+	}
+	return create(ctx)
 }

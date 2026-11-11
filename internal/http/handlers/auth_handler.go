@@ -105,6 +105,7 @@ func (h *AuthHandler) RegisterSubmit(w http.ResponseWriter, r *http.Request) {
 		Value:    middleware.EncodeFlash("common.flash.info", "auth.flash.registered"),
 		Path:     "/",
 		HttpOnly: true,
+		Secure:   h.cfg.SessionCookieSecure,
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   10,
 	})
@@ -119,11 +120,13 @@ func (h *AuthHandler) LogoutSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.clearSessionCookie(w)
+	w.Header().Set("Clear-Site-Data", "\"cache\", \"storage\"")
 	http.SetCookie(w, &http.Cookie{
 		Name:     "flash",
 		Value:    middleware.EncodeFlash("common.flash.info", "auth.flash.loggedOut"),
 		Path:     "/",
 		HttpOnly: true,
+		Secure:   h.cfg.SessionCookieSecure,
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   10,
 	})
@@ -141,11 +144,12 @@ func (h *AuthHandler) baseAuthData(r *http.Request, titleKey string, values map[
 	}
 
 	return map[string]any{
-		"TitleKey":   titleKey,
-		"Locale":     locale,
-		"Path":       r.URL.Path,
-		"Values":     values,
-		"FormErrors": formErrors,
+		"SignupEnabled": h.cfg.SignupEnabled,
+		"TitleKey":      titleKey,
+		"Locale":        locale,
+		"Path":          r.URL.Path,
+		"Values":        values,
+		"FormErrors":    formErrors,
 	}
 }
 
@@ -188,6 +192,7 @@ func (h *AuthHandler) consumeFlash(w http.ResponseWriter, r *http.Request, data 
 		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
+		Secure:   h.cfg.SessionCookieSecure,
 		MaxAge:   -1,
 		SameSite: http.SameSiteLaxMode,
 	})

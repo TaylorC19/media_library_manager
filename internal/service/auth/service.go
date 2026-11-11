@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	domainauth "media_library_manager/internal/domain/auth"
-	"media_library_manager/internal/repository"
-
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
+
+	domainauth "media_library_manager/internal/domain/auth"
+	"media_library_manager/internal/repository"
 )
 
 var (
@@ -58,6 +58,7 @@ func (s *Service) Login(ctx context.Context, username, password, userAgent, ipAd
 		return nil, "", err
 	}
 	if user == nil {
+		_ = bcrypt.CompareHashAndPassword([]byte(dummyHash), []byte(password))
 		return nil, "", ErrInvalidCredentials
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
@@ -139,3 +140,6 @@ func generateToken(size int) (string, error) {
 	}
 	return base64.RawURLEncoding.EncodeToString(buf), nil
 }
+
+// Constant valid bcrypt hash ensures missing accounts perform the same work.
+const dummyHash = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"

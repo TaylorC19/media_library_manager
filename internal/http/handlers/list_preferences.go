@@ -75,7 +75,7 @@ func resolveListPreferences(w http.ResponseWriter, r *http.Request, scope string
 	if validListPreferences(effective, scope) {
 		encoded := base64.RawURLEncoding.EncodeToString([]byte(effective.Encode()))
 		if previous, err := r.Cookie(cookieName); err != nil || previous.Value != encoded {
-			http.SetCookie(w, &http.Cookie{Name: cookieName, Value: encoded, Path: "/", MaxAge: listPreferenceLifetime, HttpOnly: true, Secure: r.TLS != nil, SameSite: http.SameSiteLaxMode})
+			http.SetCookie(w, &http.Cookie{Name: cookieName, Value: encoded, Path: "/", MaxAge: listPreferenceLifetime, HttpOnly: true, Secure: middleware.SecureCookies(r), SameSite: http.SameSiteLaxMode})
 		}
 	}
 	r.URL.RawQuery = query.Encode()
