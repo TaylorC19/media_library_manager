@@ -2,9 +2,10 @@
 .env
 .env.local
 .env.*.local
-.env.*
+.env*
 !.env.example
 !.env.prod.example
+!.env.setup.example
 node_modules
 .pnpm-store
 .turbo
@@ -41,3 +42,10 @@ data/provider-keys/
 
 # Local compiled Go server.
 /server
+
+# Initial administrator bootstrap secret.
+.bootstrap-admin-password
+
+# Python packaging helper caches.
+__pycache__/
+*.pyc

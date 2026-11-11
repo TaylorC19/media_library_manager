@@ -81,3 +81,9 @@ replica set for an atomic multi-collection transaction. Archives are limited to
 before switching application traffic; use managed snapshots or MongoDB tools
 for larger datasets. Development web restores validate the archive first but
 are not an atomic maintenance interface. Production web restores are disabled.
+
+The primary authenticated Compose installation uses separate maintenance and runtime
+credentials. The legacy `make db-backup` helpers target the development Compose
+stack; they do not automatically back up the production volumes or decrypt personal
+provider keys. For production, use a separately configured maintenance connection
+and preserve both MongoDB volumes and generated private configuration files.

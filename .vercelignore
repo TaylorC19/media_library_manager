@@ -40,3 +40,10 @@ data/provider-keys/
 
 # Local compiled Go server.
 /server
+
+# Initial administrator bootstrap secret.
+.bootstrap-admin-password
+
+# Python packaging helper caches.
+__pycache__/
+*.pyc

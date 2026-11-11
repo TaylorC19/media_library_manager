@@ -1,12 +1,13 @@
 module media_library_manager
 
-go 1.27.3
+go 1.27.4
 
 require (
 	github.com/go-chi/chi/v5 v5.5.0
 	github.com/joho/godotenv v1.5.1
 	go.mongodb.org/mongo-driver v1.17.10
 	golang.org/x/crypto v0.58.1-0.20261009181718-2f1f834330b2
+	golang.org/x/term v0.48.0
 )
 
 require (
@@ -18,5 +19,6 @@ require (
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	golang.org/x/sync v0.25.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/text v0.44.0 // indirect
 )

@@ -1,18 +1,13 @@
-// dbsetup runs with maintenance credentials before starting a new deployment.
+// dbsetup is the developer entrypoint; installers use the packaged setup tool.
 package main
 
 import (
 	"context"
 	"log"
-	"time"
-
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-
 	"media_library_manager/internal/config"
 	"media_library_manager/internal/db"
-	"media_library_manager/internal/repository"
+	"media_library_manager/internal/dbsetup"
+	"time"
 )
 
 func main() {
@@ -26,21 +21,8 @@ func main() {
 	if err != nil {
 		log.Fatal("database connection failed")
 	}
-	defer client.Disconnect(ctx)
-	database := client.Database(cfg.MongoDatabase)
-	for _, ensure := range []func(context.Context) error{repository.NewUsersRepository(database).EnsureIndexes, repository.NewSessionsRepository(database).EnsureIndexes, repository.NewMediaRecordsRepository(database).EnsureIndexes, repository.NewLibraryEntriesRepository(database).EnsureIndexes, repository.NewScanLogsRepository(database).EnsureIndexes, repository.NewProviderCacheRepository(database).EnsureIndexes} {
-		if err := ensure(ctx); err != nil {
-			log.Fatal(err)
-		}
-	}
-	for _, name := range []string{"request_budgets", "request_leases"} {
-		_, err := database.Collection(name).Indexes().CreateOne(ctx, mongo.IndexModel{Keys: bson.D{{Key: "expiresAt", Value: 1}}, Options: options.Index().SetExpireAfterSeconds(0)})
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-	_, err = database.Collection("admin_guard").UpdateByID(ctx, "roles", bson.M{"$setOnInsert": bson.M{"revision": 0}}, options.Update().SetUpsert(true))
-	if err != nil {
+	defer client.Disconnect(context.Background())
+	if err := dbsetup.Initialize(ctx, client.Database(cfg.MongoDatabase)); err != nil {
 		log.Fatal(err)
 	}
 	log.Print("database setup complete")

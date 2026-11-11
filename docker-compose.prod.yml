@@ -1,49 +1,64 @@
+# Primary self-hosted installation. Generate private files with the setup image first.
 services:
   app:
+    image: media-library-manager:local
     build:
       context: .
-      dockerfile: Dockerfile
+      target: app
     init: true
     restart: unless-stopped
-    env_file:
-      - .env.prod
+    env_file: [.env.prod]
     environment:
-      # Force embedded assets in container; see internal/config.UseEmbeddedAssets.
       APP_ENV: production
       PORT: "8080"
+    depends_on:
+      setup:
+        condition: service_completed_successfully
     ports:
-      - "${PORT:-8080}:8080"
+      - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-8080}:8080"
+    networks: [default, database]
     healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "-qO-",
-          "http://127.0.0.1:8080/health",
-        ]
+      test: [CMD, wget, -qO-, "http://127.0.0.1:8080/health"]
       interval: 15s
       timeout: 5s
       retries: 10
       start_period: 20s
-
+  setup:
+    user: "0:0"
+    image: media-library-manager-setup:local
+    build:
+      context: .
+      target: setup
+    restart: "no"
+    env_file: [.env.prod, .env.setup]
+    command: [database, -init-replica, -provision-runtime, -admin-password-file, /run/secrets/bootstrap_admin]
+    secrets: [bootstrap_admin]
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks: [database]
   mongo:
     image: mongo:7
-    command: ["mongod", "--replSet", "mlm", "--bind_ip_all"]
-    profiles:
-      - mongo
+    entrypoint: [sh, /opt/mlm/mongo-entrypoint.sh]
+    env_file: [.env.setup]
     restart: unless-stopped
     volumes:
       - mongo-prod-data:/data/db
+      - mongo-config:/data/configdb
+      - ./scripts/mongo-entrypoint.sh:/opt/mlm/mongo-entrypoint.sh:ro
+    networks: [database]
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "echo 'db.adminCommand({ ping: 1 })' | mongosh mongodb://127.0.0.1:27017/admin --quiet >/dev/null 2>&1 || exit 1",
-        ]
+      test: [CMD, mongosh, --host, mongo, --quiet, --eval, "if (!db.adminCommand({ping:1}).ok) quit(1)"]
       interval: 5s
       timeout: 5s
-      retries: 10
-      start_period: 5s
-
+      retries: 20
+      start_period: 20s
+secrets:
+  bootstrap_admin:
+    file: .bootstrap-admin-password
+networks:
+  database:
+    internal: true
 volumes:
   mongo-prod-data:
+  mongo-config:

@@ -30,7 +30,7 @@ In v1, every item lives in one of two buckets:
 - Search with title lookup, barcode entry, and camera scanning, with explicit confirmation before saving
 - Personal provider API keys configurable from Settings, with environment defaults
 - English and Japanese UI support
-- Docker Compose for local **MongoDB** only; production Go image via `docker-compose.prod.yml`
+- Docker Compose installation with authenticated MongoDB, automatic database setup, and administrator bootstrap
 - `GET /health` for readiness and container health checks
 - Full-database maintenance (development Settings UI, `cmd/db`, and `mongodump` scripts — see [`docs/backup.md`](docs/backup.md))
 
@@ -49,42 +49,38 @@ A single Go binary keeps deployment small and predictable: one process to run on
 
 Pages are rendered on the server with `html/template`. That makes auth, links, and forms straightforward, works well for a private catalog app, and keeps **canonical state on the server**. The UI is **not** a single-page React or Vue app; it also is **not** “no JavaScript.” **[htmx](https://htmx.org/)** swaps in HTML fragments for search results, list filters, pagination, and inline notices so interactions feel responsive without moving business logic into the browser. **Vanilla JS** is used where the platform requires it—especially the **scan** flow (camera and barcode decoding). See [`docs/templates.md`](docs/templates.md).
 
-## Quick Start (recommended)
+## Quick Start (Docker Compose)
 
-1. **MongoDB in Docker** (database only — fast iteration on the Go app on your host):
+Download the matching **Docker image bundle** from [the alpha release](https://github.com/TaylorC19/media_library_manager/releases/tag/v0.1.0-alpha.1).
+It includes the app and setup images, Compose files, and installation guide.
+Choose `linux_amd64` or `linux_arm64` for Docker's architecture, including when
+using Docker Desktop on macOS/Windows. Verify the archive against `SHA256SUMS`,
+extract it, and run from the extracted directory (macOS/Linux shell):
 
-```bash
-./scripts/dev-db-up.sh
+```sh
+docker load --input images.tar
+docker run --rm --user "$(id -u):$(id -g)" \
+  --mount "type=bind,source=$PWD,target=/config" \
+  media-library-manager-setup:0.1.0-alpha.1 init \
+  -dir /config -origin https://library.example.com
+docker compose --env-file .env.prod up -d
 ```
 
-2. **Run the Go app** with live reload:
+Replace the origin with your HTTPS address and configure your reverse proxy to
+forward to `127.0.0.1:8080`. Setup generates private credentials, initializes the
+bundled database, and creates the first `admin` account. Its random password is
+in the owner-only `.bootstrap-admin-password` file; no passwords are printed.
+Keep generated files and database volumes backed up privately. Repeating startup
+preserves saved data and existing passwords.
 
-```bash
-./scripts/dev-web.sh
-```
+The web app starts after the setup service succeeds. No source build, registry login, local Go installation, manual collection
+creation, or GitHub Actions setup is required. See the
+[installation guide](docs/deployment.md) for updates, external databases, and
+Vercel, or the [packaged setup tool](docs/setup-tool.md) for standalone binaries.
 
-3. Open [http://localhost:8080](http://localhost:8080)
-
-`./scripts/dev-web.sh` uses `air` when available so template, locale, and static asset changes restart the server. For a one-shot run without `air`:
-
-```bash
-./scripts/dev-web-run.sh
-```
-
-4. Copy [`.env.example`](.env.example) to `.env` and adjust. For local Mongo, `MONGODB_URI=mongodb://localhost:27017` matches `./scripts/dev-db-up.sh`.
-
-## Docker Compose (local dev)
-
-[`docker-compose.yml`](docker-compose.yml) runs **only MongoDB** for development. Start the DB, then run the Go app on your machine (see Quick Start above):
-
-```bash
-make docker-up
-# or: docker compose up -d
-```
-
-Use `MONGODB_URI=mongodb://localhost:27017` in `.env` when the app runs on the host.
-
-For **production**, build and run the Go app in Docker with [`docker-compose.prod.yml`](docker-compose.prod.yml) and the root [`Dockerfile`](Dockerfile) — see [Deployment](#deployment) and [`docs/deployment.md`](docs/deployment.md).
+For development with Go on your host, use `.env.example`,
+`./scripts/dev-db-up.sh`, and `./scripts/dev-web.sh`. The default
+`docker-compose.yml` remains the development database-only stack.
 
 ## Configuration
 
@@ -93,7 +89,8 @@ Key variables are documented in [`.env.example`](.env.example) and loaded in [`i
 Templates:
 
 - `.env.example` — local development
-- `.env.prod.example` — copy to `.env.prod` for production-style Compose (see [`docs/deployment.md`](docs/deployment.md))
+- `.env.setup.example` — private maintenance configuration for an external database
+- `.env.prod.example` — runtime configuration reference for external databases (see [`docs/deployment.md`](docs/deployment.md))
 
 ## Providers
 
@@ -107,21 +104,10 @@ Details: [`docs/provider-notes.md`](docs/provider-notes.md).
 
 ## Deployment
 
-Production-style Compose (see [`.env.prod.example`](.env.prod.example)):
-
-```bash
-cp .env.prod.example .env.prod
-# edit .env.prod (especially MONGODB_URI)
-make docker-prod-up
-```
-
-Optional bundled Mongo:
-
-```bash
-make docker-prod-up-mongo
-```
-
-Full notes: [`docs/deployment.md`](docs/deployment.md).
+[Docker Compose is the primary installation path](docs/deployment.md).
+Vercel is an optional managed deployment: initialize its external database with
+the Docker setup image or a packaged `mlm-setup` executable, then deploy the Go
+server. Installers do not need to fork this repository or run GitHub Actions.
 
 ## Health checks
 
@@ -153,7 +139,8 @@ cmd/web/           main
 internal/          app code (HTTP, services, repos, providers, views, static embed)
 docs/              spec, architecture, deployment, routes, templates, data model
 Dockerfile         multi-stage Go build
-docker-compose.yml mongo only (local dev DB); docker-compose.prod.yml Go app + optional mongo
+docker-compose.yml development DB; docker-compose.prod.yml complete self-hosted installation
+cmd/setup/         packaged installer (mlm-setup)
 ```
 
 ## Roadmap
@@ -167,9 +154,10 @@ docker-compose.yml mongo only (local dev DB); docker-compose.prod.yml Go app + o
 
 ## Account roles
 
-When explicitly enabled, public registration creates **general** accounts. Production defaults to admin-created accounts. Existing accounts without a role also remain general; none are automatically promoted. **Admin** can use full-database backup/restore and manage their own library. **General** can manage their own library and provider keys. **Demo** can browse, search, and test provider connections, but cannot save library/settings changes, refresh metadata, or use database backups. Demo barcode lookups do not create scan-log records.
+When explicitly enabled, public registration creates **general** accounts. Production defaults to admin-created accounts. Existing accounts without a role also remain general; none are automatically promoted. **Admin** can manage users, saved provider keys, and their own library. Web database maintenance is available only in explicitly enabled development installations. **General** can manage their own library and provider keys. **Demo** can browse, search, and test provider connections, but cannot save library/settings changes, refresh metadata, or use database backups. Demo barcode lookups do not create scan-log records.
 
-Promote an existing account using trusted server access:
+Fresh installations bootstrap the initial administrator through the setup tool.
+For developer recovery, promote an existing account using trusted server access:
 
 ```bash
 go run ./cmd/users -username YOUR_USERNAME -role admin
@@ -185,7 +173,7 @@ Admins can open **User management** from the header or Settings to search accoun
 
 Each account also has **Manage saved keys**. Admins can see which providers have personal keys saved, without viewing their values. Clearing a key requires a separate confirmation page and checkbox. It removes only that account’s selected provider override: the server default applies afterward if configured. It does not revoke the credential with the provider or change other accounts’ keys.
 
-The server command remains available for bootstrap and recovery. Use `-role general` or `-role demo` to change access later. Changes apply on the next authenticated request, including existing sessions. There is no public role-selection or self-promotion endpoint. Older database backups without roles restore accounts with general access; use the command again to promote the intended administrator.
+The developer/server command remains available for recovery. Use `-role general` or `-role demo` to change access later. Changes apply on the next authenticated request, including existing sessions. There is no public role-selection or self-promotion endpoint. Older database backups without roles restore accounts with general access; use the command again to promote the intended administrator.
 
 ## Improvement backlog
 

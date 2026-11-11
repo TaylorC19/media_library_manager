@@ -33,3 +33,17 @@ docs/security/
 
 # Exclude every real environment variant from the build context.
 .env*
+
+# Initial administrator bootstrap secret.
+.bootstrap-admin-password
+
+# Local caches and deployment/editor credentials are never build inputs.
+.pnpm-store
+.codex
+.agents
+.aws
+.vercel
+
+# Python packaging helper caches.
+__pycache__/
+*.pyc
