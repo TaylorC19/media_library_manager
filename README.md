@@ -9,6 +9,15 @@ In v1, every item lives in one of two buckets:
 - `catalog` for things you already own
 - `wishlist` for things you want to track without mixing them into the main collection
 
+## Live demo
+
+[Open the live app](https://media-library-prod.vercel.app/).
+
+Public demo account:
+
+- **Username:** `demo`
+- **Password:** `password`
+
 ## Why Use It
 
 - Keep your media library in a self-hosted app you control
